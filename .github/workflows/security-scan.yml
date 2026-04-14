@@ -1,0 +1,106 @@
+name: Security Scan
+on:
+  workflow_call:
+    inputs:
+      semantic_version:
+        description: 'The semantic version of the application being scanned'
+        type: string
+        required: true
+      project_name:
+        description: 'The name of the project that must be scanned'
+        type: string
+        required: true
+      gradle_version_regex:
+        description: 'The regex pattern to match the version in the Gradle properties file'
+        type: string
+        required: false
+        default: 'version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*'
+      fail_on_fatal:
+        description: 'Fail on a finding of a fatal vulnerability'
+        type: boolean
+        required: false
+        default: false
+      reports_subpath:
+        description: 'Path below the project root to the build reports directory'
+        type: string
+        required: false
+        default: 'app/build/reports'
+      DEBUG:
+        description: 'Run the workflow in debug mode'
+        type: boolean
+        required: false
+        default: false
+    secrets:
+        NVD_APIKEY_SEDR:
+            required: true
+
+jobs:
+
+  vulnerability-scan:
+    name: Vulnerability Scan
+    permissions:
+      contents: read
+      packages: read
+
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{ inputs.semantic_version }}
+      PROJECT_NAME: ${{ inputs.project_name }}
+      GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
+      GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
+      REPORTS_DIR: ${{ inputs.project_name }}/${{ inputs.reports_subpath }}
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Update version in Gradle property file
+        run: |
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Cache NVD Database
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-
+
+      - name: Update NVD database
+        run: |
+          cd ${{ env.PROJECT_NAME }}
+          ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel
+        env:
+          NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+      - name: Scan for vulnerabilities
+        run: |
+          cd ${{ env.PROJECT_NAME }}
+          ./gradlew dependencyCheckAnalyze --no-configuration-cache --no-parallel
+        env:
+          NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+      - name: Upload Vulnerability Test Report
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.PROJECT_NAME }}-reports-vulnerability
+          path: ${{ env.REPORTS_DIR }}/dependency-check-report.html
