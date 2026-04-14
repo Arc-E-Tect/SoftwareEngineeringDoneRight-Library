@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+changed_manifests=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'package(-lock)?\.json$' || true)
+changed_workflows=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^\.github/workflows/.*\.ya?ml$' || true)
+staged_keystores=$(git diff --cached --name-only --diff-filter=ACM | grep -Ei '\.(p12|pfx|jks|keystore)$' || true)
+bom_hex="efbbbf"
+failed=0
+
+if [[ -n "$staged_keystores" ]]; then
+  printf 'Error: keystore files must not be committed. Remove these from the stage:%s' "\n" >&2
+  printf '%s\n' "$staged_keystores" >&2
+  printf 'Keep keystores outside of Git (see .gitignore) and restage once removed.%s' "\n" >&2
+  exit 1
+fi
+
+# Secret detection: check for hardcoded secrets in staged files
+# Exclude .env.example files (these contain documentation placeholders)
+# Allow placeholders like <password>, ${VAR}, or password: # comment
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -Ev '\.(min\.js|lock|sum|jar|class|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|pdf|zip|tar|gz|bz2|xz|7z|rar|exe|dll|so|dylib)$' || true)
+
+if [[ -n "$staged_files" ]]; then
+  # Pattern: Match secret-like keys with non-placeholder values
+  # Match: password=value, api_key: value, secret = value, token=value
+  # Skip: password=<password>, password=${VAR}, password: # comment
+  secret_pattern='(password|passwd|pwd|secret|api[-_]?key|auth[-_]?token|access[-_]?token|private[-_]?key|client[-_]?secret|api[-_]?secret|bearer[-_]?token|oauth[-_]?token|session[-_]?secret|encryption[-_]?key|signing[-_]?key|jwt[-_]?secret)[[:space:]]*[:=][[:space:]]*[^<$#][^$#]{2,}'
+
+  while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
+    # Skip git hooks (may contain pattern examples in comments)
+    [[ "$file" =~ ^\.githooks/ ]] && continue
+    # Skip Copilot instructions (contains security policy documentation)
+    [[ "$file" =~ copilot-instructions\.md$ ]] && continue
+    # Skip security-related documentation files (can contain examples)
+    [[ "$file" =~ (SECURITY|POLICY|SECRET).*\.(md|adoc)$ ]] && continue
+    [[ "$file" =~ \.example$ ]] && continue
+    [[ "$file" =~ \.sample$ ]] && continue
+    [[ "$file" =~ \.template$ ]] && continue
+
+    # Check staged content for secrets.
+    # Filter out lines that are clearly dynamic env-var lookups (e.g. Groovy
+    # System.getenv() / project.findProperty() in Gradle build files) — these
+    # are not hardcoded secrets.
+    matched_secrets=$(git show ":$file" | grep -E "$secret_pattern" | grep -Ev '(System\.getenv|project\.findProperty|System\.getProperty)' || true)
+    if [[ -n "$matched_secrets" ]]; then
+      printf 'Error: Potential secret detected in %s%s' "$file" "\n" >&2
+      printf 'Matched lines:%s' "\n" >&2
+      printf '%s\n' "$matched_secrets" | head -5 >&2
+      printf '%s' "\n" >&2
+      printf 'Secrets must not be committed. Use environment variables or .env files instead.%s' "\n" >&2
+      printf 'If this is a false positive (e.g., documentation), use:%s' "\n" >&2
+      printf '  - Placeholders: password=<your-password> or password=${PASSWORD}%s' "\n" >&2
+      printf '  - Comments: password: # Set this via environment variable%s' "\n" >&2
+      printf '  - Example files: .env.example, config.sample, etc.%s' "\n" >&2
+      failed=1
+    fi
+  done <<< "$staged_files"
+fi
+
+if [[ -n "$changed_workflows" ]]; then
+  if ! command -v actionlint >/dev/null 2>&1; then
+    printf 'Error: actionlint is not installed but GitHub workflow files are staged.%s' "\n" >&2
+    printf 'See https://github.com/rhysd/actionlint for installation instructions (for example, on macOS: "brew install actionlint").%s' "\n" >&2
+    printf 'Install actionlint to proceed, or temporarily unstage the workflow files with `git restore --staged .github/workflows/`.%s' "\n" >&2
+    exit 1
+  fi
+
+  workflow_count=$(printf '%s\n' "$changed_workflows" | sed '/^$/d' | wc -l)
+  if [[ "$workflow_count" -gt 0 ]]; then
+    printf 'Running actionlint on %d workflow file(s)...\n' "$workflow_count"
+    while IFS= read -r workflow; do
+      [[ -z "$workflow" ]] && continue
+      # Lint the staged version of the workflow file
+      if ! git show ":$workflow" | actionlint -stdin-filename "$workflow" -; then
+        failed=1
+        if ! actionlint "$workflow"; then
+          failed=1
+        fi
+      fi
+    done <<< "$changed_workflows"
+  fi
+fi
+
+if [[ -n "$changed_manifests" ]]; then
+  while IFS= read -r rel_path; do
+    [[ -z "$rel_path" ]] && continue
+    if ! git show ":$rel_path" >/dev/null 2>&1; then
+      # If there is no staged version fall back to working tree content. Temporarily disable
+      # pipefail so the upstream command closing early does not abort the hook.
+      target_file="$repo_root/$rel_path"
+      [[ -f "$target_file" ]] || continue
+      set +o pipefail
+      first_bytes=$(LC_ALL=C head -c 3 "$target_file" 2>/dev/null | hexdump -v -e '/1 "%02x"')
+      set -o pipefail
+    else
+      # Avoid pipefail + SIGPIPE when truncating large files with head
+      set +o pipefail
+      first_bytes=$( (git show ":$rel_path" | head -c 3 || true) | hexdump -v -e '/1 "%02x"')
+      set -o pipefail
+    fi
+
+    if [[ "$first_bytes" == "$bom_hex" ]]; then
+      printf 'Error: %s contains a UTF-8 BOM (\xef\xbb\xbf) and cannot be committed.%s' "$rel_path" "\n" >&2
+      printf 'Fix options:%s' "\n" >&2
+      printf '  - Strip the BOM: python -c "from pathlib import Path; p=Path(\"%s\"); p.write_bytes(p.read_bytes().lstrip(b"\\xef\\xbb\\xbf"))"%s' "$rel_path" "\n" >&2
+      printf '  - Or regenerate the lockfile without BOM (e.g., delete it and rerun npm install).%s' "\n" >&2
+      failed=1
+    fi
+
+  done <<< "$changed_manifests"
+fi
+
+if [[ $failed -ne 0 ]]; then
+  printf 'Commit aborted because pre-commit checks failed (see messages above).\n' >&2
+  exit 1
+fi
+
+exit 0
