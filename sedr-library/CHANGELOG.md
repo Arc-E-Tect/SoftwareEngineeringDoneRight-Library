@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.1...v0.2.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* Update README documentation and automate version updates ([#5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/5)) ([5393640](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/539364075ef9a2c71d3d474f3935398959fde4fb))
+
 ## [0.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.0...v0.2.1) (2026-04-14)
 
 
