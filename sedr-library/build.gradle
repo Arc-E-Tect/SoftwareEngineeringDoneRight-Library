@@ -68,7 +68,7 @@ publishing {
             pom {
                 name = 'SEDR Library'
                 description = 'Shared annotations and utilities for Software Engineering Done Right projects.'
-                url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code'
+                url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
                 inceptionYear = '2024'
                 licenses {
                     license {
@@ -85,9 +85,9 @@ publishing {
                     }
                 }
                 scm {
-                    connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code.git'
-                    developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code.git'
-                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code'
+                    connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
                 }
             }
         }
@@ -95,7 +95,7 @@ publishing {
     repositories {
         maven {
             name = 'GitHubPackages'
-            url = uri('https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code')
+            url = uri('https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library')
             credentials {
                 username = System.getenv('GITHUB_ACTOR') ?: project.findProperty('gpr.user')
                 password = System.getenv('GITHUB_TOKEN') ?: project.findProperty('gpr.key')
