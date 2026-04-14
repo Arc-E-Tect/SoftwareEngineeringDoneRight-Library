@@ -40,6 +40,11 @@ on:
         type: string
         required: false
         default: 'bdd-test/**'
+      reports_subpath:
+        description: 'Path below the project root to the build reports directory'
+        type: string
+        required: false
+        default: 'app/build/reports'
       DEBUG:
         description: 'Run the workflow in debug mode'
         type: boolean
@@ -69,7 +74,7 @@ jobs:
       PROJECT_NAME: ${{ inputs.project_name }}
       GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
       GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
-      REPORTS_DIR: ${{ inputs.project_name }}/app/build/reports
+      REPORTS_DIR: ${{ inputs.project_name }}/${{ inputs.reports_subpath }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TOKEN: ${{ github.token }}
 
@@ -139,7 +144,7 @@ jobs:
       PROJECT_NAME: ${{ inputs.project_name }}
       GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
       GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
-      REPORTS_DIR: ${{ inputs.project_name }}/app/build/reports
+      REPORTS_DIR: ${{ inputs.project_name }}/${{ inputs.reports_subpath }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TOKEN: ${{ github.token }}
 

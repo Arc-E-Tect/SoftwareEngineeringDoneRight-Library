@@ -8,6 +8,7 @@ on:
       - '.github/workflows/sedr-library-release.yml'
       - '.github/workflows/semantic-version-calculate.yml'
       - '.github/workflows/semantic-version-apply.yml'
+      - '.github/workflows/security-scan.yml'
 
 jobs:
   Calculate-Version:
@@ -19,12 +20,12 @@ jobs:
     secrets:
       sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
-  Build-and-Publish:
-    name: Build and Publish SEDR Library
+  Build:
+    name: Build SEDR Library
     needs: Calculate-Version
     permissions:
       contents: read
-      packages: write
+      packages: read
 
     runs-on: ubuntu-latest
 
@@ -67,6 +68,76 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
 
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: sedr-library-build-reports
+          path: sedr-library/build/reports/**
+
+  Security-Scan:
+    needs: [Calculate-Version]
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      semantic_version: ${{ needs.Calculate-Version.outputs.next_version }}
+      project_name: sedr-library
+      reports_subpath: build/reports
+      vulnerability_scan: true
+      secure_behavior: false
+      fail_on_fatal: true
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+  Release-sedr-library:
+    name: Release SEDR Library
+    needs: [Calculate-Version, Build, Security-Scan]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    uses: ./.github/workflows/semantic-version-apply.yml
+    with:
+      project_dir: sedr-library
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Publish:
+    name: Publish SEDR Library
+    needs: [Calculate-Version, Release-sedr-library]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./sedr-library/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Update version in Gradle property file
+        run: |
+          echo "VERSION=${{ env.VERSION }}"
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
       - name: Publish SEDR Library
         run: |
           cd sedr-library
@@ -88,30 +159,13 @@ jobs:
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.SIGNING_PASSWORD }}
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
 
-      - name: Upload build reports
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: sedr-library-build-reports
-          path: sedr-library/build/reports/**
-
-  Release-sedr-library:
-    name: Release SEDR Library
-    needs: [Calculate-Version, Build-and-Publish]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
-    uses: ./.github/workflows/semantic-version-apply.yml
-    with:
-      project_dir: sedr-library
-    secrets:
-      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
-
   Determine-Release-Type:
     needs: [Calculate-Version]
     uses: ./.github/workflows/determine-release-type.yml
 
   Workflow-Summary:
     name: Workflow Summary
-    needs: [Build-and-Publish, Release-sedr-library, Determine-Release-Type]
+    needs: [Build, Security-Scan, Publish, Release-sedr-library, Determine-Release-Type]
     if: always()
     runs-on: ubuntu-latest
     steps:
