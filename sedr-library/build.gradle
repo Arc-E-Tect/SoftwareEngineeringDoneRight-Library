@@ -8,6 +8,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     alias(libs.plugins.jreleaser)
+    alias(libs.plugins.owaspDependencycheck)
 }
 import groovy.json.JsonSlurper
 
@@ -105,6 +106,14 @@ publishing {
             url = layout.buildDirectory.dir('staging-deploy')
         }
     }
+}
+
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = 9
+    format = 'HTML'
 }
 
 jreleaser {

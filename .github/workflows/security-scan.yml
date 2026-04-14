@@ -20,26 +20,11 @@ on:
         type: boolean
         required: false
         default: false
-      vulnerability_scan:
-        description: 'Perform the OWASP vulnerability scan'
-        type: boolean
-        required: false
-        default: true
-      secure_behavior:
-        description: 'Perform the BDD tests for secure behavior'
-        type: boolean
-        required: false
-        default: true
-      secure_behavior_task:
-        description: 'The Gradle task to run for secure behavior testing'
+      reports_subpath:
+        description: 'Path below the project root to the build reports directory'
         type: string
         required: false
-        default: 'bddTest'
-      secure_behavior_reports_path:
-        description: 'The path pattern for secure behavior test reports relative to app/build/reports'
-        type: string
-        required: false
-        default: 'bdd-test/**'
+        default: 'app/build/reports'
       DEBUG:
         description: 'Run the workflow in debug mode'
         type: boolean
@@ -48,15 +33,10 @@ on:
     secrets:
         NVD_APIKEY_SEDR:
             required: true
-        POSTGRES_PASSWORD:
-            required: false
-        SSL_KEYSTORE_PASSWORD:
-            required: false
 
 jobs:
 
   vulnerability-scan:
-    if: ${{ inputs.vulnerability_scan == true }}
     name: Vulnerability Scan
     permissions:
       contents: read
@@ -69,7 +49,7 @@ jobs:
       PROJECT_NAME: ${{ inputs.project_name }}
       GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
       GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
-      REPORTS_DIR: ${{ inputs.project_name }}/app/build/reports
+      REPORTS_DIR: ${{ inputs.project_name }}/${{ inputs.reports_subpath }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TOKEN: ${{ github.token }}
 
@@ -122,70 +102,5 @@ jobs:
       - name: Upload Vulnerability Test Report
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.PROJECT_NAME}}-reports-vulnerability
+          name: ${{ env.PROJECT_NAME }}-reports-vulnerability
           path: ${{ env.REPORTS_DIR }}/dependency-check-report.html
-
-  secure-behavior-scan:
-    if: ${{ inputs.secure_behavior == true }}
-    name: Secure Behavior Scan
-    permissions:
-      contents: read
-      packages: read
-
-    runs-on: ubuntu-latest
-
-    env:
-      VERSION: ${{ inputs.semantic_version }}
-      PROJECT_NAME: ${{ inputs.project_name }}
-      GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
-      GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
-      REPORTS_DIR: ${{ inputs.project_name }}/app/build/reports
-      GITHUB_ACTOR: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ github.token }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: 21
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: Generate system-test keystore
-        uses: ./.github/actions/generate-keystore
-        with:
-          keystore_path: ${{ env.PROJECT_NAME }}/app/src/testSystem/resources/ssl/keystore.p12
-          ssl_keystore_password: ${{ secrets.SSL_KEYSTORE_PASSWORD }}
-
-      - name: Test for secure behavior
-        run: |
-          cd ${{ env.PROJECT_NAME }}
-          ./gradlew ${{ inputs.secure_behavior_task }} -Dcucumber_filter_tags="@StormyFlow"  
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          SSL_KEYSTORE_PASSWORD: ${{ secrets.SSL_KEYSTORE_PASSWORD }}
-
-      - name: Upload Security Test Report
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ env.PROJECT_NAME }}-reports-security-test
-          path: ${{ env.REPORTS_DIR }}/${{ inputs.secure_behavior_reports_path }}
-
-  skip-security-scan:
-    if: ${{ inputs.vulnerability_scan == false && inputs.secure_behavior == false }}
-    name: Skip Security Scan
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Raise a warning
-        run: |
-          echo "WARNING: Skipping security scan"

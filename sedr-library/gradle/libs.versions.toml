@@ -2,8 +2,10 @@
 
 [versions]
 jreleaser = "1.23.0"
+owaspDependencycheck = "12.2.1"
 
 [libraries]
 
 [plugins]
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
+owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspDependencycheck" }
