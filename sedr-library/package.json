@@ -1,0 +1,18 @@
+{
+  "name": "sedr-library",
+  "private": true,
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "semantic-release": "^25.0.3"
+  },
+  "engines": {
+    "node": "^22.14.0 || ^24.10.0"
+  },
+  "version": "0.0.1"
+}

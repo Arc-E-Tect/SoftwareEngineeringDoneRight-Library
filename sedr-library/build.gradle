@@ -1,0 +1,127 @@
+/*
+ * Build file for sedr-library - shared utilities for IFF microservices.
+ * Version: SEDR_LIBRARY_VERSION env var (CI), latest sedr-library-v* GitHub tag
+ *          (local dev, requires gh CLI), or 1.0.0-PRERELEASE (fallback).
+ * Publish: ./gradlew publishToMavenLocal
+ */
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    alias(libs.plugins.jreleaser)
+}
+import groovy.json.JsonSlurper
+
+def resolveVersion = {
+    def propsVersion = project.version as String
+    if (propsVersion != '1.0.0-PRERELEASE') {
+        logger.lifecycle('[sedr-library] version from gradle.properties: ' + propsVersion)
+        return propsVersion
+    }
+    def envVersion = System.getenv('SEDR_LIBRARY_VERSION')
+    if (envVersion) {
+        logger.lifecycle('[sedr-library] version from SEDR_LIBRARY_VERSION: ' + envVersion)
+        return envVersion
+    }
+    try {
+        def cmd = ['gh', 'release', 'list',
+                   '--repo', 'Arc-E-Tect/SoftwareEngineeringDoneRight-Code',
+                   '--limit', '50',
+                   '--json', 'tagName']
+        def proc = cmd.execute()
+        proc.waitForOrKill(10_000)
+        def releases = new JsonSlurper().parseText(proc.text)
+        def tag = releases.findAll { it.tagName.startsWith('sedr-library-v') }
+                          .collect { it.tagName }
+                          .sort()
+                          .last()
+        if (tag) {
+            def v = tag.replaceFirst(/^sedr-library-v/, '')
+            logger.lifecycle('[sedr-library] version from GitHub release: ' + v)
+            return v
+        }
+    } catch (Exception ignored) {
+        logger.lifecycle('[sedr-library] GitHub CLI query failed, using 1.0.0-PRERELEASE')
+    }
+    logger.lifecycle('[sedr-library] No release found, using 1.0.0-PRERELEASE')
+    return '1.0.0-PRERELEASE'
+}
+
+version = resolveVersion()
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = 'SEDR Library'
+                description = 'Shared annotations and utilities for Software Engineering Done Right projects.'
+                url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code'
+                inceptionYear = '2024'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'ieising'
+                        name = 'Iwan Eising'
+                        email = 'iwan@arc-e-tect.com'
+                        organizationUrl = 'https://github.com/Arc-E-Tect'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code.git'
+                    developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code.git'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Code')
+            credentials {
+                username = System.getenv('GITHUB_ACTOR') ?: project.findProperty('gpr.user')
+                password = System.getenv('GITHUB_TOKEN') ?: project.findProperty('gpr.key')
+            }
+        }
+        maven {
+            name = 'StagingDeploy'
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
+}
+
+jreleaser {
+    gitRootSearch = true
+    signing {
+        active = 'ALWAYS'
+        armored = true
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'RELEASE'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepositories = ['build/staging-deploy']
+                }
+            }
+        }
+    }
+}
