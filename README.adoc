@@ -107,7 +107,7 @@ For Maven, add your credentials to `~/.m2/settings.xml`:
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.2.1")
+    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.2.2")
 }
 ----
 
@@ -115,7 +115,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.2.1'
+    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.2.2'
 }
 ----
 
@@ -125,7 +125,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect.sedr.utils</groupId>
     <artifactId>sedr-library</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ----
 
