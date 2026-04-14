@@ -1,0 +1,143 @@
+= SoftwareEngineeringDoneRight-Library
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+Repository with useful and usable software components used in the _Software Engineering Done Right_ book.
+
+== sedr-library
+
+Shared Java annotations and utilities for _Software Engineering Done Right_ projects.
+
+[cols="1,1"]
+|===
+|Latest version |`0.2.1`
+|Group ID       |`com.arc-e-tect.sedr.utils`
+|Artifact ID    |`sedr-library`
+|===
+
+=== What's included
+
+[cols="1,2,3"]
+|===
+|Class |Package |Description
+
+|`ExcludeFromJacocoGeneratedCodeCoverage`
+|`com.arc_e_tect.sedr.utils.jacoco.marker`
+|Marker annotation to exclude constructors, methods, or types from JaCoCo code-coverage measurement.
+|===
+
+=== Adding the dependency
+
+The library is published to https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/packages/2968105[GitHub Packages].
+Unlike Maven Central, GitHub Packages requires authentication even for public packages.
+You need a https://github.com/settings/tokens[GitHub Personal Access Token (PAT)] with the `read:packages` scope.
+
+==== 1. Store your credentials locally
+
+Add the following to `~/.gradle/gradle.properties` (create the file if it does not exist).
+Never commit this file — it lives outside your project.
+
+[source,properties]
+----
+gpr.user=<your-github-username>
+gpr.key=<your-github-pat>
+----
+
+==== 2. Declare the repository
+
+.Gradle (Kotlin DSL — `build.gradle.kts`)
+[source,kotlin]
+----
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library")
+        credentials {
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+----
+
+.Gradle (Groovy DSL — `build.gradle`)
+[source,groovy]
+----
+repositories {
+    maven {
+        url = uri('https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library')
+        credentials {
+            username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+            password = project.findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+        }
+    }
+}
+----
+
+.Maven (`pom.xml`)
+[source,xml]
+----
+<repositories>
+    <repository>
+        <id>github-sedr-library</id>
+        <url>https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library</url>
+    </repository>
+</repositories>
+----
+
+For Maven, add your credentials to `~/.m2/settings.xml`:
+
+[source,xml]
+----
+<settings>
+    <servers>
+        <server>
+            <id>github-sedr-library</id>
+            <username>${env.GITHUB_ACTOR}</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+    </servers>
+</settings>
+----
+
+==== 3. Declare the dependency
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.2.1")
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.2.1'
+}
+----
+
+.Maven
+[source,xml]
+----
+<dependency>
+    <groupId>com.arc-e-tect.sedr.utils</groupId>
+    <artifactId>sedr-library</artifactId>
+    <version>0.2.1</version>
+</dependency>
+----
+
+==== Using in CI/CD
+
+In GitHub Actions, `GITHUB_ACTOR` and `GITHUB_TOKEN` are injected automatically — no extra secrets are needed when consuming the package from within a GitHub Actions workflow.
+
+[source,yaml]
+----
+- name: Build
+  run: ./gradlew build
+  env:
+    GITHUB_ACTOR: ${{ github.actor }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+----
