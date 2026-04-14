@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.0...v0.2.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* Update CI/CD workflows and fix publication configurations ([#4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/4)) ([1249bdb](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1249bdb1b7b968f5eac027cab25bfae98dc5872d))
+
 # [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.1.0...v0.2.0) (2026-04-14)
 
 
