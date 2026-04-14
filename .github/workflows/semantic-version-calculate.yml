@@ -1,0 +1,174 @@
+name: Semantic Version - Calculate
+on:
+  workflow_call:
+    secrets:
+      sem_rel_token_token:
+        required: true
+    inputs:
+      fail_on_empty_version:
+        description: 'Fail on empty version string'
+        type: boolean
+        required: true
+      fail_on_existing_tag:
+        description: 'Fail if a tag with the calculated version already exists'
+        type: boolean
+        required: false
+        default: true
+      project_dir:
+        description: 'Directory where the Semantic Release configuration is located'
+        type: string
+        required: false
+      DEBUG:
+        description: 'Run the workflow in debug mode'
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      next_version:
+        description: 'The next semantic version'
+        value: ${{ jobs.calculate_version.outputs.next_version }}
+
+jobs:
+  calculate_version:
+    name: Calculate Version
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      next_version: ${{ steps.calculate_semantic_version.outputs.next_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/*"
+
+      - name: Set PROJECT_DIR environment variable
+        if: ${{ inputs.project_dir != '' }}
+        run: echo "PROJECT_DIR=${{ inputs.project_dir }}" >> "$GITHUB_ENV"
+
+      - name: Install Semantic Release
+        run: |
+          cd ${{ env.PROJECT_DIR || '.' }}
+          npm ci
+
+      - name: Calculate semantic version
+        id: calculate_semantic_version
+        run: |
+          cd ${{ env.PROJECT_DIR || '.' }}
+          set -e
+          
+          # Run semantic-release in dry-run mode and capture all output
+          OUTPUT=$(npx semantic-release --dry-run 2>&1 || true)
+          EXIT_CODE=$?
+          
+          # Always show output in debug mode
+          if [ "${{ inputs.DEBUG }}" = "true" ]; then
+            echo "============================== SEMANTIC RELEASE OUTPUT START =============================="
+            echo "$OUTPUT"
+            echo "============================== SEMANTIC RELEASE OUTPUT END ==============================="
+            echo "Exit code: $EXIT_CODE"
+          fi
+          
+          # Check for fatal errors
+          if echo "$OUTPUT" | grep -qE "(An error occurred while running semantic-release|ENOGHTOKEN|EINVALIDNEXTVERSION)"; then
+            echo "Fatal error detected in semantic-release output"
+            if [ "${{ inputs.DEBUG }}" != "true" ]; then
+              echo "$OUTPUT"
+            fi
+            exit 1
+          fi
+          
+          # Extract version information using multiple patterns for compatibility
+          # Try modern format first (v23+): "Published release X.Y.Z" or "The next release version is X.Y.Z"
+          CURRENT_VERSION=$(echo "$OUTPUT" | grep -oP '(?:Found git tag|last release|Published release|Current release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
+          NEXT_VERSION=$(echo "$OUTPUT" | grep -oP '(?:The next release version is|would publish release|Publishing release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
+          
+          # Fallback: check git tags directly (more reliable than parsing output)
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "")
+          fi
+          
+          # If still empty, try extracting from any line containing version numbers (exclude semantic-release version itself)
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION=$(echo "$OUTPUT" | grep -v "Running semantic-release version" | grep -oP 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
+          fi
+          
+          # Final fallback
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION="0.0.0"
+          fi
+          
+          echo "current version: ${CURRENT_VERSION}"
+          echo "next version: ${NEXT_VERSION}"
+          
+          # Set outputs
+          if [ -z "$NEXT_VERSION" ]; then
+            echo "next_version_empty=true" >> "$GITHUB_OUTPUT"
+            echo "next_version=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "next_version: ${CURRENT_VERSION}"
+          else
+            echo "next_version_empty=false" >> "$GITHUB_OUTPUT"
+            echo "next_version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "next_version: ${NEXT_VERSION}"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.sem_rel_token_token }}
+
+      - name: Annotate calculated version
+        run: |
+          VERSION="${{ steps.calculate_semantic_version.outputs.next_version }}"
+          echo "::notice title=Calculated Semantic Version::${VERSION}"
+
+      - name: Check for existing tag
+        id: check_tag
+        run: |
+          VERSION="${{ steps.calculate_semantic_version.outputs.next_version }}"
+          
+          # Check if tag exists with or without 'v' prefix
+          TAG_EXISTS=false
+          if git rev-parse "refs/tags/${VERSION}" >/dev/null 2>&1; then
+            TAG_EXISTS=true
+            EXISTING_TAG="${VERSION}"
+          elif git rev-parse "refs/tags/v${VERSION}" >/dev/null 2>&1; then
+            TAG_EXISTS=true
+            EXISTING_TAG="v${VERSION}"
+          fi
+          
+          echo "tag_exists=${TAG_EXISTS}" >> "$GITHUB_OUTPUT"
+          
+          if [ "${TAG_EXISTS}" = "true" ]; then
+            echo "::warning title=Tag Already Exists::Tag '${EXISTING_TAG}' already exists for version ${VERSION}"
+            echo "existing_tag=${EXISTING_TAG}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Tag Status::No existing tag found for version ${VERSION}"
+          fi
+
+      - name: Fail on existing tag
+        if: ${{ inputs.fail_on_existing_tag && steps.check_tag.outputs.tag_exists == 'true' }}
+        run: |
+          VERSION="${{ steps.calculate_semantic_version.outputs.next_version }}"
+          EXISTING_TAG="${{ steps.check_tag.outputs.existing_tag }}"
+          echo "::error title=Tag Conflict::Cannot proceed - tag '${EXISTING_TAG}' already exists for version ${VERSION}"
+          echo "A future Semantic Release run will fail because it cannot create this tag."
+          echo "This workflow is configured to fail early (fail_on_existing_tag=true)."
+          exit 1
+
+      - name: Fail on empty version string
+        if: ${{ inputs.fail_on_empty_version }}
+        run: |
+          if [ "${{ steps.calculate_semantic_version.outputs.next_version_empty }}" = "true" ]; then
+            echo "::error title=No Version Calculated::No new version could be calculated"
+            echo "No new version could be calculated for the main branch."
+            echo "This is likely due to the absence of a new commit since the last release that triggers a change of the Semantic Version."
+            echo
+            echo "The workflow will fail"
+            exit 1
+          fi
+          echo "next_version=${{ steps.calculate_semantic_version.outputs.next_version }}"

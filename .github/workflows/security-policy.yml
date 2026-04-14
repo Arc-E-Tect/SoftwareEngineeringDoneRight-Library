@@ -1,0 +1,151 @@
+name: Security Policy - HTTPS Only
+
+on:
+  workflow_call:
+    inputs:
+      project_dir:
+        description: "Project directory containing the Gradle build"
+        required: false
+        type: string
+        default: family-ties
+      app_dir:
+        description: "Application module directory"
+        required: false
+        type: string
+        default: app
+      https_url:
+        description: "HTTPS URL to probe for success"
+        required: false
+        type: string
+        default: https://localhost:8443/actuator/health
+      http_url:
+        description: "HTTP URL to probe for expected failure"
+        required: false
+        type: string
+        default: http://localhost:8443/actuator/health
+    secrets:
+      ssl_keystore_password:
+        description: "Password for the generated test keystore"
+        required: true
+      POSTGRES_PASSWORD:
+        description: "Password for the Family Ties PostgreSQL database"
+        required: true
+      H2_PASSWORD:
+        description: "Password for the Family Ties H2 database"
+        required: true
+
+jobs:
+  security-policy:
+    name: Enforce HTTPS-only policy
+    runs-on: ubuntu-latest
+
+    env:
+      SSL_KEYSTORE_PASSWORD: ${{ secrets.ssl_keystore_password }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      H2_PASSWORD: ${{ secrets.H2_PASSWORD }}
+      POSTGRES_DB: familyties
+      POSTGRES_USER: familyties
+      SERVER_PORT: 8443
+      PROJECT_DIR: ${{ inputs.project_dir }}
+      APP_DIR: ${{ inputs.app_dir }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Fail when SSL keystore password is missing
+        run: |
+          if [ -z "$SSL_KEYSTORE_PASSWORD" ]; then
+            echo "SSL_KEYSTORE_PASSWORD is not set; define the secret in the repository settings" >&2
+            exit 1
+          fi
+
+      - name: Generate self-signed TLS keystore
+        uses: ./.github/actions/generate-keystore
+        with:
+          keystore_path: ${{ env.PROJECT_DIR }}/${{ env.APP_DIR }}/src/testSystem/resources/ssl/keystore.p12
+          alias: familyties
+          dname: "CN=localhost, OU=Family Ties, O=Arc-E-Tect, L=Amsterdam, S=NH, C=NL"
+          ssl_keystore_password: ${{ secrets.ssl_keystore_password }}
+
+      - name: Build boot jar (skip tests)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: ./gradlew :app:bootJar -x test
+
+      - name: Start application (TLS-only)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          JAR_PATH=$(find ${{ env.APP_DIR }}/build/libs -maxdepth 1 -name 'familyTies-*.jar' | head -n1)
+          java -jar "$JAR_PATH" \
+            --server.port=8443 \
+            --server.ssl.enabled=true \
+            --server.ssl.key-store=file:${{ env.APP_DIR }}/src/testSystem/resources/ssl/keystore.p12 \
+            --server.ssl.key-store-password="$SSL_KEYSTORE_PASSWORD" \
+            --server.ssl.key-store-type=PKCS12 \
+            --server.ssl.key-alias=familyties \
+            --management.endpoints.web.exposure.include=health,info \
+            > ../app.log 2>&1 &
+          echo $! > ../app.pid
+
+      - name: Wait for HTTPS health
+        run: |
+          for _i in {1..30}; do
+            if curl -k --fail --silent "${{ inputs.https_url }}" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Application did not become healthy on HTTPS" >&2
+          cat app.log
+          exit 1
+
+      - name: Verify HTTPS succeeds
+        run: |
+          curl -k --fail --silent --show-error "${{ inputs.https_url }}" >/dev/null
+
+      - name: Verify HTTP is rejected
+        run: |
+          http_status=$(curl --silent --show-error --max-time 5 \
+            --write-out "%{http_code}" \
+            --output /tmp/http.out \
+            "${{ inputs.http_url }}")
+
+          # Treat anything outside 2xx/3xx as rejection (expected)
+          if [[ "$http_status" =~ ^[23] ]]; then
+            echo "HTTP unexpectedly succeeded (status $http_status)"
+            cat /tmp/http.out
+            exit 1
+          fi
+
+          echo "HTTP rejected as expected (status $http_status)"
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f app.pid ]; then
+            kill "$(cat app.pid)" || true
+            sleep 2
+          fi
+          if [ -f app.log ]; then
+            echo "--- app.log (tail) ---"
+            tail -n 200 app.log || true
+          fi
+
+      - name: Run security system tests (@security)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          ./gradlew :app:testSystem \
+            -Dcucumber.filter.tags="@security" \
+            -Dcucumber_filter_tags="@security" \
+            --info
