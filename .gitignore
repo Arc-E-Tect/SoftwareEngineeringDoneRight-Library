@@ -50,3 +50,7 @@ out/
 
 # VS Code
 /worktrees/
+
+# Local docs and publishing helper files
+gradle-plugin-publishing.md
+
