@@ -1,3 +1,12 @@
+## [0.2.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.2...v0.2.3) (2026-04-15)
+
+
+### Bug Fixes
+
+* add jsLibraryMappings.xml to exclude worktree node_modules ([6c6d30d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/6c6d30ddbc0917b9d96332725e5269c9383137cd))
+* add jsLibraryMappings.xml to exclude worktree node_modules ([fac12bf](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/fac12bfc11385cc1c19d8529eeba88db886953d0))
+* Update .gitignore and exclude worktree node_modules ([#6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/6)) ([206216f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/206216fdb19f460c39d047d5a164f3beba3ce564))
+
 ## [0.2.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.1...v0.2.2) (2026-04-14)
 
 
