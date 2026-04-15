@@ -67,7 +67,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Update version in Gradle property file
         run: |
@@ -100,7 +100,7 @@ jobs:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
 
       - name: Upload Vulnerability Test Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.PROJECT_NAME }}-reports-vulnerability
           path: ${{ env.REPORTS_DIR }}/dependency-check-report.html
