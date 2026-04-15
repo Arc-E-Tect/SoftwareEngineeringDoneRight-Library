@@ -49,3 +49,4 @@ build/
 out/
 
 # VS Code
+/worktrees/
