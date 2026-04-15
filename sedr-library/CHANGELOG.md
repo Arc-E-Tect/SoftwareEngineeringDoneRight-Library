@@ -1,3 +1,10 @@
+## [0.2.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.3...v0.2.4) (2026-04-15)
+
+
+### Bug Fixes
+
+* **publish:** set jReleaser GPG signing mode to MEMORY for env var keys ([#7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/7)) ([8e5af82](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/8e5af8203316254d9f3a58a65e9070204fba97f9))
+
 ## [0.2.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.2...v0.2.3) (2026-04-15)
 
 
