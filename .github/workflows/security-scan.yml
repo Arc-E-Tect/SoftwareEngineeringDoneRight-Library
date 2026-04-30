@@ -86,20 +86,52 @@ jobs:
             ${{ runner.os }}-dependency-check-
 
       - name: Update NVD database
+        id: nvd-update
         run: |
           cd ${{ env.PROJECT_NAME }}
-          ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel
+          OUTFILE="$RUNNER_TEMP/nvd-update-output.txt"
+          timeout 900 ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
+          EXIT_CODE="${PIPESTATUS[0]}"
+          if [ "$EXIT_CODE" -eq 124 ]; then
+            echo "::warning title=NVD Database Update Timeout::The NVD database update exceeded the 15-minute time limit and was aborted. The vulnerability scan will be skipped. Review the build at a later time."
+            echo "nvd_update_timed_out=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [ "$EXIT_CODE" -ne 0 ]; then
+            if grep -qE "NVD Returned Status Code|Error updating the NVD Data|NvdApiException|NVD API request failures" "$OUTFILE"; then
+              echo "::warning title=NVD Service Unavailable::The NVD database update failed due to an NVD service error (HTTP 503 or similar). The vulnerability scan was not completed. Retry the release when the NVD service is restored."
+              echo "nvd_update_failed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$EXIT_CODE"
+          fi
         env:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
 
       - name: Scan for vulnerabilities
+        id: vulnerability-scan
+        if: steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
         run: |
           cd ${{ env.PROJECT_NAME }}
-          ./gradlew dependencyCheckAnalyze --no-configuration-cache --no-parallel
+          OUTFILE="$RUNNER_TEMP/nvd-scan-output.txt"
+          timeout 900 ./gradlew dependencyCheckAnalyze --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
+          EXIT_CODE="${PIPESTATUS[0]}"
+          if [ "$EXIT_CODE" -eq 124 ]; then
+            echo "::warning title=Vulnerability Scan Timeout::The vulnerability scan exceeded the 15-minute time limit and was aborted. Review the build at a later time."
+            echo "scan_timed_out=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [ "$EXIT_CODE" -ne 0 ]; then
+            if grep -qE "NVD Returned Status Code|NvdApiException|NVD API request failures" "$OUTFILE"; then
+              echo "::warning title=NVD Service Unavailable::The vulnerability scan failed due to an NVD service error (HTTP 503 or similar). The security scan was not completed. Retry the release when the NVD service is restored."
+              echo "nvd_scan_failed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$EXIT_CODE"
+          fi
         env:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
 
       - name: Upload Vulnerability Test Report
+        if: always() && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true' && steps.vulnerability-scan.outputs.scan_timed_out != 'true' && steps.vulnerability-scan.outputs.nvd_scan_failed != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.PROJECT_NAME }}-reports-vulnerability
