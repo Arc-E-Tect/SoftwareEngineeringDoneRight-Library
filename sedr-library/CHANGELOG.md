@@ -1,3 +1,25 @@
+## [0.2.5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.4...v0.2.5) (2026-04-30)
+
+
+### 🐛 Bug Fixes
+
+* **security-scan:** enhance NVD database update and vulnerability scan with timeout handling and error reporting ([#11](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/11)) ([155167a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/155167af8600dbdedc2d440a9db25b5a3b8eb162)), closes [#11](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/11)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.2.4 [skip ci] ([d8a95a2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d8a95a24dcfee6cf4a5d7f7d9a9fc551d057cbe7))
+
+
+### 🔧 Misc
+
+* **Sedr Library:** update java dependency versions ([#9](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/9)) ([91b0ab2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/91b0ab229b5d867e2e34e488c1d617b09544a6d4)), closes [#9](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/9)
+
+
+### security
+
+* harden repository supply chain and access controls ([#8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/8)) ([e36bd0a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/e36bd0aae70cbf416c8c72ebca453cd301e6915a)), closes [#8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/8)
+
 ## [0.2.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.3...v0.2.4) (2026-04-15)
 
 
