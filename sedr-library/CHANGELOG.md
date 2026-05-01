@@ -1,3 +1,15 @@
+## [0.2.6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.5...v0.2.6) (2026-05-01)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.2.5 [skip ci] ([d99dc87](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d99dc87b379ff08d14dbfc0b7fd1f1d8a80db097))
+
+
+### 🔧 Misc
+
+* dependency updates for sedr-library ([#12](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/12)) ([71cc489](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/71cc4898a450403973090fb3f75b8d078d118423)), closes [#12](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/12)
+
 ## [0.2.5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.4...v0.2.5) (2026-04-30)
 
 
