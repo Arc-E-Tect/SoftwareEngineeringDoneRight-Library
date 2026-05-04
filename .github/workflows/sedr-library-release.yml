@@ -10,6 +10,32 @@ on:
       - '.github/workflows/semantic-version-apply.yml'
       - '.github/workflows/security-scan.yml'
 
+# ---------------------------------------------------------------------------
+# Concurrency control — prevents incorrect semantic version calculation when
+# multiple branches are merged to `main` in quick succession.
+#
+# How it works:
+#   GitHub Actions assigns every workflow run to the named `group`. If a run
+#   is already active for that group when a new run is triggered, the new run
+#   is *queued* (held in a pending state) until the active run finishes.
+#
+# Why `cancel-in-progress: false`:
+#   Setting this to `true` would cancel the running workflow and start the
+#   new one immediately — but that would skip the release entirely for the
+#   first commit. With `false`, every merged commit is processed in order:
+#     merge A  →  run A starts  (calculates v1.0.1, tags, publishes)
+#     merge B  →  run B queued
+#     run A finishes  →  run B starts (now calculates v1.0.2 correctly)
+#
+# Why a fixed group name instead of `github.ref`:
+#   Using `github.ref` would create a separate queue per branch. Since all
+#   releases always come from `main`, a fixed name is equivalent — and makes
+#   the intention explicit.
+# ---------------------------------------------------------------------------
+concurrency:
+  group: sedr-library-release
+  cancel-in-progress: false
+
 jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
