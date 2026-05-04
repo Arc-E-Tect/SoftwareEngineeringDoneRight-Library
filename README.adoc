@@ -12,7 +12,7 @@ Shared Java annotations and utilities for _Software Engineering Done Right_ proj
 
 [cols="1,1"]
 |===
-|Latest version |`0.2.1`
+|Latest version |`0.2.6`
 |Group ID       |`com.arc-e-tect.sedr.utils`
 |Artifact ID    |`sedr-library`
 |===
@@ -141,3 +141,118 @@ In GitHub Actions, `GITHUB_ACTOR` and `GITHUB_TOKEN` are injected automatically 
     GITHUB_ACTOR: ${{ github.actor }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ----
+
+=== Enforcing the justification convention with ArchUnit
+
+The library ships a `test-fixtures` artifact that contains the reusable ArchUnit rule `AbstractCoverageExclusionConventionsTest`.
+It verifies that every use of `@ExcludeFromJacocoGeneratedCodeCoverage` in your production code carries a non-blank `justification`.
+
+==== Add the test-fixtures dependency
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.2.6"))
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.2.6')
+}
+----
+
+The test-fixtures artifact brings `archunit-junit5` and `junit-jupiter-api` in as transitive dependencies, so no extra entries are needed for those.
+You do need to add the JUnit Jupiter engine for test execution:
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.14.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.14.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+----
+
+==== Write the convention test
+
+Extend `AbstractCoverageExclusionConventionsTest` and override `getBasePackage()` to scope the rule to your project's root package.
+
+[source,java]
+----
+class CoverageExclusionConventionsTest extends AbstractCoverageExclusionConventionsTest {
+
+    @Override
+    protected String getBasePackage() {
+        return "com.example.myapp";
+    }
+}
+----
+
+The inherited test `coverageExclusionAnnotationsMustHaveJustification()` runs automatically and fails if any class, constructor, or method in the scanned packages carries `@ExcludeFromJacocoGeneratedCodeCoverage` without a non-blank `justification`.
+
+==== Using the annotation correctly
+
+.Compliant — justification provided
+[source,java]
+----
+@ExcludeFromJacocoGeneratedCodeCoverage(
+        justification = "Spring Boot entry point – not unit-testable")
+public static void main(String[] args) {
+    SpringApplication.run(MyApp.class, args);
+}
+----
+
+.Non-compliant — ArchUnit rule will fail
+[source,java]
+----
+@ExcludeFromJacocoGeneratedCodeCoverage   // missing justification
+public static void main(String[] args) {
+    SpringApplication.run(MyApp.class, args);
+}
+----
+
+=== Example project
+
+A self-contained example demonstrating both compliant and non-compliant usage is located at link:examples/sedr-library/jacoco-marker/[`examples/sedr-library/jacoco-marker/`].
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../CompliantService.java`
+|Uses `@ExcludeFromJacocoGeneratedCodeCoverage` with a justification — passes the rule.
+
+|`src/main/java/.../NonCompliantService.java`
+|Uses `@ExcludeFromJacocoGeneratedCodeCoverage` without a justification — the ArchUnit test reports a violation for this class.
+
+|`src/test/java/.../CoverageExclusionConventionsTest.java`
+|Extends `AbstractCoverageExclusionConventionsTest` targeting the example package.
+|===
+
+To run the example (requires the library to be published to your local Maven repository first):
+
+[source,bash]
+----
+# 1. Publish the library locally
+cd sedr-library && ./gradlew clean build publishToMavenLocal
+
+# 2. Run the example — expected to FAIL with one ArchUnit violation
+cd ../examples/sedr-library/jacoco-marker && ./gradlew test
+----
+
+The test run reports exactly one violation:
+`Method NonCompliantService.stop() uses @ExcludeFromJacocoGeneratedCodeCoverage without a justification`.
+`CompliantService` is not mentioned.
