@@ -19,7 +19,7 @@ import static java.lang.annotation.ElementType.TYPE;
  *
  * <p>Example usage:
  * <pre>
- *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage("Spring Boot entry point")
+ *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage(justification = "Spring Boot entry point – not unit-testable")
  *   public static void main(String[] args) { ... }
  *
  *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage(justification = "Lombok-generated boilerplate")
@@ -35,7 +35,7 @@ public @interface ExcludeFromJacocoGeneratedCodeCoverage {
      *
      * <p>Examples:
      * <pre>
-     *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage("Spring Boot entry point – not unit-testable")
+     *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage(justification = "Spring Boot entry point – not unit-testable")
      *   {@literal @}ExcludeFromJacocoGeneratedCodeCoverage(justification = "Lombok-generated boilerplate")
      * </pre>
      *
