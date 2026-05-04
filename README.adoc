@@ -107,7 +107,7 @@ For Maven, add your credentials to `~/.m2/settings.xml`:
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.3.1")
+    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.3.2")
 }
 ----
 
@@ -115,7 +115,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.3.1'
+    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.3.2'
 }
 ----
 
@@ -125,7 +125,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect.sedr.utils</groupId>
     <artifactId>sedr-library</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
 </dependency>
 ----
 
@@ -153,7 +153,7 @@ It verifies that every use of `@ExcludeFromJacocoGeneratedCodeCoverage` in your 
 [source,kotlin]
 ----
 dependencies {
-    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.3.1"))
+    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.3.2"))
 }
 ----
 
@@ -161,7 +161,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.3.1')
+    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.3.2')
 }
 ----
 
