@@ -1,3 +1,15 @@
+## [0.3.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.1...v0.3.2) (2026-05-04)
+
+
+### 🐛 Bug Fixes
+
+* **workflow:** implement concurrency control for semantic version calculation ([#16](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/16)) ([dae8349](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/dae83497179ef908ed0dd6742e8a769aa94efc68)), closes [#16](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/16)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.3.1 [skip ci] ([c564217](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/c56421708f55fcfdf945ef059ab2702c0cc0a9a4))
+
 ## [0.3.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.0...v0.3.1) (2026-05-04)
 
 
