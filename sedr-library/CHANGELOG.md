@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.6...v0.3.0) (2026-05-04)
+
+
+### ✨ New and updated features
+
+* Add reusable ArchUnit rule and example project for coverage annotations ([#14](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/14)) ([f797cc8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f797cc8e0dadfab567b8da3e6708eadacb73a410)), closes [#14](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/14)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.2.6 [skip ci] ([0e6915f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0e6915f520e8553bb6150f89e699ce04f8598444))
+
 ## [0.2.6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.2.5...v0.2.6) (2026-05-01)
 
 
