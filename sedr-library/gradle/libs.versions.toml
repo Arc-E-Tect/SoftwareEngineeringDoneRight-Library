@@ -7,9 +7,35 @@ owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspD
 
 [versions]
 
+archunit = "1.4.2"
+##    ⬆ = "1.3.1"
+##    ⬆ = "1.3.2"
+##    ⬆ = "1.4.0"
+##    ⬆ = "1.4.1"
+##    ⬆ = "1.4.2"
+junit-jupiter = "5.14.4"
+##         ⬆ = "5.12.0"
+##         ⬆ = "5.12.1"
+##         ⬆ = "5.12.2"
+##         ⬆ = "5.13.0"
+##         ⬆ = "5.13.1"
+##         ⬆ = "5.13.2"
+##         ⬆ = "5.13.3"
+##         ⬆ = "5.13.4"
+##         ⬆ = "5.14.0"
+##         ⬆ = "5.14.1"
+##         ⬆ = "5.14.2"
+##         ⬆ = "5.14.3"
+##         ⬆ = "5.14.4"
+##         ⬆ = "6.0.0"
+##         ⬆ = "6.0.1"
+##         ⬆ = "6.0.2"
+##         ⬆ = "6.0.3"
 jreleaser = "1.24.0"
 owaspDependencycheck = "12.2.1"
+##                ⬆ = "12.2.2"
 
 [libraries]
 
-
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }

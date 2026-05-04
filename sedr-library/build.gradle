@@ -6,11 +6,11 @@
  */
 plugins {
     id 'java-library'
+    id 'java-test-fixtures'
     id 'maven-publish'
     alias(libs.plugins.jreleaser)
     alias(libs.plugins.owaspDependencycheck)
 }
-import groovy.json.JsonSlurper
 
 def resolveVersion = {
     def propsVersion = project.version as String
@@ -27,12 +27,11 @@ def resolveVersion = {
         def cmd = ['gh', 'release', 'list',
                    '--repo', 'Arc-E-Tect/SoftwareEngineeringDoneRight-Code',
                    '--limit', '50',
-                   '--json', 'tagName']
+                   '--json', 'tagName',
+                   '--jq', '.[] | select(.tagName | startswith("sedr-library-v")) | .tagName']
         def proc = cmd.execute()
         proc.waitForOrKill(10_000)
-        def releases = new JsonSlurper().parseText(proc.text)
-        def tag = releases.findAll { it.tagName.startsWith('sedr-library-v') }
-                          .collect { it.tagName }
+        def tag = proc.text.readLines().findAll { it.startsWith('sedr-library-v') }
                           .sort()
                           .last()
         if (tag) {
@@ -59,6 +58,11 @@ java {
 
 repositories {
     mavenCentral()
+}
+
+dependencies {
+    testFixturesApi(libs.archunit.junit5)
+    testFixturesApi(libs.junit.jupiter.api)
 }
 
 publishing {
