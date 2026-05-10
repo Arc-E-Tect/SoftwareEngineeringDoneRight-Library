@@ -4,11 +4,10 @@ on:
     branches:
       - main
     paths:
-      - 'sedr-library/**'
-      - '.github/workflows/sedr-library-release.yml'
-      - '.github/workflows/semantic-version-calculate.yml'
-      - '.github/workflows/semantic-version-apply.yml'
-      - '.github/workflows/security-scan.yml'
+      - 'sedr-library/*.gradle'
+      - 'sedr-library/gradle/**'
+      - 'sedr-library/src/main/**'
+      - 'sedr-library/src/testFixtures/**'
 
 # ---------------------------------------------------------------------------
 # Concurrency control — prevents incorrect semantic version calculation when
