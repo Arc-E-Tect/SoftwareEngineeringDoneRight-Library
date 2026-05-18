@@ -1,3 +1,17 @@
+## [0.3.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.2...v0.3.3) (2026-05-18)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.3.2 [skip ci] ([f40df48](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f40df48b8793a2bcf8b96b3922b4353e1ac0ca79))
+
+
+### 🔧 Misc
+
+* **Sedr Library:** update gradle wrapper to 9.5.1 ([#18](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/18)) ([cf4a5d0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/cf4a5d0b45403c083c81d6b45b3ed2a219384eb9)), closes [#18](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/18)
+* update npm packages ([#17](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/17)) ([9de53bb](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9de53bb0c39ac5826a101ac15658642b31b16cc0)), closes [#17](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/17)
+* **workflow:** update paths for sedr-library release workflow ([0d56ca3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0d56ca381b6fecfd17a3e31299f158b780acb9de))
+
 ## [0.3.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.1...v0.3.2) (2026-05-04)
 
 
