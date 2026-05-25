@@ -8,7 +8,7 @@ owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspD
 [versions]
 
 archunit = "1.4.2"
-junit-jupiter = "6.0.3"
+junit-jupiter = "6.1.0"
 jreleaser = "1.24.0"
 owaspDependencycheck = "12.2.2"
 
@@ -16,3 +16,4 @@ owaspDependencycheck = "12.2.2"
 
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+
