@@ -1,3 +1,15 @@
+## [0.3.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.3...v0.3.4) (2026-05-25)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.3.3 [skip ci] ([9a081ba](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9a081bac6b33468b670063ececd636874610071f))
+
+
+### 🔧 Misc
+
+* **Sedr Library:** update java dependency versions ([#19](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/19)) ([cc20654](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/cc20654095ee56d41cdfb70db4ff2243e8843d84)), closes [#19](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/19)
+
 ## [0.3.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.2...v0.3.3) (2026-05-18)
 
 
