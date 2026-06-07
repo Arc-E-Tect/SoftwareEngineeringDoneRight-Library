@@ -27,13 +27,11 @@ repositories {
     mavenCentral()
 }
 
-def sedrLibraryVersion = '0.2.6'
-
 dependencies {
-    implementation("com.arc-e-tect.sedr.utils:sedr-library:${sedrLibraryVersion}")
-    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:${sedrLibraryVersion}"))
-    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.14.4')
-    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+    implementation(libs.sedr.library)
+    testImplementation(testFixtures(libs.sedr.library))
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 test {
