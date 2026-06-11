@@ -1,0 +1,80 @@
+= Architecture Validator Spring Rules
+:toc: left
+:toc-title: Contents
+:toclevels: 2
+:icons: font
+:source-highlighter: rouge
+
+image:https://img.shields.io/badge/Java-21%2B-blue[Java 21+,link=https://adoptium.net]
+image:https://img.shields.io/badge/Gradle-9.x-02303A?logo=gradle[Gradle 9.x,link=https://gradle.org]
+
+The Spring Rules project publishes the `architecture-validator-hexagonal-spring-rules` rule pack.
+It is consumed by the Architecture Validator plugin as an external rule pack dependency.
+
+== Artifact Coordinates
+
+[source]
+----
+groupId:    com.arc-e-tect.architecture-validator
+artifactId: architecture-validator-hexagonal-spring-rules
+----
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|===
+
+== Build
+
+Run from this project directory.
+
+[source,bash]
+----
+./gradlew clean build
+----
+
+== Use in a Consumer Project
+
+Add the rule pack to `testArchitectureImplementation`.
+
+[source,groovy]
+----
+dependencies {
+    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:<version>'
+}
+----
+
+The plugin discovers these tests on the classpath and includes them in the generated external rule-pack suite.
+
+== What This Rule Pack Checks
+
+The default rules target Spring-specific architectural boundaries, including dependency direction and domain isolation.
+
+Source test classes include:
+
+* `SpringHexagonalArchitectureTest`
+* `DomainIsolationTest`
+* `DependencyDirectionTest`
+* `PortContractTest`
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/spring-rules-build.yml`
+* `.github/workflows/spring-rules-release.yml`
+* `.github/workflows/spring-rules-security-scan.yml`
+* `release.config.js`
+* `package.json`
+
+Build jobs use configuration cache where compatible.
+Publish jobs keep `--no-configuration-cache` for publishing tasks.
+
+== License
+
+This project is part of the _Software Engineering Done Right_ repository.
+See link:../LICENSE[LICENSE] for details.

@@ -1,0 +1,35 @@
+name: Architecture Validator Spring Rules - Security Scan
+on:
+  schedule:
+    - cron: '0 8 * * 5'  # Every Friday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  Read-Version:
+    name: Read Current Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Read version from gradle.properties
+        id: read-version
+        run: |
+          VERSION=$(grep -oP 'version\s*=\s*\K\S+' hexagonal-spring-rules/gradle.properties)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  Security-Scan:
+    needs: Read-Version
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      project_name: 'hexagonal-spring-rules'
+      semantic_version: ${{ needs.Read-Version.outputs.version }}
+      fail_on_fatal: true
+      reports_subpath: build/reports
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}

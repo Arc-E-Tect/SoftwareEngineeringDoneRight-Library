@@ -25,7 +25,7 @@ def resolveVersion = {
     }
     try {
         def cmd = ['gh', 'release', 'list',
-                   '--repo', 'Arc-E-Tect/SoftwareEngineeringDoneRight-Code',
+                   '--repo', 'Arc-E-Tect/SoftwareEngineeringDoneRight-Library',
                    '--limit', '50',
                    '--json', 'tagName',
                    '--jq', '.[] | select(.tagName | startswith("sedr-library-v")) | .tagName']
