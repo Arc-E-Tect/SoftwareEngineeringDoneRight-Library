@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'com.arc-e-tect.architecture-validator' version '0.4.1'
+    alias(libs.plugins.architecture.validator.iff)
 }
 
 group = 'com.example.spring'
@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     implementation libs.spring.context.iff
-    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:1.0.0'
+    testArchitectureImplementation libs.architecture.validator.hexagonal.spring.rules.iff
 }
 
 architectureValidator {
