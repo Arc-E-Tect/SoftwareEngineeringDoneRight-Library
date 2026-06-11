@@ -1,0 +1,165 @@
+name: Architecture Validator Spring Rules - Release
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hexagonal-spring-rules/*.gradle'
+      - 'hexagonal-spring-rules/package.json'
+      - 'hexagonal-spring-rules/package-lock.json'
+      - 'hexagonal-spring-rules/release.config.js'
+      - 'hexagonal-spring-rules/CHANGELOG.md'
+      - 'hexagonal-spring-rules/gradle/**'
+      - 'hexagonal-spring-rules/src/main/**'
+
+jobs:
+  Calculate-Version:
+    uses: ./.github/workflows/semantic-version-calculate.yml
+    with:
+      fail_on_empty_version: true
+      project_dir: hexagonal-spring-rules
+      DEBUG: true
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Security-Scan:
+    needs: Calculate-Version
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      fail_on_fatal: true
+      project_name: 'hexagonal-spring-rules'
+      semantic_version: ${{ needs.Calculate-Version.outputs.next_version }}
+      reports_subpath: build/reports
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+  Build:
+    name: Build Architecture Validator Spring Rules
+    needs: Calculate-Version
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./hexagonal-spring-rules/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+
+      - name: Update version in Gradle property file
+        run: |
+          echo "VERSION=${{ env.VERSION }}"
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Build and test Architecture Validator Spring Rules
+        run: |
+          cd hexagonal-spring-rules
+          chmod +x ./gradlew
+          ./gradlew build --configuration-cache
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
+
+  Release-Spring-Rules:
+    name: Release Architecture Validator Spring Rules
+    needs: [Calculate-Version, Build, Security-Scan]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    uses: ./.github/workflows/semantic-version-apply.yml
+    with:
+      project_dir: hexagonal-spring-rules
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Publish:
+    name: Publish Architecture Validator Spring Rules
+    needs: [Calculate-Version, Release-Spring-Rules]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./hexagonal-spring-rules/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+
+      - name: Update version in Gradle property file
+        run: |
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Publish to Maven Central or GitHub Packages
+        run: |
+          cd hexagonal-spring-rules
+          chmod +x ./gradlew
+          if echo "$MAVEN_OR_GITHUB" | grep -iq "^maven$"; then
+            echo "Publishing Spring Rules to Maven Central via jReleaser"
+            ./gradlew publishMavenJavaPublicationToStagingDeployRepository --no-daemon --no-configuration-cache
+            ./gradlew jreleaserDeploy --no-daemon --no-configuration-cache
+          else
+            echo "Publishing Spring Rules to GitHub Packages"
+            ./gradlew publishMavenJavaPublicationToGitHubPackagesRepository --no-daemon --no-configuration-cache
+          fi
+        env:
+          MAVEN_OR_GITHUB: ${{ vars.MAVEN_OR_GITHUB }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.SIGNING_KEY }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.SIGNING_PASSWORD }}
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+
+  Determine-Release-Type:
+    needs: [Calculate-Version]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    uses: ./.github/workflows/determine-release-type.yml
+
+  Workflow-Summary:
+    name: Workflow Summary
+    needs: [Build, Security-Scan, Publish, Release-Spring-Rules, Determine-Release-Type]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Output release completion
+        run: |
+          echo "Architecture Validator Spring Rules ${{ needs.Determine-Release-Type.outputs.release_type }} release workflow completed"
+          echo "::notice title=Release Complete::Architecture Validator Spring Rules ${{ needs.Determine-Release-Type.outputs.release_type }} release workflow completed"

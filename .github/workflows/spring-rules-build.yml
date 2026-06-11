@@ -1,0 +1,85 @@
+name: Architecture Validator Spring Rules - Build
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - 'hexagonal-spring-rules/**'
+      - 'examples/architecture-validator/single-module-spring/**'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+
+jobs:
+  Calculate-Version:
+    uses: ./.github/workflows/semantic-version-calculate.yml
+    with:
+      fail_on_empty_version: false
+      fail_on_existing_tag: false
+      project_dir: hexagonal-spring-rules
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Determine-Release-Type:
+    needs: Calculate-Version
+    uses: ./.github/workflows/determine-release-type.yml
+
+  Build-Spring-Rules:
+    name: Build Architecture Validator Spring Rules
+    needs: Calculate-Version
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./hexagonal-spring-rules/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+
+      - name: Update version in Gradle property file
+        if: ${{ env.VERSION != '' }}
+        run: |
+          echo "VERSION=${{ env.VERSION }}-PRERELEASE"
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}-PRERELEASE/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Build and test Architecture Validator Spring Rules
+        run: |
+          cd hexagonal-spring-rules
+          chmod +x ./gradlew
+          ./gradlew build --configuration-cache
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
+
+  Workflow-Summary:
+    name: Workflow Summary
+    needs: [Build-Spring-Rules, Determine-Release-Type]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Output build completion
+        run: |
+          echo "Architecture Validator Spring Rules ${{ needs.Determine-Release-Type.outputs.release_type }} build workflow completed"
+          echo "::notice title=Build Complete::Architecture Validator Spring Rules ${{ needs.Determine-Release-Type.outputs.release_type }} build workflow completed"

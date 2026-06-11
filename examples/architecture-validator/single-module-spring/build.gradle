@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'com.arc-e-tect.architecture-validator' version '0.4.1'
+}
+
+group = 'com.example.spring'
+version = '0.0.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation libs.spring.context.iff
+    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:1.0.0'
+}
+
+architectureValidator {
+    basePackage = 'com.example.spring'
+    ignoreFailures = true
+}

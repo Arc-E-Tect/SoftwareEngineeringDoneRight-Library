@@ -1,0 +1,28 @@
+= Single-Module Spring Example
+:toc: left
+
+This example enables the companion Spring rule pack.
+It demonstrates a direct dependency from a Spring service to a Spring repository in the adapter layer.
+
+== Run
+
+[source,bash]
+----
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+`OrderService` is a Spring `@Service` that depends directly on `OrderRepository`.
+That violates the Spring-flavoured Hexagonal rules because the service bypasses an outbound port and reaches into the adapter layer directly.
+
+== Reports
+
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
+
+== Fix
+
+Introduce an outbound port in `application.port.out`.
+Make the service depend on that port.
+Move the repository implementation behind an adapter that satisfies the port contract.
