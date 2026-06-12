@@ -1,8 +1,8 @@
-package com.example.spring.application.service;
+package com.arc_e_tect.example.spring.application.service;
 
-import com.example.spring.adapter.persistence.OrderRepository;
-import com.example.spring.application.domain.model.Order;
-import com.example.spring.application.port.in.OrderUseCase;
+import com.arc_e_tect.example.spring.adapter.persistence.OrderRepository;
+import com.arc_e_tect.example.spring.application.domain.model.Order;
+import com.arc_e_tect.example.spring.application.port.in.OrderUseCase;
 import org.springframework.stereotype.Service;
 
 @Service

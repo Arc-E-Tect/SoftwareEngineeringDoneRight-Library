@@ -1,6 +1,6 @@
-package com.example.spring.adapter.persistence;
+package com.arc_e_tect.example.spring.adapter.persistence;
 
-import com.example.spring.application.domain.model.Order;
+import com.arc_e_tect.example.spring.application.domain.model.Order;
 import org.springframework.stereotype.Repository;
 
 @Repository

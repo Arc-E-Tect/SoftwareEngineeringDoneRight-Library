@@ -1,4 +1,4 @@
-package com.example.spring.application.port.in;
+package com.arc_e_tect.example.spring.application.port.in;
 
 public interface OrderUseCase {
 
