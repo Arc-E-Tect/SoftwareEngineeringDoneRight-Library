@@ -1,3 +1,15 @@
+## [0.4.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.0...v0.4.1) (2026-06-12)
+
+
+### 🐛 Bug Fixes
+
+* example package names ([#24](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/24)) ([4adef98](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4adef9809a6278adeac29ca344a843f408a9c94a)), closes [#24](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/24)
+
+
+### 🔧 Misc
+
+* update architecture-validator-hexagonal-spring-rules-iff version to 0.4.0 ([#23](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/23)) ([119287c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/119287c7cb3a574616b58c4dfa912d7a2fbb0116)), closes [#23](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/23)
+
 # [0.4.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.4...v0.4.0) (2026-06-11)
 
 
