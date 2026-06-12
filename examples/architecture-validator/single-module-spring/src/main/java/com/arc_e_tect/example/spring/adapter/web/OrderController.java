@@ -1,6 +1,6 @@
-package com.example.spring.adapter.web;
+package com.arc_e_tect.example.spring.adapter.web;
 
-import com.example.spring.application.service.OrderService;
+import com.arc_e_tect.example.spring.application.service.OrderService;
 import org.springframework.stereotype.Controller;
 
 @Controller
