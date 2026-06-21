@@ -25,7 +25,7 @@ Shared Java annotations and utilities for _Software Engineering Done Right_ proj
 
 |`ExcludeFromJacocoGeneratedCodeCoverage`
 |`com.arc_e_tect.sedr.utils.jacoco.marker`
-|Marker annotation to exclude constructors, methods, or types from JaCoCo code-coverage measurement.
+|Marker annotation to document constructors, methods, or types that should be treated as excluded from JaCoCo code-coverage measurement, with an ArchUnit rule that enforces a justification.
 |===
 
 === Adding the dependency
@@ -146,6 +146,7 @@ In GitHub Actions, `GITHUB_ACTOR` and `GITHUB_TOKEN` are injected automatically 
 
 The library ships a `test-fixtures` artifact that contains the reusable ArchUnit rule `AbstractCoverageExclusionConventionsTest`.
 It verifies that every use of `@ExcludeFromJacocoGeneratedCodeCoverage` in your production code carries a non-blank `justification`.
+The Gradle builds in this repository use Gradle's native JaCoCo support, with the JaCoCo tool version managed through `refreshVersions` in each build.
 
 ==== Add the test-fixtures dependency
 

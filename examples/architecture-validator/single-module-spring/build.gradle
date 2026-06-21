@@ -1,4 +1,5 @@
 plugins {
+    id 'jacoco'
     id 'java'
     alias(libs.plugins.architecture.validator.iff)
 }
@@ -24,4 +25,11 @@ dependencies {
 architectureValidator {
     basePackage = 'com.arc_e_tect.example.spring'
     ignoreFailures = true
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
