@@ -5,6 +5,7 @@
  *          gh CLI), or 1.0.0-PRERELEASE as fallback.
  */
 plugins {
+    id 'jacoco'
     id 'java-library'
     id 'maven-publish'
     alias(libs.plugins.owasp.dependency.check.iff)
@@ -66,6 +67,9 @@ java {
     }
     withJavadocJar()
     withSourcesJar()
+}
+
+jacoco {
 }
 
 repositories {
@@ -179,4 +183,11 @@ tasks.withType(Javadoc).configureEach {
     options.links('https://docs.oracle.com/javase/21/docs/api/')
     options.docTitle = "Architecture Validator Spring Rules API"
     options.windowTitle = "Spring Hexagonal Architecture Rules (${project.version})"
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }

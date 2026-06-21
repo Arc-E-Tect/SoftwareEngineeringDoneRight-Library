@@ -9,6 +9,7 @@
  *   ./gradlew test
  */
 plugins {
+    id 'jacoco'
     id 'java'
 }
 
@@ -36,4 +37,11 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }

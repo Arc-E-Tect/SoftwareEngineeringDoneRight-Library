@@ -5,6 +5,7 @@
  * Publish: ./gradlew publishToMavenLocal
  */
 plugins {
+    id 'jacoco'
     id 'java-library'
     id 'java-test-fixtures'
     id 'maven-publish'
@@ -54,6 +55,9 @@ java {
     }
     withJavadocJar()
     withSourcesJar()
+}
+
+jacoco {
 }
 
 repositories {
@@ -137,5 +141,12 @@ jreleaser {
                 }
             }
         }
+    }
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
     }
 }
