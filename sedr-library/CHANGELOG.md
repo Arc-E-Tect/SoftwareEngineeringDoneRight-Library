@@ -1,3 +1,15 @@
+## [0.4.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.2...v0.4.3) (2026-06-21)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.4.2 [skip ci] ([18162dd](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/18162dde30e26651d58a072d627b41d070996559))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#27](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/27)) ([8e736e5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/8e736e51348b7a5b1175cd46f94a64a4b15f2bd4)), closes [#27](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/27)
+
 ## [0.4.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.1...v0.4.2) (2026-06-21)
 
 
