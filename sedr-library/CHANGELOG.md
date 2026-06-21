@@ -1,3 +1,11 @@
+## [0.4.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.1...v0.4.2) (2026-06-21)
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#25](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/25)) ([a32470f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a32470fa265f76519e5ad66cf4553dba10358203)), closes [#25](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/25)
+* enhance JaCoCo integration and documentation for exclusion annotation ([#26](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/26)) ([90ee826](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/90ee82696e1de3ce9b062296ce9b3e3002d3a033)), closes [#26](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/26)
+
 ## [0.3.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.3.3...v0.3.4) (2026-05-25)
 
 
