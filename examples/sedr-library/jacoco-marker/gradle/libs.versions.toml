@@ -6,7 +6,7 @@
 
 [versions]
 
-sedr-library = "0.3.4"
+sedr-library = "0.4.2"
 junit-jupiter = "6.1.0"
 
 [libraries]
@@ -14,3 +14,4 @@ junit-jupiter = "6.1.0"
 sedr-library = { module = "com.arc-e-tect.sedr.utils:sedr-library", version.ref = "sedr-library" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
