@@ -1,0 +1,86 @@
+name: NVD Cache Refresh
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh-nvd-cache:
+    name: Refresh Shared NVD Cache
+    permissions:
+      contents: read
+      packages: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Compute cache date key
+        id: cache-date
+        run: |
+          echo "date_key=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore NVD Database Cache
+        id: nvd-cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-shared-${{ steps.cache-date.outputs.date_key }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-shared-
+
+      - name: Update NVD database
+        id: nvd-update
+        run: |
+          cd sedr-library
+          OUTFILE="$RUNNER_TEMP/nvd-update-output.txt"
+          timeout 900 ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
+          EXIT_CODE="${PIPESTATUS[0]}"
+          if [ "$EXIT_CODE" -eq 124 ]; then
+            echo "::warning title=NVD Database Update Timeout::The NVD database update exceeded the 15-minute time limit and was aborted. The vulnerability scan will be skipped. Review the build at a later time."
+            echo "nvd_update_timed_out=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [ "$EXIT_CODE" -ne 0 ]; then
+            if grep -qE "NVD Returned Status Code|Error updating the NVD Data|NvdApiException|NVD API request failures" "$OUTFILE"; then
+              echo "::warning title=NVD Service Unavailable::The NVD database update failed due to an NVD service error (HTTP 503 or similar). The vulnerability scan was not completed. Retry the release when the NVD service is restored."
+              echo "nvd_update_failed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$EXIT_CODE"
+          fi
+        env:
+          NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+      - name: Save NVD Database Cache
+        if: steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-shared-${{ steps.cache-date.outputs.date_key }}
+
+      - name: Summarize cache refresh
+        if: always()
+        run: |
+          {
+            echo "## NVD Cache Refresh"
+            echo "- Scope: shared"
+            echo "- Date key: ${{ steps.cache-date.outputs.date_key }}"
+            echo "- Restore cache hit: ${{ steps.nvd-cache.outputs.cache-hit || 'false' }}"
+            echo "- Update timed out: ${{ steps.nvd-update.outputs.nvd_update_timed_out || 'false' }}"
+            echo "- Update failed: ${{ steps.nvd-update.outputs.nvd_update_failed || 'false' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
