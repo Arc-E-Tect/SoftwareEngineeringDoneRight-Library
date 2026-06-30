@@ -1,0 +1,15 @@
+plugins {
+    alias(libs.plugins.owaspDependencycheck)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = 9
+    format = 'HTML'
+}

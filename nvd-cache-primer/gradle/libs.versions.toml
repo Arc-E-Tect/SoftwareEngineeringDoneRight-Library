@@ -1,0 +1,6 @@
+[plugins]
+
+owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspDependencycheck" }
+
+[versions]
+owaspDependencycheck = "12.2.2"
