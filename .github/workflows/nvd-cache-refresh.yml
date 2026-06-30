@@ -47,7 +47,7 @@ jobs:
       - name: Update NVD database
         id: nvd-update
         run: |
-          cd sedr-library
+          cd nvd-cache-primer
           OUTFILE="$RUNNER_TEMP/nvd-update-output.txt"
           timeout 900 ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
           EXIT_CODE="${PIPESTATUS[0]}"
