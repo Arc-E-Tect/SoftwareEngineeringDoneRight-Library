@@ -6,6 +6,11 @@ on:
         description: 'The semantic version of the application being scanned'
         type: string
         required: true
+      project_dir:
+        description: 'The directory that contains the project to scan'
+        type: string
+        required: false
+        default: ''
       project_name:
         description: 'The name of the project that must be scanned'
         type: string
@@ -26,7 +31,7 @@ on:
         required: false
         default: false
       reports_subpath:
-        description: 'Path below the project root to the build reports directory'
+        description: 'The reports directory relative to the project directory'
         type: string
         required: false
         default: 'app/build/reports'
@@ -52,9 +57,10 @@ jobs:
     env:
       VERSION: ${{ inputs.semantic_version }}
       PROJECT_NAME: ${{ inputs.project_name }}
-      GRADLE_PROPERTIES_FILE: ${{ inputs.project_name }}/gradle.properties
+      PROJECT_DIR: ${{ inputs.project_dir || inputs.project_name }}
+      GRADLE_PROPERTIES_FILE: ${{ inputs.project_dir || inputs.project_name }}/gradle.properties
       GRADLE_VERSION_REGEX: ${{ inputs.gradle_version_regex }}
-      REPORTS_DIR: ${{ inputs.project_name }}/${{ inputs.reports_subpath }}
+      REPORTS_DIR: ${{ inputs.project_dir || inputs.project_name }}/${{ inputs.reports_subpath }}
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TOKEN: ${{ github.token }}
 
@@ -111,11 +117,23 @@ jobs:
           echo "Shared NVD cache is unavailable for ${{ env.PROJECT_NAME }}. Skipping dependency check for this run."
           echo "::warning title=NVD Cache Unavailable::Shared NVD cache is unavailable for ${{ env.PROJECT_NAME }}. Skipping dependency check for this run; the scan will resume on a future run when cache is available."
 
+      - name: Detect dependency-check tasks
+        id: dependency-check-tasks
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          if ./gradlew -q tasks --all | grep -q '^dependencyCheckUpdate'; then
+            echo "dependency_check_available=true" >> "$GITHUB_OUTPUT"
+            echo "Dependency-Check tasks detected for ${{ env.PROJECT_NAME }}."
+          else
+            echo "dependency_check_available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Dependency-Check Tasks Missing::No dependencyCheckUpdate/dependencyCheckAnalyze tasks were found for ${{ env.PROJECT_NAME }}. Vulnerability scanning steps are being skipped for this project."
+          fi
+
       - name: Update NVD database
         id: nvd-update
-        if: inputs.force_nvd_refresh == true && steps.nvd-cache-data.outputs.cache_available == 'true'
+        if: steps.dependency-check-tasks.outputs.dependency_check_available == 'true' && inputs.force_nvd_refresh == true && steps.nvd-cache-data.outputs.cache_available == 'true'
         run: |
-          cd ${{ env.PROJECT_NAME }}
+          cd ${{ env.PROJECT_DIR }}
           OUTFILE="$RUNNER_TEMP/nvd-update-output.txt"
           timeout 900 ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
           EXIT_CODE="${PIPESTATUS[0]}"
@@ -134,11 +152,18 @@ jobs:
         env:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
 
+      - name: Save NVD Database Cache
+        if: steps.dependency-check-tasks.outputs.dependency_check_available == 'true' && inputs.force_nvd_refresh == true && steps.nvd-cache-data.outputs.cache_available == 'true' && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-shared-${{ steps.cache-date.outputs.date_key }}
+
       - name: Scan for vulnerabilities
         id: vulnerability-scan
-        if: steps.nvd-cache-data.outputs.cache_available == 'true' && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
+        if: steps.dependency-check-tasks.outputs.dependency_check_available == 'true' && steps.nvd-cache-data.outputs.cache_available == 'true' && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
         run: |
-          cd ${{ env.PROJECT_NAME }}
+          cd ${{ env.PROJECT_DIR }}
           OUTFILE="$RUNNER_TEMP/nvd-scan-output.txt"
           timeout 900 ./gradlew dependencyCheckAnalyze --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
           EXIT_CODE="${PIPESTATUS[0]}"
@@ -156,10 +181,11 @@ jobs:
           fi
         env:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+          FAIL_ON_FATAL: ${{ inputs.fail_on_fatal }}
 
       - name: Upload Vulnerability Test Report
-        if: always() && steps.nvd-cache-data.outputs.cache_available == 'true' && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true' && steps.vulnerability-scan.outputs.scan_timed_out != 'true' && steps.vulnerability-scan.outputs.nvd_scan_failed != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always() && steps.dependency-check-tasks.outputs.dependency_check_available == 'true' && steps.nvd-cache-data.outputs.cache_available == 'true' && steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true' && steps.vulnerability-scan.outputs.scan_timed_out != 'true' && steps.vulnerability-scan.outputs.nvd_scan_failed != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ env.PROJECT_NAME }}-reports-vulnerability
+          name: ${{ env.PROJECT_NAME}}-reports-vulnerability
           path: ${{ env.REPORTS_DIR }}/dependency-check-report.html

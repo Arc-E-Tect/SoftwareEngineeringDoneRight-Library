@@ -52,12 +52,12 @@ jobs:
           timeout 900 ./gradlew dependencyCheckUpdate --no-configuration-cache --no-parallel 2>&1 | tee "$OUTFILE"
           EXIT_CODE="${PIPESTATUS[0]}"
           if [ "$EXIT_CODE" -eq 124 ]; then
-            echo "::warning title=NVD Database Update Timeout::The NVD database update exceeded the 15-minute time limit and was aborted. The vulnerability scan will be skipped. Review the build at a later time."
+            echo "::warning title=NVD Database Update Timeout::The NVD database update exceeded the 15-minute time limit and was aborted. The shared cache refresh will be retried in a later run."
             echo "nvd_update_timed_out=true" >> "$GITHUB_OUTPUT"
             exit 0
           elif [ "$EXIT_CODE" -ne 0 ]; then
             if grep -qE "NVD Returned Status Code|Error updating the NVD Data|NvdApiException|NVD API request failures" "$OUTFILE"; then
-              echo "::warning title=NVD Service Unavailable::The NVD database update failed due to an NVD service error (HTTP 503 or similar). The vulnerability scan was not completed. Retry the release when the NVD service is restored."
+              echo "::warning title=NVD Service Unavailable::The NVD database update failed due to an NVD service error (HTTP 503 or similar). The shared cache refresh will be retried in a later run."
               echo "nvd_update_failed=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
@@ -81,6 +81,7 @@ jobs:
             echo "- Scope: shared"
             echo "- Date key: ${{ steps.cache-date.outputs.date_key }}"
             echo "- Restore cache hit: ${{ steps.nvd-cache.outputs.cache-hit || 'false' }}"
+            echo "- Project: nvd-cache-primer"
             echo "- Update timed out: ${{ steps.nvd-update.outputs.nvd_update_timed_out || 'false' }}"
             echo "- Update failed: ${{ steps.nvd-update.outputs.nvd_update_failed || 'false' }}"
           } >> "$GITHUB_STEP_SUMMARY"
