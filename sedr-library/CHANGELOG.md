@@ -1,3 +1,17 @@
+## [0.4.5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.4...v0.4.5) (2026-07-01)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.4.4 [skip ci] ([ede1fb8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ede1fb8fc15c372da228f0ace0719f65c0cb22d6))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#31](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/31)) ([241de96](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/241de96276fbbea8cd4737c6517beb074e0627f4)), closes [#31](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/31)
+* remove NVD cache update from the standard security scan and move it to a weekly process. ([#29](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/29)) ([14b1c72](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/14b1c7288d3283cfc4a5ed5bd8e06c6dc30e8e16)), closes [#29](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/29)
+* Update NVD cache refresh process and adjust workflows ([#30](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/30)) ([fe48966](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/fe48966fc1e475a419f24098b51b6bce80ae98ad)), closes [#30](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/30)
+
 ## [0.4.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.3...v0.4.4) (2026-06-28)
 
 
