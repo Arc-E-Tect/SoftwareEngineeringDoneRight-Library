@@ -3,6 +3,12 @@ on:
   schedule:
     - cron: '0 8 * * 5'  # Every Friday at 08:00 UTC
   workflow_dispatch:
+    inputs:
+      force_nvd_refresh:
+        description: 'Force dependencyCheckUpdate before analyze'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   Read-Version:
@@ -30,6 +36,7 @@ jobs:
       project_name: 'hexagonal-spring-rules'
       semantic_version: ${{ needs.Read-Version.outputs.version }}
       fail_on_fatal: true
+      force_nvd_refresh: ${{ github.event_name == 'workflow_dispatch' && inputs.force_nvd_refresh || false }}
       reports_subpath: build/reports
     secrets:
       NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}

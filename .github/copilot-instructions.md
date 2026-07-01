@@ -100,6 +100,7 @@ All secrets must be used through variable names which can be mapped to environme
 - Install actionlint: `brew install actionlint` (macOS) or download from https://github.com/rhysd/actionlint
 - Run validation: `actionlint .github/workflows/*.yml`
 - Fix any errors reported by actionlint before committing
+- SECURITY REQUIREMENT: All external GitHub Actions references must be pinned to a full 40-character commit SHA (for example, `actions/checkout@<40-char-sha>`). Never use mutable tags such as `@v5`, `@v7`, `@main`, or branch names for external actions.
 - Common issues to check:
   - Job dependencies (`needs:`) must reference actual job names
   - Outputs must be accessible through the correct `needs.<job-name>.outputs.<output-name>` path
