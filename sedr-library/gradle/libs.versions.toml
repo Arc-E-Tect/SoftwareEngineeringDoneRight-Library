@@ -9,7 +9,7 @@ owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspD
 
 archunit = "1.4.2"
 junit-jupiter = "6.1.1"
-jreleaser = "1.24.0"
+jreleaser = "1.25.0"
 owaspDependencycheck = "12.2.2"
 
 [libraries]
