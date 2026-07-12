@@ -8,8 +8,16 @@ It demonstrates a direct dependency from a Spring service to a Spring repository
 
 [source,bash]
 ----
+# Run the full lifecycle (includes architecture checks via check)
+./gradlew build
+
+# Or run only the architecture suite
 ./gradlew testArchitecture
 ----
+
+Use the Gradle wrapper (`./gradlew`) from this directory.
+
+The current sample is intentionally non-compliant, so both commands are expected to fail until the violations are fixed.
 
 == Expected violations
 
