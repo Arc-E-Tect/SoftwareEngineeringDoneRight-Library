@@ -1,3 +1,19 @@
+## [0.4.6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.5...v0.4.6) (2026-07-12)
+
+
+### 📝 Documentation
+
+* **readme:** update version to 0.4.5 [skip ci] ([cac98d6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/cac98d6bf3172a08db03acb32b58fbb552bb2f58))
+
+
+### 🔧 Misc
+
+* **workflows:** align NVD cache and action pinning policies ([#32](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/32)) ([869930d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/869930d102ec4368a3ee728d24537938747ef3db)), closes [#32](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/32)
+* dependency updates for Library projects ([#33](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/33)) ([1706662](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/17066622985c9bcf233593d7020121612be68099)), closes [#33](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/33)
+* dependency updates for Library projects ([#38](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/38)) ([325d587](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/325d5871f2624d840401db6f045e894467ea66d7)), closes [#38](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/38)
+* Update documentation and Java toolchain version ([#37](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/37)) ([93996b0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/93996b0bcc977ec202884443e85ab4c5cffae48b)), closes [#37](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/37)
+* **Single Module Spring:** update Java toolchain version and enforce architecture rules ([#36](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/36)) ([12dda27](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/12dda27605a55248ea07388dc309ffbdfc02d075)), closes [#36](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/36)
+
 ## [0.4.5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.4...v0.4.5) (2026-07-01)
 
 
