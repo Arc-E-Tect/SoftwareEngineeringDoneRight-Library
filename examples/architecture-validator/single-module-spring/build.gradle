@@ -9,7 +9,7 @@ version = '0.0.1'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -24,7 +24,6 @@ dependencies {
 
 architectureValidator {
     basePackage = 'com.arc_e_tect.example.spring'
-    ignoreFailures = true
 }
 
 tasks.named('jacocoTestReport') {
@@ -32,4 +31,13 @@ tasks.named('jacocoTestReport') {
         xml.required = true
         html.required = true
     }
+}
+
+tasks.named('testArchitecture', Test) {
+    // Make architecture-rule failures fail the task even if a higher-level script tries to relax test failures.
+    ignoreFailures = false
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testArchitecture')
 }
