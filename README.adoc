@@ -129,7 +129,7 @@ For Maven, add your credentials to `~/.m2/settings.xml`:
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.4.5")
+    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.4.6")
 }
 ----
 
@@ -137,7 +137,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.4.5'
+    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.4.6'
 }
 ----
 
@@ -147,7 +147,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect.sedr.utils</groupId>
     <artifactId>sedr-library</artifactId>
-    <version>0.4.5</version>
+    <version>0.4.6</version>
 </dependency>
 ----
 
@@ -176,7 +176,7 @@ The Gradle builds in this repository use Gradle's native JaCoCo support, with th
 [source,kotlin]
 ----
 dependencies {
-    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.4.5"))
+    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.4.6"))
 }
 ----
 
@@ -184,7 +184,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.4.5')
+    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.4.6')
 }
 ----
 
