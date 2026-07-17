@@ -6,7 +6,11 @@
 
 Repository with useful and usable software components used in the _Software Engineering Done Right_ book.
 
-== Projects in this repository
+== Repository layout
+
+This repository is not a single Gradle multi-module build.
+Each project below is a standalone Gradle build with its own wrapper, its own version, and — for the two published projects — its own GitHub Actions build/release/security-scan workflows.
+Run `./gradlew` from *within* a project's directory, not from the repository root.
 
 [cols="2,4"]
 |===
@@ -19,10 +23,10 @@ Repository with useful and usable software components used in the _Software Engi
 |Published Spring-focused external architecture rule pack for the Architecture Validator plugin.
 
 |`nvd-cache-primer/`
-|Utility project for priming and validating the OWASP Dependency-Check NVD cache workflow.
+|Internal utility project that primes and validates the shared OWASP Dependency-Check NVD cache used by this repository's security-scan workflows. Not published.
 
 |`examples/architecture-validator/single-module-spring/`
-|Runnable example that demonstrates Spring Hexagonal rule-pack violations and failing architecture validation.
+|Runnable example that demonstrates a Spring Hexagonal rule-pack violation and a failing architecture validation build.
 
 |`examples/sedr-library/jacoco-marker/`
 |Runnable example that demonstrates compliant and non-compliant usage of `@ExcludeFromJacocoGeneratedCodeCoverage`.
@@ -34,7 +38,7 @@ Shared Java annotations and utilities for _Software Engineering Done Right_ proj
 
 [cols="1,1"]
 |===
-|Latest version |`0.4.5`
+|Latest version |`0.4.6`
 |Group ID       |`com.arc-e-tect.sedr.utils`
 |Artifact ID    |`sedr-library`
 |===
@@ -279,3 +283,149 @@ cd ../examples/sedr-library/jacoco-marker && ./gradlew test
 The test run reports exactly one violation:
 `Method NonCompliantService.stop() uses @ExcludeFromJacocoGeneratedCodeCoverage without a justification`.
 `CompliantService` is not mentioned.
+
+== hexagonal-spring-rules
+
+Published Spring-focused external rule pack for the Architecture Validator Gradle plugin.
+It enforces Hexagonal (ports and adapters) architectural boundaries — dependency direction, domain isolation, and port contracts — against Spring applications.
+
+See link:hexagonal-spring-rules/README.adoc[`hexagonal-spring-rules/README.adoc`] for build instructions and CI/release details, and link:hexagonal-spring-rules/CHANGELOG.md[CHANGELOG.md] for the release history and current version.
+
+[cols="1,1"]
+|===
+|Group ID    |`com.arc-e-tect.architecture-validator`
+|Artifact ID |`architecture-validator-hexagonal-spring-rules`
+|===
+
+=== What's included
+
+The rule pack is a set of ArchUnit-based test classes that the Architecture Validator plugin discovers on the `testArchitecture` classpath and folds into the generated rule-pack suite.
+
+[cols="1,3"]
+|===
+|Class |Checks
+
+|`SpringHexagonalArchitectureTest`
+|Controllers only call in-ports, services do not access repositories directly (must go through an out-port), repositories are only reached through out-ports, and Spring components live in the expected Hexagonal layer.
+
+|`DomainIsolationTest`
+|The domain model depends only on Java core and other domain classes; the application core carries no Spring, persistence, or validation framework dependencies; application services stay free of Spring stereotypes.
+
+|`DependencyDirectionTest`
+|Dependencies flow inward only — the core never depends on adapters or adapter implementations, adapters depend only on ports (not concrete services), and only the configuration layer wires concrete services directly.
+
+|`PortContractTest`
+|In-ports and out-ports are interfaces, and port signatures reference only Java core and domain model types — no framework leakage into port contracts.
+|===
+
+=== Consuming the rule pack
+
+Add the rule pack to `testArchitectureImplementation` in a project that already applies the Architecture Validator plugin:
+
+[source,groovy]
+----
+dependencies {
+    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:<version>'
+}
+----
+
+The rules read package boundaries from system properties set by the Architecture Validator plugin's `architectureValidator` extension:
+
+[cols="1,3"]
+|===
+|Property |Purpose
+
+|`architectureValidator.basePackage`
+|Root package to validate.
+
+|`architectureValidator.inPorts`
+|Comma-separated in-port packages.
+
+|`architectureValidator.outPorts`
+|Comma-separated out-port packages.
+
+|`architectureValidator.domainModel`
+|Comma-separated domain model packages.
+
+|`architectureValidator.adapters`
+|Comma-separated adapter packages.
+
+|`architectureValidator.applicationServices`
+|Comma-separated application service packages.
+|===
+
+=== Example project
+
+A self-contained example demonstrating a Spring Hexagonal architecture violation is located at link:examples/architecture-validator/single-module-spring/[`examples/architecture-validator/single-module-spring/`].
+See link:examples/architecture-validator/single-module-spring/README.adoc[its README] for full details.
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`.../application/service/OrderService.java`
+|A Spring `@Service` that depends directly on `OrderRepository` — the rule violation under test.
+
+|`.../adapter/persistence/OrderRepository.java`
+|Adapter-layer Spring repository reached directly by the service instead of through an out-port.
+
+|`.../adapter/web/OrderController.java`
+|Inbound web adapter calling the use case.
+
+|`.../application/port/in/OrderUseCase.java`
+|Inbound port interface.
+
+|`.../application/domain/model/Order.java`
+|Domain model.
+|===
+
+To run the example — expected to FAIL because the sample is intentionally non-compliant:
+
+[source,bash]
+----
+cd examples/architecture-validator/single-module-spring && ./gradlew testArchitecture
+----
+
+To fix the violation: introduce an outbound port in `application.port.out`, make `OrderService` depend on that port, and move the repository implementation behind an adapter that satisfies the port contract.
+
+== nvd-cache-primer
+
+Internal utility Gradle project that primes and validates the OWASP Dependency-Check NVD (National Vulnerability Database) cache shared by this repository's security-scan workflows.
+It is not published — its only purpose is running the `dependencyCheckUpdate` task in CI.
+
+=== Why it exists
+
+`sedr-library` and `hexagonal-spring-rules` each run OWASP Dependency-Check as part of their security-scan workflows.
+Updating the NVD database from scratch is slow and can hit NVD API rate limits when run repeatedly.
+`nvd-cache-primer` is a minimal project — it has no source code, just the `owaspDependencycheck` plugin — dedicated to warming a `~/.gradle/dependency-check-data` cache once a day.
+
+The scheduled workflow `.github/workflows/nvd-cache-refresh.yml` runs daily (`17 2 * * *` UTC), restores the previous cache, executes `dependencyCheckUpdate` from this project, and saves the refreshed cache under a date-stamped key.
+The per-project `security-scan.yml` workflow then restores that shared cache before running `dependencyCheckAnalyze`, only falling back to its own update when the cache is missing.
+
+=== Configuration
+
+[source,groovy]
+----
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = 9
+    format = 'HTML'
+}
+----
+
+An https://nvd.nist.gov/developers/request-an-api-key[NVD API key] is required — set `NVD_APIKEY_SEDR` (or `NVD_APIKEY` as a fallback) as a repository secret or local environment variable.
+
+=== Running locally
+
+[source,bash]
+----
+cd nvd-cache-primer
+NVD_APIKEY_SEDR=<your-nvd-api-key> ./gradlew dependencyCheckUpdate
+----
+
+== License
+
+This repository is licensed under the terms in link:LICENSE[LICENSE].
+Published sub-projects (`sedr-library/`, `hexagonal-spring-rules/`) are part of the same repository and license.
