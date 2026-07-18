@@ -93,6 +93,9 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`DependencyInjectionStyleTest`
 |Classes in adapters, application services, and domain model must not use field injection via `@Autowired`.
+
+|`NamingConventionTest`
+|Optional naming checks enforce consistent suffixes for in-ports, out-ports, repositories, and web controllers.
 |===
 
 == Architecture Validator Properties
@@ -124,6 +127,9 @@ The rules read package boundaries from system properties set by the Architecture
 |`architectureValidator.rules.disabled`
 |Comma-separated rule identifiers to skip in the format `ClassSimpleName.methodName`.
 Example: `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`.
+
+|`architectureValidator.namingConventions.enabled`
+|Boolean flag for optional naming convention rules; defaults to `false` and must be explicitly set to `true`.
 |===
 
 == Example Project

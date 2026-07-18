@@ -23,6 +23,7 @@ import java.util.stream.Stream;
  *   <li>{@code architectureValidator.adapters} - Comma-separated adapter packages</li>
  *   <li>{@code architectureValidator.applicationServices} - Comma-separated application service packages</li>
  *   <li>{@code architectureValidator.rules.disabled} - Comma-separated rule identifiers to skip</li>
+ *   <li>{@code architectureValidator.namingConventions.enabled} - Enables optional naming convention rules</li>
  * </ul>
  *
  * @since 0.4.0
@@ -59,6 +60,10 @@ final class RulePackConfiguration {
 
     static boolean isRuleDisabled(String ruleId) {
         return disabledRules().contains(ruleId);
+    }
+
+    static boolean namingConventionsEnabled() {
+        return Boolean.parseBoolean(property("architectureValidator.namingConventions.enabled", "false"));
     }
 
     static void requireConfigured() {
