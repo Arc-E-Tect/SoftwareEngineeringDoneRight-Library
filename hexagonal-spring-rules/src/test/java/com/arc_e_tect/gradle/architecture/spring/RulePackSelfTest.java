@@ -26,9 +26,12 @@ class RulePackSelfTest {
     private static final String OUT_PORTS_KEY = "architectureValidator.outPorts";
     private static final String DOMAIN_MODEL_KEY = "architectureValidator.domainModel";
     private static final String ADAPTERS_KEY = "architectureValidator.adapters";
+    private static final String INBOUND_ADAPTERS_KEY = "architectureValidator.inboundAdapters";
+    private static final String OUTBOUND_ADAPTERS_KEY = "architectureValidator.outboundAdapters";
     private static final String APPLICATION_SERVICES_KEY = "architectureValidator.applicationServices";
 
     private static final String COMPLIANT_BASE = "com.arc_e_tect.fixtures.compliant";
+    private static final String SERVICE_IMPLEMENTS_PORT_BASE = "com.arc_e_tect.fixtures.regression.serviceImplementsPort";
 
     private static final String SPRING_CONTROLLERS_BASE = "com.arc_e_tect.fixtures.violating.spring.controllers";
     private static final String SPRING_SERVICES_BASE = "com.arc_e_tect.fixtures.violating.spring.services";
@@ -58,6 +61,8 @@ class RulePackSelfTest {
         capture(OUT_PORTS_KEY);
         capture(DOMAIN_MODEL_KEY);
         capture(ADAPTERS_KEY);
+        capture(INBOUND_ADAPTERS_KEY);
+        capture(OUTBOUND_ADAPTERS_KEY);
         capture(APPLICATION_SERVICES_KEY);
     }
 
@@ -68,6 +73,8 @@ class RulePackSelfTest {
         restore(OUT_PORTS_KEY);
         restore(DOMAIN_MODEL_KEY);
         restore(ADAPTERS_KEY);
+        restore(INBOUND_ADAPTERS_KEY);
+        restore(OUTBOUND_ADAPTERS_KEY);
         restore(APPLICATION_SERVICES_KEY);
     }
 
@@ -106,6 +113,26 @@ class RulePackSelfTest {
                 () -> assertDoesNotThrow(cycleRules::adapterPackagesShouldBeFreeOfCycles),
                 () -> assertDoesNotThrow(cycleRules::domainModelShouldBeFreeOfCycles)
         );
+    }
+
+    @Test
+    void springHexagonalArchitectureShouldPassServicesRuleWhenServiceImplementsItsOwnInPort() {
+        configure(
+                SERVICE_IMPLEMENTS_PORT_BASE,
+                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.in..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.out..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".domain.model..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".adapters..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".application.service.."
+        );
+
+        SpringHexagonalArchitectureTest rules = new SpringHexagonalArchitectureTest();
+
+        // Regression test: a @Service implementing its own in-port (the standard Hexagonal
+        // pattern) must not be flagged as reaching into a repository/adapter merely because
+        // interface implementation is itself a dependency ArchUnit can see. Previously this
+        // rule used an allow-list that omitted in-ports, so this exact case failed.
+        assertDoesNotThrow(rules::servicesShouldNotAccessRepositoriesDirectly);
     }
 
     @Test
@@ -292,6 +319,30 @@ class RulePackSelfTest {
         assertThrows(AssertionError.class, rules::coreApplicationLayerShouldNotDependOnAdapters);
         assertDoesNotThrow(rules::adaptersShouldNotDependOnServiceImplementations);
         assertDoesNotThrow(rules::onlyConfigurationMayDependOnServiceImplementations);
+    }
+
+    @Test
+    void dependencyDirectionShouldFailCoreRuleWhenOnlySplitAdapterPropertiesAreConfigured() {
+        configure(
+                DEPENDENCY_CORE_BASE,
+                DEPENDENCY_CORE_BASE + ".application.port.in..",
+                DEPENDENCY_CORE_BASE + ".application.port.out..",
+                DEPENDENCY_CORE_BASE + ".domain.model..",
+                "",
+                DEPENDENCY_CORE_BASE + ".application.service.."
+        );
+        // Deliberately leave the legacy ADAPTERS_KEY empty (set above) and only configure the
+        // split inboundAdapters property, mirroring a consumer who follows the Architecture
+        // Validator plugin's preferred split layout without also setting the legacy aggregate.
+        System.setProperty(INBOUND_ADAPTERS_KEY, DEPENDENCY_CORE_BASE + ".adapters..");
+        System.setProperty(OUTBOUND_ADAPTERS_KEY, "");
+
+        DependencyDirectionTest rules = new DependencyDirectionTest();
+
+        // Regression test: RulePackConfiguration.adapters() must also honor inboundAdapters/
+        // outboundAdapters, not only the legacy aggregate architectureValidator.adapters
+        // property; otherwise this violation would pass vacuously for split-layout consumers.
+        assertThrows(AssertionError.class, rules::coreApplicationLayerShouldNotDependOnAdapters);
     }
 
     @Test
