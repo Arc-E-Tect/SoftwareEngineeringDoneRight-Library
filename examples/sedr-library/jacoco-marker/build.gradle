@@ -2,9 +2,6 @@
  * Example project demonstrating the sedr-library jacoco-marker annotation
  * and the reusable ArchUnit convention test shipped as a test-fixtures artifact.
  *
- * Prerequisites:
- *   cd ../../../sedr-library && ./gradlew clean build publishToMavenLocal
- *
  * Run the example (intentionally fails to demonstrate the ArchUnit check):
  *   ./gradlew test
  */
@@ -20,11 +17,6 @@ java {
 }
 
 repositories {
-    // mavenLocal() first so the locally published snapshot is found during
-    // development before the library is released to Maven Central.
-    // Once released, the same repositories block resolves from Maven Central
-    // without any change.
-    mavenLocal()
     mavenCentral()
 }
 

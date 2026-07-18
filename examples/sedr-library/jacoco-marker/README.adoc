@@ -69,16 +69,14 @@ class CoverageExclusionConventionsTest extends AbstractCoverageExclusionConventi
 
 == Running the Example
 
-This example requires `sedr-library` to be published to your local Maven repository first.
+`sedr-library` is resolved from Maven Central, so no local publishing step is needed.
 
 [source,bash]
 ----
-# 1. Publish the library locally
-cd sedr-library && ./gradlew clean build publishToMavenLocal
-
-# 2. Run the example - expected to FAIL with one ArchUnit violation
-cd ../examples/sedr-library/jacoco-marker && ./gradlew test
+cd examples/sedr-library/jacoco-marker && ./gradlew test
 ----
+
+Expected to FAIL with one ArchUnit violation.
 
 The test run reports exactly one violation:
 
