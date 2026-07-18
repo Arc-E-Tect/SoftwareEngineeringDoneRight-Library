@@ -46,7 +46,7 @@ build/
 # IntelliJ IDEA
 *.iml
 *.iws
-out/
+/out/
 
 # VS Code
 /worktrees/
