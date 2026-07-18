@@ -20,7 +20,9 @@ import java.util.stream.Stream;
  *   <li>{@code architectureValidator.inPorts} - Comma-separated in-port packages</li>
  *   <li>{@code architectureValidator.outPorts} - Comma-separated out-port packages</li>
  *   <li>{@code architectureValidator.domainModel} - Comma-separated domain model packages</li>
- *   <li>{@code architectureValidator.adapters} - Comma-separated adapter packages</li>
+ *   <li>{@code architectureValidator.adapters} - Comma-separated adapter packages (legacy aggregate)</li>
+ *   <li>{@code architectureValidator.inboundAdapters} - Comma-separated inbound adapter packages, merged with {@code adapters}</li>
+ *   <li>{@code architectureValidator.outboundAdapters} - Comma-separated outbound adapter packages, merged with {@code adapters}</li>
  *   <li>{@code architectureValidator.applicationServices} - Comma-separated application service packages</li>
  *   <li>{@code architectureValidator.rules.disabled} - Comma-separated rule identifiers to skip</li>
  *   <li>{@code architectureValidator.namingConventions.enabled} - Enables optional naming convention rules</li>
@@ -51,7 +53,17 @@ final class RulePackConfiguration {
     }
 
     static String[] adapters() {
-        return packages("architectureValidator.adapters");
+        // The Architecture Validator plugin's inboundAdapters/outboundAdapters is the preferred
+        // split package layout; architectureValidator.adapters remains a legacy aggregate
+        // fallback. Merge all three so this rule pack matches whichever layout a consumer
+        // actually configured instead of only recognizing the legacy aggregate property.
+        return Stream.of(
+                        packages("architectureValidator.adapters"),
+                        packages("architectureValidator.inboundAdapters"),
+                        packages("architectureValidator.outboundAdapters"))
+                .flatMap(Arrays::stream)
+                .distinct()
+                .toArray(String[]::new);
     }
 
     static String[] applicationServices() {
