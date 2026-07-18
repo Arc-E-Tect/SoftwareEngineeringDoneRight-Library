@@ -81,6 +81,9 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`PortContractTest`
 |In-ports and out-ports are interfaces, and port signatures reference only Java core and domain model types with no framework leakage into port contracts.
+
+|`RulePackConfigurationTest`
+|Fails fast when required Architecture Validator properties are missing so the rule pack cannot pass with empty class imports.
 |===
 
 == Architecture Validator Properties

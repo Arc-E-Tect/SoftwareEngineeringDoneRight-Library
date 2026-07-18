@@ -31,6 +31,7 @@ final class RulePackConfiguration {
     }
 
     static String basePackage() {
+        requireConfigured();
         return property("architectureValidator.basePackage", "");
     }
 
@@ -52,6 +53,18 @@ final class RulePackConfiguration {
 
     static String[] applicationServices() {
         return packages("architectureValidator.applicationServices");
+    }
+
+    static void requireConfigured() {
+        String configuredBasePackage = property("architectureValidator.basePackage", "").trim();
+
+        if (configuredBasePackage.isEmpty()) {
+            throw new AssertionError("architectureValidator.basePackage is not set. Configure it via the Architecture Validator plugin's architectureValidator { basePackage = 'com.example.myapp' } extension.");
+        }
+
+        if (inPorts().length == 0 && outPorts().length == 0 && domainModel().length == 0) {
+            throw new AssertionError("architectureValidator.inPorts, architectureValidator.outPorts, and architectureValidator.domainModel are all empty. Configure at least one of these via the Architecture Validator plugin's architectureValidator { inPorts = 'com.example.myapp.application.port.in'; outPorts = 'com.example.myapp.application.port.out'; domainModel = 'com.example.myapp.domain.model' } extension.");
+        }
     }
 
     static String[] merge(String[] dynamicPackages, String... fixedPackages) {
