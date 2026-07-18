@@ -90,6 +90,9 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`CycleFreedomTest`
 |Adapter and domain-model package trees must be free of circular package dependencies.
+
+|`DependencyInjectionStyleTest`
+|Classes in adapters, application services, and domain model must not use field injection via `@Autowired`.
 |===
 
 == Architecture Validator Properties
