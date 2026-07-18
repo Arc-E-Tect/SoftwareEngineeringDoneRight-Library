@@ -1,0 +1,82 @@
+= Hexagonal Spring Cycle Detection Example
+:toc: left
+
+This example demonstrates package cycle detection in adapter packages via `CycleFreedomTest`.
+It also documents the `CycleFreedomTest` slice-pattern bug fix that was required to make this check
+effective in realistically nested base packages — see "Why this example exists" below.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../cycledetection/adapter/persistence/OrderRepositoryAdapter.java`
+|Adapter package A. Depends on `adapter.notification.OrderNotifier`.
+
+|`src/main/java/.../cycledetection/adapter/notification/OrderNotifier.java`
+|Adapter package B. Depends back on `OrderRepositoryAdapter`, closing the cycle.
+
+|`src/main/java/.../cycledetection/application/service/OrderService.java`
+|Plain application service that depends only on an outbound port — kept compliant so the only failure is the
+cycle itself.
+|===
+
+== Configuration
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.cycledetection'
+    useBuiltInHexagonalRulePack = false
+}
+----
+
+No special properties are needed — `CycleFreedomTest` runs against the plugin's default `adapters` pattern
+(`..adapter..`/`..adapters..`).
+
+== Why this example exists
+
+`CycleFreedomTest` builds an ArchUnit slice pattern from the configured `adapters` package root. The
+original implementation stripped a leading `..` from that pattern (e.g. `..adapters..` became `adapters`),
+which anchors the resulting pattern to the *start* of a class's fully-qualified name. For any realistic,
+multi-segment base package like `com.arc_e_tect.example.spring.cycledetection`, no class's FQN actually
+starts with `adapters.` — so the check matched zero classes and passed vacuously, regardless of real cycles.
+This example's base package is deliberately nested several segments deep so it would have silently passed
+under the old, buggy pattern; it now correctly fails.
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+The two adapter classes depend on each other, forming a two-package cycle:
+
+[source,java]
+----
+// adapter.persistence.OrderRepositoryAdapter
+public OrderRepositoryAdapter(OrderNotifier notifier) { ... }   // depends on adapter.notification
+
+// adapter.notification.OrderNotifier
+public OrderNotifier(OrderRepositoryAdapter repositoryAdapter) { ... } // depends back on adapter.persistence
+----
+
+`CycleFreedomTest.adapterPackagesShouldBeFreeOfCycles` fails and reports the cycle between
+`adapter.persistence` and `adapter.notification`. Every other rule class passes for this fixture.
+
+== Reports
+
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
+
+== Fix
+
+Break the dependency loop so `adapter.notification` no longer depends on `adapter.persistence` — for
+example, have `OrderRepositoryAdapter` publish through a port or event mechanism instead of calling into
+`OrderNotifier` directly, or move the shared collaboration point into a package neither adapter owns. Keep
+adapter package dependencies acyclic to preserve maintainable boundaries.

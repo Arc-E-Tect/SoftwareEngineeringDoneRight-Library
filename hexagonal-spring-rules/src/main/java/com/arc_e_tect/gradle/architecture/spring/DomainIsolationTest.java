@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -43,11 +44,22 @@ class DomainIsolationTest {
      */
     @Test
     void domainModelShouldOnlyDependOnJavaCoreAndDomainModel() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.domainModelShouldOnlyDependOnJavaCoreAndDomainModel"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().resideInAnyPackage(RulePackConfiguration.domainModel())
                 .should().onlyDependOnClassesThat()
                 .resideInAnyPackage(RulePackConfiguration.merge(
                         RulePackConfiguration.domainModel(),
+                        "java.util..",
+                        "java.lang..",
+                        "java.time.."))
+                .because("Domain model classes must stay framework free")
+                .check(classes);
+    }
+
     /**
      * Validates that the core application layer has no Spring or persistence framework dependencies.
      * 
@@ -56,15 +68,12 @@ class DomainIsolationTest {
      * This ensures the business logic remains framework-agnostic and can be evolved
      * independently of infrastructure choices.
      */
-                        "java.util..",
-                        "java.lang..",
-                        "java.time.."))
-                .because("Domain model classes must stay framework free")
-                .check(classes);
-    }
-
     @Test
     void coreApplicationLayerShouldHaveNoFrameworkDependencies() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.coreApplicationLayerShouldHaveNoFrameworkDependencies"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideInAnyPackage(RulePackConfiguration.domainModel())
                 .should().dependOnClassesThat()
@@ -89,6 +98,10 @@ class DomainIsolationTest {
      */
     @Test
     void applicationServicesShouldNotCarrySpringStereotypes() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideInAnyPackage(RulePackConfiguration.applicationServices())
                 .should().beAnnotatedWith("org.springframework.stereotype.Service")

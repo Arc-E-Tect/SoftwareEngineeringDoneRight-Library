@@ -1,0 +1,46 @@
+plugins {
+    id 'jacoco'
+    id 'java'
+    alias(libs.plugins.architecture.validator.iff)
+}
+
+group = 'com.arc-e-tect.example.spring'
+version = '0.0.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation libs.spring.context.iff
+    testArchitectureImplementation libs.architecture.validator.hexagonal.spring.rules.iff
+}
+
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.rulesdisabled'
+    rulesDisabled = ['DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes']
+    useBuiltInHexagonalRulePack = false
+
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.named('testArchitecture', Test) {
+    ignoreFailures = false
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testArchitecture')
+}

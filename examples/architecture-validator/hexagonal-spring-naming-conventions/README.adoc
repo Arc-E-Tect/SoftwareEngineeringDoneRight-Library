@@ -1,0 +1,92 @@
+= Hexagonal Spring Naming Conventions Example
+:toc: left
+
+This example demonstrates the opt-in naming convention rules from `NamingConventionTest`.
+It intentionally uses non-compliant suffixes for an in-port, an out-port, and a repository adapter.
+
+`NamingConventionTest` is disabled by default — unlike the other example projects in this repository, simply
+adding the rule pack dependency is not enough here. It must be explicitly turned on.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../namingconventions/application/port/inbound/OrderCommands.java`
+|Inbound port that intentionally does not end with `UseCase` or `Port`.
+
+|`src/main/java/.../namingconventions/application/port/outbound/OrderStore.java`
+|Outbound port that intentionally does not end with `Port`.
+
+|`src/main/java/.../namingconventions/adapter/persistence/OrderPersistence.java`
+|Repository adapter (`@Repository`) that intentionally does not end with `Repository` or `Adapter`.
+
+|`build.gradle`
+|Opts in to naming convention rules via `hexagonalArchitecture { namingConventionsEnabled = true }`.
+|===
+
+== Configuration
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.namingconventions'
+    hexagonalArchitecture {
+        namingConventionsEnabled = true // <1>
+    }
+    useBuiltInHexagonalRulePack = false
+}
+----
+<1> Required. Without this, all three `NamingConventionTest` rules are reported as *SKIPPED* rather than
+failed — try commenting this line out and re-running `./gradlew testArchitecture` to see the difference.
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+Three types deliberately break their expected suffix:
+
+[source,java]
+----
+public interface OrderCommands { void createOrder(String id); }   // should end with UseCase or Port
+public interface OrderStore { void save(Order order); }           // should end with Port
+
+@Repository
+public class OrderPersistence implements OrderStore { ... }       // should end with Repository or Adapter
+----
+
+All three fail, each naming the specific offending class:
+
+* `NamingConventionTest.inputPortsShouldHaveConsistentSuffix` fails for `OrderCommands`.
+* `NamingConventionTest.outputPortsShouldHaveConsistentSuffix` fails for `OrderStore`.
+* `NamingConventionTest.adaptersShouldHaveConsistentSuffix` fails for `OrderPersistence`.
+
+== Reports
+
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
+
+== Fix
+
+Rename each type to match its role's expected suffix:
+
+[cols="1,1"]
+|===
+|From |To
+
+|`OrderCommands`
+|`OrderUseCase` (or `OrderCommandsUseCase`)
+
+|`OrderStore`
+|`OrderPort`
+
+|`OrderPersistence`
+|`OrderRepositoryAdapter` (or `OrderRepository`)
+|===

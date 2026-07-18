@@ -3,9 +3,11 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
  * Spring Hexagonal architecture validation rules.
@@ -56,6 +58,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void controllersShouldOnlyCallInPorts() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.controllersShouldOnlyCallInPorts"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Controller")
                 .or().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
@@ -71,22 +77,27 @@ class SpringHexagonalArchitectureTest {
 
     /**
      * Validates that Spring services do not directly access repositories or adapters.
-     * 
+     *
      * <p>Services must communicate with external systems through out-ports only.
      * Direct repository access couples the business logic to persistence details
      * and prevents flexibility in choosing adapter implementations.
+     *
+     * <p>This is a deny-list check on the adapter packages specifically, rather than an
+     * allow-list of every legitimate dependency: a {@code @Service} implementing its own
+     * in-port (the standard Hexagonal pattern) is a real dependency ArchUnit can see, and an
+     * allow-list would have to special-case it. The actual concern is adapter/repository
+     * access, so only that is checked.
      */
     @Test
     void servicesShouldNotAccessRepositoriesDirectly() {
-        classes()
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.servicesShouldNotAccessRepositoriesDirectly"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
+        noClasses()
                 .that().areAnnotatedWith("org.springframework.stereotype.Service")
-                .should().onlyDependOnClassesThat()
-                .resideInAnyPackage(mergeAll(
-                        RulePackConfiguration.outPorts(),
-                        RulePackConfiguration.applicationServices(),
-                        RulePackConfiguration.domainModel(),
-                        "java..",
-                        "org.springframework.."))
+                .should().dependOnClassesThat()
+                .resideInAnyPackage(RulePackConfiguration.adapters())
                 .because("Spring services should not access repositories directly; use out-ports instead")
                 .allowEmptyShould(true)
                 .check(classes);
@@ -101,6 +112,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void repositoriesShouldOnlyBeAccessedViaOutPorts() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.repositoriesShouldOnlyBeAccessedViaOutPorts"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Repository")
                 .should().onlyBeAccessed().byClassesThat()
@@ -122,6 +137,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void springComponentsShouldFollowHexagonalLayers() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.springComponentsShouldFollowHexagonalLayers"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Component")
                 .or().areAnnotatedWith("org.springframework.stereotype.Service")

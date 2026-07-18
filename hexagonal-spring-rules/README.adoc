@@ -81,6 +81,21 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`PortContractTest`
 |In-ports and out-ports are interfaces, and port signatures reference only Java core and domain model types with no framework leakage into port contracts.
+
+|`RulePackConfigurationTest`
+|Fails fast when required Architecture Validator properties are missing so the rule pack cannot pass with empty class imports.
+
+|`TypeLeakageTest`
+|Ports must not expose JPA entities or web DTO packages, and the domain model must not reference JPA entities.
+
+|`CycleFreedomTest`
+|Adapter and domain-model package trees must be free of circular package dependencies.
+
+|`DependencyInjectionStyleTest`
+|Classes in adapters, application services, and domain model must not use field injection via `@Autowired`.
+
+|`NamingConventionTest`
+|Optional naming checks enforce consistent suffixes for in-ports, out-ports, repositories, and web controllers.
 |===
 
 == Architecture Validator Properties
@@ -108,12 +123,28 @@ The rules read package boundaries from system properties set by the Architecture
 
 |`architectureValidator.applicationServices`
 |Comma-separated application service packages.
+
+|`architectureValidator.rules.disabled`
+|Comma-separated rule identifiers to skip in the format `ClassSimpleName.methodName`.
+Example: `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`.
+
+|`architectureValidator.namingConventions.enabled`
+|Boolean flag for optional naming convention rules; defaults to `false` and must be explicitly set to `true`.
 |===
 
 == Example Project
 
-A self-contained example demonstrating a Spring Hexagonal architecture violation is at link:../examples/architecture-validator/single-module-spring/[`examples/architecture-validator/single-module-spring/`].
-See link:../examples/architecture-validator/single-module-spring/README.adoc[its README] for full details.
+The following self-contained example projects demonstrate each rule-pack behavior in isolation-oriented fixtures.
+
+* link:../examples/architecture-validator/single-module-spring/[examples/architecture-validator/single-module-spring/] demonstrates the original SpringHexagonalArchitectureTest service-to-repository violation.
+* link:../examples/architecture-validator/hexagonal-spring-misconfigured/[examples/architecture-validator/hexagonal-spring-misconfigured/] demonstrates fail-fast configuration errors from RulePackConfigurationTest.
+* link:../examples/architecture-validator/hexagonal-spring-type-leakage/[examples/architecture-validator/hexagonal-spring-type-leakage/] demonstrates TypeLeakageTest detection of JPA entity leakage in a port contract.
+* link:../examples/architecture-validator/hexagonal-spring-cycle-detection/[examples/architecture-validator/hexagonal-spring-cycle-detection/] demonstrates CycleFreedomTest detection of adapter-package cycles in nested base packages.
+* link:../examples/architecture-validator/hexagonal-spring-rules-disabled/[examples/architecture-validator/hexagonal-spring-rules-disabled/] demonstrates selective per-rule opt-out via architectureValidator.rulesDisabled.
+* link:../examples/architecture-validator/hexagonal-spring-field-injection/[examples/architecture-validator/hexagonal-spring-field-injection/] demonstrates DependencyInjectionStyleTest detection of @Autowired field injection.
+* link:../examples/architecture-validator/hexagonal-spring-naming-conventions/[examples/architecture-validator/hexagonal-spring-naming-conventions/] demonstrates opt-in NamingConventionTest failures for inconsistent suffixes.
+
+Each example README contains runnable commands, expected violations, and remediation guidance.
 
 == Contributing
 

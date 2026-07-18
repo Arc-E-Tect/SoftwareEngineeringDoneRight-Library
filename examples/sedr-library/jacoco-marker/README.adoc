@@ -4,7 +4,15 @@
 :icons: font
 :source-highlighter: rouge
 
-This self-contained example demonstrates compliant and non-compliant usage of `@ExcludeFromJacocoGeneratedCodeCoverage`.
+`@ExcludeFromJacocoGeneratedCodeCoverage` (from `sedr-library`'s `com.arc_e_tect.sedr.utils.jacoco.marker`
+package) marks a constructor, method, or type as intentionally excluded from JaCoCo coverage measurement —
+for example, a framework entry point that only the container ever calls, which unit tests cannot reasonably
+exercise. `AbstractCoverageExclusionConventionsTest` is an ArchUnit-based convention check that enforces the
+one rule that makes the annotation trustworthy: every use must carry a non-blank `justification`, so a
+reviewer can tell a deliberate exclusion from someone quietly hiding untested code.
+
+This self-contained example demonstrates both sides of that check: compliant usage (justification present,
+passes) and non-compliant usage (justification missing, fails).
 
 // tag::root[]
 == Files and Purpose
@@ -20,8 +28,44 @@ This self-contained example demonstrates compliant and non-compliant usage of `@
 |Uses `@ExcludeFromJacocoGeneratedCodeCoverage` without a justification, so the ArchUnit test reports a violation.
 
 |`src/test/java/.../CoverageExclusionConventionsTest.java`
-|Extends `AbstractCoverageExclusionConventionsTest` targeting the example package.
+|Extends `AbstractCoverageExclusionConventionsTest` targeting the example package. This is the entire
+integration point — see the snippet below.
 |===
+
+== The Two Cases
+
+[source,java]
+----
+// CompliantService.java
+@ExcludeFromJacocoGeneratedCodeCoverage(
+        justification = "Stub entry point executed only by the container, not unit-testable")
+public void start() {
+    // framework entry point — excluded from coverage by design
+}
+----
+
+[source,java]
+----
+// NonCompliantService.java
+@ExcludeFromJacocoGeneratedCodeCoverage   // <1>
+public void stop() {
+    // annotation has no justification — the ArchUnit test will fail here
+}
+----
+<1> No `justification` — this is what the convention check rejects.
+
+Wiring the check into a project is a three-line subclass naming the package to scan:
+
+[source,java]
+----
+class CoverageExclusionConventionsTest extends AbstractCoverageExclusionConventionsTest {
+
+    @Override
+    protected String getBasePackage() {
+        return "com.arc_e_tect.sedr.example.jacoco.marker";
+    }
+}
+----
 
 == Running the Example
 
@@ -36,9 +80,15 @@ cd sedr-library && ./gradlew clean build publishToMavenLocal
 cd ../examples/sedr-library/jacoco-marker && ./gradlew test
 ----
 
-The test run reports exactly one violation.
-`Method NonCompliantService.stop() uses @ExcludeFromJacocoGeneratedCodeCoverage without a justification`.
-`CompliantService` is not mentioned.
+The test run reports exactly one violation:
+
+[source]
+----
+Method com.arc_e_tect.sedr.example.jacoco.marker.NonCompliantService.stop() uses
+@ExcludeFromJacocoGeneratedCodeCoverage without a justification
+----
+
+`CompliantService` is not mentioned — only the annotation usage missing a `justification` is flagged.
 // end::root[]
 
 == License

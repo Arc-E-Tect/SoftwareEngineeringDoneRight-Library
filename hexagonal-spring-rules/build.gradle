@@ -7,6 +7,7 @@
 plugins {
     id 'jacoco'
     id 'java-library'
+    id 'java-test-fixtures'
     id 'maven-publish'
     alias(libs.plugins.owasp.dependency.check.iff)
     alias(libs.plugins.jreleaser.iff)
@@ -92,7 +93,10 @@ dependencies {
     compileOnly libs.spring.context.iff
     compileOnly libs.junit.jupiter.iff
 
+    testFixturesImplementation libs.spring.context.iff
+
     testImplementation libs.junit.jupiter.iff
+    testImplementation(testFixtures(project))
     testRuntimeOnly libs.junit.platform.launcher.iff
 }
 

@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -43,6 +44,10 @@ class DependencyDirectionTest {
      */
     @Test
     void coreApplicationLayerShouldNotDependOnAdapters() {
+        Assumptions.assumeFalse(
+            RulePackConfiguration.isRuleDisabled("DependencyDirectionTest.coreApplicationLayerShouldNotDependOnAdapters"),
+            "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideOutsideOfPackage("..adapter..")
                 .and().resideOutsideOfPackage("..adapters..")
@@ -60,6 +65,10 @@ class DependencyDirectionTest {
      */
     @Test
     void adaptersShouldNotDependOnServiceImplementations() {
+        Assumptions.assumeFalse(
+            RulePackConfiguration.isRuleDisabled("DependencyDirectionTest.adaptersShouldNotDependOnServiceImplementations"),
+            "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideInAnyPackage(RulePackConfiguration.adapters())
                 .should().dependOnClassesThat().resideInAnyPackage(RulePackConfiguration.applicationServices())
@@ -78,6 +87,10 @@ class DependencyDirectionTest {
      */
     @Test
     void onlyConfigurationMayDependOnServiceImplementations() {
+        Assumptions.assumeFalse(
+            RulePackConfiguration.isRuleDisabled("DependencyDirectionTest.onlyConfigurationMayDependOnServiceImplementations"),
+            "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideOutsideOfPackage("..configuration..")
                 .and().resideOutsideOfPackage("..application.domain.service..")

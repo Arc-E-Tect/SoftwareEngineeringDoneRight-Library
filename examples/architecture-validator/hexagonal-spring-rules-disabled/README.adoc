@@ -1,0 +1,84 @@
+= Hexagonal Spring Rules Disabled Example
+:toc: left
+
+This example demonstrates per-rule opt-out using `architectureValidator.rulesDisabled`.
+It intentionally introduces two violations of two different rules and disables only one of them, so the
+build still fails — proving the opt-out is selective, not a blanket "ignore everything" switch.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../rulesdisabled/application/service/adapter/OrderService.java`
+|Annotated `@Service` and depends directly on a `@Repository` — both intentional violations (see below).
+
+|`src/main/java/.../rulesdisabled/adapter/persistence/OrderRepository.java`
+|Spring repository adapter reached directly by the service instead of through an outbound port.
+
+|`build.gradle`
+|Disables `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes` via `rulesDisabled`.
+|===
+
+== Configuration
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.rulesdisabled'
+    rulesDisabled = ['DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes'] // <1>
+    useBuiltInHexagonalRulePack = false
+}
+----
+<1> Rule identifiers are `ClassSimpleName.methodName`, matching the `@Test` method names in
+`hexagonal-spring-rules`'s rule classes exactly.
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+`OrderService` carries `@Service` *and* depends directly on `OrderRepository`:
+
+[source,java]
+----
+@Service
+public class OrderService implements OrderUseCase {
+
+    private final OrderRepository repository; // <1>
+
+    public OrderService(OrderRepository repository) {
+        this.repository = repository;
+    }
+    ...
+}
+----
+<1> Direct dependency on an adapter-layer `@Repository`, bypassing an outbound port.
+
+This is structurally two separate violations:
+
+* `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes` — flags the `@Service`
+  annotation itself. This is the one disabled via `rulesDisabled`, so it's reported as *SKIPPED*, not
+  passed and not absent.
+* `SpringHexagonalArchitectureTest.servicesShouldNotAccessRepositoriesDirectly` — flags the direct
+  `OrderRepository` dependency. This one stays enabled and *fails* the build.
+
+All other enabled rule classes pass for this fixture — only the one deliberately-left-enabled violation
+should be red.
+
+== Reports
+
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
+
+== Fix
+
+Remove direct service-to-repository coupling by introducing an outbound port, and remove the `rulesDisabled`
+override once the project is aligned with the architecture rules — `rulesDisabled` is meant as a deliberate,
+temporary or team-specific exception, not a permanent way to silence a rule you plan to leave violated.

@@ -1,0 +1,96 @@
+= Hexagonal Spring Field Injection Example
+:toc: left
+
+This example demonstrates the no-field-injection rule from `DependencyInjectionStyleTest`.
+It intentionally uses `@Autowired` field injection on an adapter class, instead of constructor injection.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../fieldinjection/adapter/persistence/OrderRepositoryAdapter.java`
+|Repository adapter with an `@Autowired` field, to trigger `DependencyInjectionStyleTest.fieldsShouldNotBeAutowired`.
+
+|`src/main/java/.../fieldinjection/application/service/OrderService.java`
+|Plain application service that depends only on an outbound port — kept compliant so the only failure is
+the field injection.
+
+|`src/main/java/.../fieldinjection/adapter/web/OrderController.java`
+|Inbound controller that depends only on the inbound port.
+|===
+
+== Configuration
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.fieldinjection'
+    useBuiltInHexagonalRulePack = false
+}
+----
+
+`DependencyInjectionStyleTest` needs no extra configuration — it checks fields in whatever packages are
+already configured as `domainModel`, `adapters`, and `applicationServices`.
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+`OrderRepositoryAdapter` injects its collaborator via an `@Autowired` field instead of a constructor
+parameter:
+
+[source,java]
+----
+@Repository
+public class OrderRepositoryAdapter implements OrderPort {
+
+    @Autowired
+    private PersistenceGateway gateway; // <1>
+
+    @Override
+    public void save(Order order) {
+        gateway.persist(order);
+    }
+}
+----
+<1> Field injection hides a required dependency and prevents constructing this class without a Spring
+context — the rule this example is designed to trip.
+
+`DependencyInjectionStyleTest.fieldsShouldNotBeAutowired` fails, naming the specific class and field.
+
+== Reports
+
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
+
+== Fix
+
+Replace the `@Autowired` field with a constructor parameter:
+
+[source,java]
+----
+@Repository
+public class OrderRepositoryAdapter implements OrderPort {
+
+    private final PersistenceGateway gateway;
+
+    public OrderRepositoryAdapter(PersistenceGateway gateway) {
+        this.gateway = gateway;
+    }
+
+    @Override
+    public void save(Order order) {
+        gateway.persist(order);
+    }
+}
+----
+
+This keeps the dependency explicit and lets the class be constructed and tested without a Spring context.
