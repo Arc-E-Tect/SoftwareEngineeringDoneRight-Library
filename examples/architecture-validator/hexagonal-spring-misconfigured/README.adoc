@@ -1,0 +1,44 @@
+= Hexagonal Spring Misconfigured Example
+:toc: left
+
+This example intentionally leaves architectureValidator.basePackage blank.
+It demonstrates fail-fast validation from RulePackConfigurationTest.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|build.gradle
+|Configures architectureValidator with a blank basePackage to trigger fail-fast misconfiguration behavior.
+
+|src/main/java/com/arc_e_tect/example/spring/misconfigured/SampleDomain.java
+|Minimal placeholder class so the project compiles.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+The architecture suite fails because architectureValidator.basePackage is blank.
+In this fixture, all 23 architecture tests fail loudly instead of passing vacuously.
+The actionable failure is RulePackConfigurationTest.requiredArchitecturePropertiesShouldBeConfigured.
+That message explicitly states that architectureValidator.basePackage is not set and shows how to configure it.
+The remaining failures are incidental noise caused by the invalid import scope and reinforce that the project is misconfigured.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Set architectureValidator.basePackage to the project root package.
+Keep inPorts, outPorts, and domainModel configured so the rules validate real classes.

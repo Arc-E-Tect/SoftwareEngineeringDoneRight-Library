@@ -1,0 +1,49 @@
+= Hexagonal Spring Type Leakage Example
+:toc: left
+
+This example demonstrates a JPA entity leaking into an outbound port contract.
+It is designed to trigger TypeLeakageTest.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|src/main/java/com/arc_e_tect/example/spring/typeleakage/application/port/outbound/OrderPort.java
+|Outbound port intentionally returns OrderEntity to demonstrate entity leakage across the application boundary.
+
+|src/main/java/com/arc_e_tect/example/spring/typeleakage/persistence/OrderEntity.java
+|JPA entity type that must not appear in port method signatures.
+
+|src/main/java/com/arc_e_tect/example/spring/typeleakage/adapter/persistence/OrderRepositoryAdapter.java
+|Repository adapter implementation behind the outbound port.
+
+|build.gradle
+|Disables PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel so this example isolates TypeLeakageTest behavior.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+TypeLeakageTest.portsShouldNotExposeJpaEntities fails because OrderPort exposes OrderEntity.
+The failure message names OrderPort.findById and the leaked type com.arc_e_tect.example.spring.typeleakage.persistence.OrderEntity.
+PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel is intentionally reported as SKIPPED via rulesDisabled to isolate this demonstration to TypeLeakageTest.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Change OrderPort to use domain types only.
+Keep OrderEntity confined to persistence adapters.
+Remove the temporary PortContractTest disable once the port signature no longer exposes OrderEntity.

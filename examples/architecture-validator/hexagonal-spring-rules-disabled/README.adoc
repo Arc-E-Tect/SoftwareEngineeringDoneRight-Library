@@ -1,0 +1,45 @@
+= Hexagonal Spring Rules Disabled Example
+:toc: left
+
+This example demonstrates per-rule opt-out using architectureValidator.rulesDisabled.
+It intentionally introduces two violations and disables one rule id.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|src/main/java/com/arc_e_tect/example/spring/rulesdisabled/application/service/adapter/OrderService.java
+|Annotated with @Service and directly depends on a @Repository, creating intentional violations.
+
+|src/main/java/com/arc_e_tect/example/spring/rulesdisabled/adapter/persistence/OrderRepository.java
+|Spring repository adapter used directly by the service.
+
+|build.gradle
+|Disables DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes via rulesDisabled.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes is reported as SKIPPED because it is disabled.
+SpringHexagonalArchitectureTest.servicesShouldNotAccessRepositoriesDirectly remains enabled and fails.
+All other enabled rule classes pass for this fixture.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Remove direct service-to-repository coupling by introducing an outbound port.
+Remove the rulesDisabled override after the project is aligned with the architecture rules.

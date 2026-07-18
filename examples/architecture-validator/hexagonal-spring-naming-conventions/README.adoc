@@ -1,0 +1,46 @@
+= Hexagonal Spring Naming Conventions Example
+:toc: left
+
+This example demonstrates opt-in naming convention rules from NamingConventionTest.
+It intentionally uses non-compliant suffixes for in-ports, out-ports, and repository adapters.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|src/main/java/com/arc_e_tect/example/spring/namingconventions/application/port/inbound/OrderCommands.java
+|Inbound port that intentionally does not end with UseCase or Port.
+
+|src/main/java/com/arc_e_tect/example/spring/namingconventions/application/port/outbound/OrderStore.java
+|Outbound port that intentionally does not end with Port.
+
+|src/main/java/com/arc_e_tect/example/spring/namingconventions/adapter/persistence/OrderPersistence.java
+|Repository adapter that intentionally does not end with Repository or Adapter.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+NamingConventionTest.inputPortsShouldHaveConsistentSuffix fails for OrderCommands.
+NamingConventionTest.outputPortsShouldHaveConsistentSuffix fails for OrderStore.
+NamingConventionTest.adaptersShouldHaveConsistentSuffix fails for OrderPersistence.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Rename OrderCommands to OrderUseCase or OrderCommandsUseCase.
+Rename OrderStore to OrderPort.
+Rename OrderPersistence to OrderRepositoryAdapter or OrderRepository.

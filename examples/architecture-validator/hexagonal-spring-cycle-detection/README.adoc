@@ -1,0 +1,44 @@
+= Hexagonal Spring Cycle Detection Example
+:toc: left
+
+This example demonstrates package cycle detection in adapter packages.
+It also documents the CycleFreedomTest slice-pattern bug fix that was required to make this check effective in nested base packages.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|src/main/java/com/arc_e_tect/example/spring/cycledetection/adapter/persistence/OrderRepositoryAdapter.java
+|Adapter package A that depends on adapter.notification.OrderNotifier.
+
+|src/main/java/com/arc_e_tect/example/spring/cycledetection/adapter/notification/OrderNotifier.java
+|Adapter package B that depends back on OrderRepositoryAdapter, creating a package cycle.
+
+|src/main/java/com/arc_e_tect/example/spring/cycledetection/application/service/OrderService.java
+|Plain application service that depends only on an outbound port.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+CycleFreedomTest.adapterPackagesShouldBeFreeOfCycles fails and reports the cycle between adapter.persistence and adapter.notification.
+Other rule classes should pass.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Break the dependency loop so adapter.notification no longer depends on adapter.persistence.
+Keep adapter package dependencies acyclic to preserve maintainable boundaries.

@@ -1,0 +1,44 @@
+= Hexagonal Spring Field Injection Example
+:toc: left
+
+This example demonstrates the no-field-injection rule from DependencyInjectionStyleTest.
+It intentionally uses @Autowired on a field in an adapter class.
+
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|src/main/java/com/arc_e_tect/example/spring/fieldinjection/adapter/persistence/OrderRepositoryAdapter.java
+|Repository adapter with an @Autowired field to trigger DependencyInjectionStyleTest.fieldsShouldNotBeAutowired.
+
+|src/main/java/com/arc_e_tect/example/spring/fieldinjection/application/service/OrderService.java
+|Plain application service that depends only on an outbound port.
+
+|src/main/java/com/arc_e_tect/example/spring/fieldinjection/adapter/web/OrderController.java
+|Inbound controller that depends only on the inbound port.
+|===
+
+== Run
+
+[source,bash]
+----
+./gradlew build
+./gradlew testArchitecture
+----
+
+== Expected violations
+
+DependencyInjectionStyleTest.fieldsShouldNotBeAutowired fails because OrderRepositoryAdapter uses field injection.
+The failure names the specific class and field.
+
+== Reports
+
+The Gradle HTML report is under build/reports/architecture-validator/html/.
+The XML report is under build/reports/architecture-validator/xml/.
+
+== Fix
+
+Replace the @Autowired field with constructor injection.
+Keep dependencies explicit and testable without a Spring context.

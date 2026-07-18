@@ -134,8 +134,17 @@ Example: `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes
 
 == Example Project
 
-A self-contained example demonstrating a Spring Hexagonal architecture violation is at link:../examples/architecture-validator/single-module-spring/[`examples/architecture-validator/single-module-spring/`].
-See link:../examples/architecture-validator/single-module-spring/README.adoc[its README] for full details.
+The following self-contained example projects demonstrate each rule-pack behavior in isolation-oriented fixtures.
+
+* link:../examples/architecture-validator/single-module-spring/[examples/architecture-validator/single-module-spring/] demonstrates the original SpringHexagonalArchitectureTest service-to-repository violation.
+* link:../examples/architecture-validator/hexagonal-spring-misconfigured/[examples/architecture-validator/hexagonal-spring-misconfigured/] demonstrates fail-fast configuration errors from RulePackConfigurationTest.
+* link:../examples/architecture-validator/hexagonal-spring-type-leakage/[examples/architecture-validator/hexagonal-spring-type-leakage/] demonstrates TypeLeakageTest detection of JPA entity leakage in a port contract.
+* link:../examples/architecture-validator/hexagonal-spring-cycle-detection/[examples/architecture-validator/hexagonal-spring-cycle-detection/] demonstrates CycleFreedomTest detection of adapter-package cycles in nested base packages.
+* link:../examples/architecture-validator/hexagonal-spring-rules-disabled/[examples/architecture-validator/hexagonal-spring-rules-disabled/] demonstrates selective per-rule opt-out via architectureValidator.rulesDisabled.
+* link:../examples/architecture-validator/hexagonal-spring-field-injection/[examples/architecture-validator/hexagonal-spring-field-injection/] demonstrates DependencyInjectionStyleTest detection of @Autowired field injection.
+* link:../examples/architecture-validator/hexagonal-spring-naming-conventions/[examples/architecture-validator/hexagonal-spring-naming-conventions/] demonstrates opt-in NamingConventionTest failures for inconsistent suffixes.
+
+Each example README contains runnable commands, expected violations, and remediation guidance.
 
 == Contributing
 
