@@ -1,8 +1,11 @@
 = Hexagonal Spring Misconfigured Example
 :toc: left
 
-This example intentionally leaves architectureValidator.basePackage blank.
-It demonstrates fail-fast validation from RulePackConfigurationTest.
+This example intentionally leaves `architectureValidator.basePackage` blank.
+It demonstrates the fail-fast validation added in `RulePackConfigurationTest`: before this check existed, a
+misconfigured consumer would see every architecture rule pass vacuously (`ClassFileImporter` imports zero
+classes, so nothing is ever checked) — a silent false-green build. This example shows the loud failure that
+replaces that silence.
 
 == Files and Purpose
 
@@ -10,12 +13,25 @@ It demonstrates fail-fast validation from RulePackConfigurationTest.
 |===
 |File |Purpose
 
-|build.gradle
-|Configures architectureValidator with a blank basePackage to trigger fail-fast misconfiguration behavior.
+|`build.gradle`
+|Configures `architectureValidator` with a blank `basePackage` to trigger fail-fast misconfiguration behavior.
 
-|src/main/java/com/arc_e_tect/example/spring/misconfigured/SampleDomain.java
-|Minimal placeholder class so the project compiles.
+|`src/main/java/com/arc_e_tect/example/spring/misconfigured/SampleDomain.java`
+|Minimal placeholder class so the project compiles. Its content is irrelevant — the point is that
+`basePackage` never resolves to it.
 |===
+
+== Configuration
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = ''
+    useBuiltInHexagonalRulePack = false // <1>
+}
+----
+<1> Disabled so the failure comes only from the external rule pack (`hexagonal-spring-rules`), not the
+plugin's own generated built-in test — keeps the demonstration focused on `RulePackConfigurationTest`.
 
 == Run
 
@@ -27,18 +43,38 @@ It demonstrates fail-fast validation from RulePackConfigurationTest.
 
 == Expected violations
 
-The architecture suite fails because architectureValidator.basePackage is blank.
-In this fixture, all 23 architecture tests fail loudly instead of passing vacuously.
-The actionable failure is RulePackConfigurationTest.requiredArchitecturePropertiesShouldBeConfigured.
-That message explicitly states that architectureValidator.basePackage is not set and shows how to configure it.
-The remaining failures are incidental noise caused by the invalid import scope and reinforce that the project is misconfigured.
+With `basePackage` blank, `RulePackConfiguration.requireConfigured()` throws before `ClassFileImporter` ever
+runs. Every rule class's `classes` field is initialized the same way
+(`new ClassFileImporter()...importPackages(RulePackConfiguration.basePackage())`), and `basePackage()` now
+calls `requireConfigured()` itself — so the same `AssertionError` propagates out of *every* rule class's
+field initializer, not just `RulePackConfigurationTest`. All 23 architecture tests fail with the identical
+root cause:
+
+[source]
+----
+java.lang.AssertionError: architectureValidator.basePackage is not set. Configure it via the Architecture
+Validator plugin's architectureValidator { basePackage = 'com.example.myapp' } extension.
+----
+
+The one that matters is `RulePackConfigurationTest.requiredArchitecturePropertiesShouldBeConfigured` — its
+message is the actionable one, telling you exactly which property to set and how. The other 22 failures are
+the same exception surfacing everywhere else; seeing all of them fail together (instead of quietly passing)
+is the point of this example.
 
 == Reports
 
-The Gradle HTML report is under build/reports/architecture-validator/html/.
-The XML report is under build/reports/architecture-validator/xml/.
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
 
 == Fix
 
-Set architectureValidator.basePackage to the project root package.
-Keep inPorts, outPorts, and domainModel configured so the rules validate real classes.
+Set `architectureValidator.basePackage` to the project's real root package. Keep `inPorts`, `outPorts`, and
+`domainModel` configured (or leave them at the plugin's Hexagonal defaults) so the rules validate real
+classes instead of an empty import scope:
+
+[source,groovy]
+----
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.misconfigured'
+}
+----

@@ -27,6 +27,25 @@ It demonstrates a direct dependency from an application service to a Spring repo
 |Domain model.
 |===
 
+== Configuration
+
+The only setup this rule pack needs is a `basePackage` and the `testArchitectureImplementation` dependency;
+package boundaries (`inPorts`, `outPorts`, `domainModel`, `adapters`, `applicationServices`) fall back to the
+plugin's Hexagonal defaults (`..application.port.inbound..`, `..application.port.outbound..`,
+`..application.domain..`, `..adapter..`/`..adapters..`, `..application.service..`), which this project's
+package layout already follows.
+
+[source,groovy]
+----
+dependencies {
+    testArchitectureImplementation libs.architecture.validator.hexagonal.spring.rules.iff
+}
+
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring'
+}
+----
+
 == Run
 
 [source,bash]
@@ -44,7 +63,26 @@ The current sample is intentionally non-compliant, so both commands are expected
 
 == Expected violations
 
-`OrderService` depends directly on `OrderRepository`, an adapter-layer Spring `@Repository`, instead of going through an outbound port.
+`OrderService` depends directly on `OrderRepository`, an adapter-layer Spring `@Repository`, instead of going through an outbound port:
+
+[source,java]
+----
+public class OrderService implements OrderUseCase {
+
+    private final OrderRepository repository; // <1>
+
+    public OrderService(OrderRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public void createOrder(String id) {
+        repository.save(new Order(id));
+    }
+}
+----
+<1> `OrderRepository` lives in `adapter.persistence`, not behind an `application.port.outbound` interface — this is the violation.
+
 That single design mistake trips several rules from different angles:
 
 * `DependencyDirectionTest.coreApplicationLayerShouldNotDependOnAdapters` — the application core must not depend on adapter-layer classes.

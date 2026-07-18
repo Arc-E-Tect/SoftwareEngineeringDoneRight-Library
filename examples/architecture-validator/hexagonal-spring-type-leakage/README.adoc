@@ -2,7 +2,7 @@
 :toc: left
 
 This example demonstrates a JPA entity leaking into an outbound port contract.
-It is designed to trigger TypeLeakageTest.
+It is designed to trigger `TypeLeakageTest.portsShouldNotExposeJpaEntities`.
 
 == Files and Purpose
 
@@ -10,18 +10,40 @@ It is designed to trigger TypeLeakageTest.
 |===
 |File |Purpose
 
-|src/main/java/com/arc_e_tect/example/spring/typeleakage/application/port/outbound/OrderPort.java
-|Outbound port intentionally returns OrderEntity to demonstrate entity leakage across the application boundary.
+|`src/main/java/.../typeleakage/application/port/outbound/OrderPort.java`
+|Outbound port that intentionally returns `OrderEntity` to demonstrate entity leakage across the application boundary.
 
-|src/main/java/com/arc_e_tect/example/spring/typeleakage/persistence/OrderEntity.java
+|`src/main/java/.../typeleakage/persistence/OrderEntity.java`
 |JPA entity type that must not appear in port method signatures.
 
-|src/main/java/com/arc_e_tect/example/spring/typeleakage/adapter/persistence/OrderRepositoryAdapter.java
+|`src/main/java/.../typeleakage/adapter/persistence/OrderRepositoryAdapter.java`
 |Repository adapter implementation behind the outbound port.
 
-|build.gradle
-|Disables PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel so this example isolates TypeLeakageTest behavior.
+|`build.gradle`
+|Disables `PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel` so this example isolates
+`TypeLeakageTest` behavior (that older, coarser rule would otherwise flag the same leak as generic
+framework-type exposure and muddy the demonstration).
 |===
+
+== Configuration
+
+[source,groovy]
+----
+dependencies {
+    implementation libs.jakarta.persistence.api.iff // <1>
+    testArchitectureImplementation libs.architecture.validator.hexagonal.spring.rules.iff
+}
+
+architectureValidator {
+    basePackage = 'com.arc_e_tect.example.spring.typeleakage'
+    useBuiltInHexagonalRulePack = false
+    rulesDisabled = ['PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel'] // <2>
+}
+----
+<1> Needed only so `jakarta.persistence.Entity` is on the compile classpath for `OrderEntity`; a real
+project would already depend on a JPA provider.
+<2> The per-rule opt-out feature (see the `hexagonal-spring-rules-disabled` example for its own dedicated
+demonstration) — used here purely to keep this example's failure output limited to `TypeLeakageTest`.
 
 == Run
 
@@ -33,17 +55,46 @@ It is designed to trigger TypeLeakageTest.
 
 == Expected violations
 
-TypeLeakageTest.portsShouldNotExposeJpaEntities fails because OrderPort exposes OrderEntity.
-The failure message names OrderPort.findById and the leaked type com.arc_e_tect.example.spring.typeleakage.persistence.OrderEntity.
-PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel is intentionally reported as SKIPPED via rulesDisabled to isolate this demonstration to TypeLeakageTest.
+The out-port method returns the JPA entity directly instead of a domain type:
+
+[source,java]
+----
+public interface OrderPort {
+
+    OrderEntity findById(String id); // <1>
+}
+----
+<1> `OrderEntity` (`persistence.OrderEntity`, annotated `@jakarta.persistence.Entity`) is a persistence
+detail; exposing it here leaks that detail across the port boundary into anything calling `OrderPort`.
+
+`TypeLeakageTest.portsShouldNotExposeJpaEntities` fails, naming the exact method and leaked type:
+
+[source]
+----
+OrderPort#findById exposes JPA entity com.arc_e_tect.example.spring.typeleakage.persistence.OrderEntity as return type
+----
+
+`PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel` is reported as SKIPPED (via `rulesDisabled`,
+not because it wouldn't also catch this) — see the Configuration section above for why.
 
 == Reports
 
-The Gradle HTML report is under build/reports/architecture-validator/html/.
-The XML report is under build/reports/architecture-validator/xml/.
+The Gradle HTML report is under `build/reports/architecture-validator/html/`.
+The XML report is under `build/reports/architecture-validator/xml/`.
 
 == Fix
 
-Change OrderPort to use domain types only.
-Keep OrderEntity confined to persistence adapters.
-Remove the temporary PortContractTest disable once the port signature no longer exposes OrderEntity.
+Change `OrderPort` to return a domain type instead of `OrderEntity`:
+
+[source,java]
+----
+public interface OrderPort {
+
+    Order findById(String id);
+}
+----
+
+Keep `OrderEntity` confined to `adapter.persistence`, mapping between it and `Order` inside
+`OrderRepositoryAdapter`. Once the port signature no longer exposes `OrderEntity`, remove the temporary
+`rulesDisabled` override in `build.gradle` — `PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel`
+should pass cleanly on its own again.
