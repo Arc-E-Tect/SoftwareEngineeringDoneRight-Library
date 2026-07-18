@@ -2,6 +2,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
  *   <li>{@code architectureValidator.domainModel} - Comma-separated domain model packages</li>
  *   <li>{@code architectureValidator.adapters} - Comma-separated adapter packages</li>
  *   <li>{@code architectureValidator.applicationServices} - Comma-separated application service packages</li>
+ *   <li>{@code architectureValidator.rules.disabled} - Comma-separated rule identifiers to skip</li>
  * </ul>
  *
  * @since 0.4.0
@@ -55,6 +57,10 @@ final class RulePackConfiguration {
         return packages("architectureValidator.applicationServices");
     }
 
+    static boolean isRuleDisabled(String ruleId) {
+        return disabledRules().contains(ruleId);
+    }
+
     static void requireConfigured() {
         String configuredBasePackage = property("architectureValidator.basePackage", "").trim();
 
@@ -82,5 +88,12 @@ final class RulePackConfiguration {
                 .filter(value -> !value.isEmpty())
                 .collect(Collectors.toList());
         return values.toArray(new String[0]);
+    }
+
+    private static Set<String> disabledRules() {
+        return Arrays.stream(property("architectureValidator.rules.disabled", "").split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .collect(Collectors.toSet());
     }
 }

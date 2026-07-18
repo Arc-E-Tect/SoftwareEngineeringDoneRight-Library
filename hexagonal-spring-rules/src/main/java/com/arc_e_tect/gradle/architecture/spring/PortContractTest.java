@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -43,6 +44,10 @@ class PortContractTest {
      */
     @Test
     void inputPortsShouldBeInterfaces() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("PortContractTest.inputPortsShouldBeInterfaces"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().resideInAnyPackage(RulePackConfiguration.inPorts())
                 .should().beInterfaces()
@@ -61,6 +66,10 @@ class PortContractTest {
      */
     @Test
     void outputPortsShouldBeInterfaces() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("PortContractTest.outputPortsShouldBeInterfaces"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().resideInAnyPackage(RulePackConfiguration.outPorts())
                 .should().beInterfaces()
@@ -79,6 +88,10 @@ class PortContractTest {
      */
     @Test
     void portsShouldOnlyDependOnJavaCoreAndDomainModel() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("PortContractTest.portsShouldOnlyDependOnJavaCoreAndDomainModel"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().resideInAnyPackage(RulePackConfiguration.inPorts())
                 .or().resideInAnyPackage(RulePackConfiguration.outPorts())

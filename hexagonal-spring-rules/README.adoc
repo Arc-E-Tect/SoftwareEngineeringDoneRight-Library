@@ -117,6 +117,10 @@ The rules read package boundaries from system properties set by the Architecture
 
 |`architectureValidator.applicationServices`
 |Comma-separated application service packages.
+
+|`architectureValidator.rules.disabled`
+|Comma-separated rule identifiers to skip in the format `ClassSimpleName.methodName`.
+Example: `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`.
 |===
 
 == Example Project

@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -43,6 +44,10 @@ class DomainIsolationTest {
      */
     @Test
     void domainModelShouldOnlyDependOnJavaCoreAndDomainModel() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.domainModelShouldOnlyDependOnJavaCoreAndDomainModel"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().resideInAnyPackage(RulePackConfiguration.domainModel())
                 .should().onlyDependOnClassesThat()
@@ -65,6 +70,10 @@ class DomainIsolationTest {
 
     @Test
     void coreApplicationLayerShouldHaveNoFrameworkDependencies() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.coreApplicationLayerShouldHaveNoFrameworkDependencies"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideInAnyPackage(RulePackConfiguration.domainModel())
                 .should().dependOnClassesThat()
@@ -89,6 +98,10 @@ class DomainIsolationTest {
      */
     @Test
     void applicationServicesShouldNotCarrySpringStereotypes() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         noClasses()
                 .that().resideInAnyPackage(RulePackConfiguration.applicationServices())
                 .should().beAnnotatedWith("org.springframework.stereotype.Service")

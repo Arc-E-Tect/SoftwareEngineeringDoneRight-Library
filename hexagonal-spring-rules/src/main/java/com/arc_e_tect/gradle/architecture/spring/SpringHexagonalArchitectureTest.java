@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.architecture.spring;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -56,6 +57,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void controllersShouldOnlyCallInPorts() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.controllersShouldOnlyCallInPorts"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Controller")
                 .or().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
@@ -78,6 +83,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void servicesShouldNotAccessRepositoriesDirectly() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.servicesShouldNotAccessRepositoriesDirectly"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Service")
                 .should().onlyDependOnClassesThat()
@@ -101,6 +110,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void repositoriesShouldOnlyBeAccessedViaOutPorts() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.repositoriesShouldOnlyBeAccessedViaOutPorts"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Repository")
                 .should().onlyBeAccessed().byClassesThat()
@@ -122,6 +135,10 @@ class SpringHexagonalArchitectureTest {
      */
     @Test
     void springComponentsShouldFollowHexagonalLayers() {
+        Assumptions.assumeFalse(
+                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.springComponentsShouldFollowHexagonalLayers"),
+                "Rule disabled via architectureValidator.rules.disabled"
+        );
         classes()
                 .that().areAnnotatedWith("org.springframework.stereotype.Component")
                 .or().areAnnotatedWith("org.springframework.stereotype.Service")
