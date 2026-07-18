@@ -87,6 +87,9 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`TypeLeakageTest`
 |Ports must not expose JPA entities or web DTO packages, and the domain model must not reference JPA entities.
+
+|`CycleFreedomTest`
+|Adapter and domain-model package trees must be free of circular package dependencies.
 |===
 
 == Architecture Validator Properties
