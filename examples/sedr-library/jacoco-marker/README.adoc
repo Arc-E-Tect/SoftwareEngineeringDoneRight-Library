@@ -1,0 +1,47 @@
+= JaCoCo Marker Example
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+This self-contained example demonstrates compliant and non-compliant usage of `@ExcludeFromJacocoGeneratedCodeCoverage`.
+
+// tag::root[]
+== Files and Purpose
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`src/main/java/.../CompliantService.java`
+|Uses `@ExcludeFromJacocoGeneratedCodeCoverage` with a justification and passes the rule.
+
+|`src/main/java/.../NonCompliantService.java`
+|Uses `@ExcludeFromJacocoGeneratedCodeCoverage` without a justification, so the ArchUnit test reports a violation.
+
+|`src/test/java/.../CoverageExclusionConventionsTest.java`
+|Extends `AbstractCoverageExclusionConventionsTest` targeting the example package.
+|===
+
+== Running the Example
+
+This example requires `sedr-library` to be published to your local Maven repository first.
+
+[source,bash]
+----
+# 1. Publish the library locally
+cd sedr-library && ./gradlew clean build publishToMavenLocal
+
+# 2. Run the example - expected to FAIL with one ArchUnit violation
+cd ../examples/sedr-library/jacoco-marker && ./gradlew test
+----
+
+The test run reports exactly one violation.
+`Method NonCompliantService.stop() uses @ExcludeFromJacocoGeneratedCodeCoverage without a justification`.
+`CompliantService` is not mentioned.
+// end::root[]
+
+== License
+
+This example is part of the _Software Engineering Done Right_ repository.
+See link:../../../LICENSE[LICENSE] for details.
