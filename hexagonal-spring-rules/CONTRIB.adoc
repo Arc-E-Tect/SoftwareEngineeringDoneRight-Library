@@ -1,0 +1,16 @@
+= Contributing to hexagonal-spring-rules
+:toc: left
+:icons: font
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/spring-rules-build.yml`
+* `.github/workflows/spring-rules-release.yml`
+* `.github/workflows/spring-rules-security-scan.yml`
+* `release.config.js`
+* `package.json`
+
+Build jobs use configuration cache where compatible.
+Publish jobs keep `--no-configuration-cache` for publishing tasks.

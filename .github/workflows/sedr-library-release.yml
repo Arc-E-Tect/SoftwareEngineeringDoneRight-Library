@@ -50,7 +50,6 @@ jobs:
     needs: Calculate-Version
     permissions:
       contents: read
-      packages: read
 
     runs-on: ubuntu-latest
 
@@ -127,7 +126,6 @@ jobs:
     if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
     permissions:
       contents: read
-      packages: write
 
     runs-on: ubuntu-latest
 
@@ -164,18 +162,10 @@ jobs:
       - name: Publish SEDR Library
         run: |
           cd sedr-library
-          if echo "$MAVEN_OR_GITHUB" | grep -iq "^maven$"; then
-            echo "Publishing to Maven Central via jReleaser"
-            ./gradlew publishMavenPublicationToStagingDeployRepository
-            ./gradlew jreleaserDeploy
-          else
-            echo "Publishing to GitHub Packages"
-            ./gradlew publishMavenPublicationToGitHubPackagesRepository
-          fi
+          echo "Publishing to Maven Central via jReleaser"
+          ./gradlew publishMavenPublicationToStagingDeployRepository
+          ./gradlew jreleaserDeploy
         env:
-          MAVEN_OR_GITHUB: ${{ vars.MAVEN_OR_GITHUB }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
           JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.SIGNING_KEY }}
@@ -202,18 +192,24 @@ jobs:
           ref: main
           token: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
 
-      - name: Update version in README.adoc
+      - name: Update version in sedr-library README
         run: |
-          sed -i "s/|Latest version |.\`[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*\`/|Latest version |\`${{ env.VERSION }}\`/" README.adoc
-          sed -i "s/sedr-library:[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*/sedr-library:${{ env.VERSION }}/g" README.adoc
-          sed -i "s|<version>[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*</version>|<version>${{ env.VERSION }}</version>|" README.adoc
+          sed -i "s/|Latest version |.\`[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*\`/|Latest version |\`${{ env.VERSION }}\`/" sedr-library/README.adoc
+          sed -i "s/sedr-library:[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*/sedr-library:${{ env.VERSION }}/g" sedr-library/README.adoc
+          sed -i "s|<version>[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*</version>|<version>${{ env.VERSION }}</version>|" sedr-library/README.adoc
 
-      - name: Commit and push updated README.adoc
+      - name: Upload updated sedr-library README
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sedr-library-readme-${{ env.VERSION }}
+          path: sedr-library/README.adoc
+
+      - name: Commit and push updated sedr-library README
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.adoc
-          git diff --cached --quiet || git commit -m "docs(readme): update version to ${{ env.VERSION }} [skip ci]"
+          git add sedr-library/README.adoc
+          git diff --cached --quiet || git commit -m "docs(sedr-library): update README version to ${{ env.VERSION }} [skip ci]"
           git push
 
   Determine-Release-Type:

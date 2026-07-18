@@ -1,0 +1,53 @@
+= nvd-cache-primer
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+Internal utility Gradle project that primes and validates the OWASP Dependency-Check NVD (National Vulnerability Database) cache shared by this repository's security-scan workflows.
+It is not published.
+Its only purpose is running the `dependencyCheckUpdate` task in CI.
+
+// tag::root[]
+== Why It Exists
+
+`sedr-library` and `hexagonal-spring-rules` each run OWASP Dependency-Check as part of their security-scan workflows.
+Updating the NVD database from scratch is slow and can hit NVD API rate limits when run repeatedly.
+`nvd-cache-primer` is a minimal project.
+It has no source code and only applies the `owaspDependencycheck` plugin.
+It is dedicated to warming a `~/.gradle/dependency-check-data` cache once a day.
+
+The scheduled workflow `.github/workflows/nvd-cache-refresh.yml` runs daily (`17 2 * * *` UTC).
+It restores the previous cache, executes `dependencyCheckUpdate` from this project, and saves the refreshed cache under a date-stamped key.
+The per-project `security-scan.yml` workflow then restores that shared cache before running `dependencyCheckAnalyze`.
+It only falls back to its own update when the cache is missing.
+
+== Configuration
+
+[source,groovy]
+----
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = 9
+    format = 'HTML'
+}
+----
+
+An https://nvd.nist.gov/developers/request-an-api-key[NVD API key] is required.
+Set `NVD_APIKEY_SEDR` (or `NVD_APIKEY` as a fallback) as a repository secret or local environment variable.
+
+== Running Locally
+
+[source,bash]
+----
+cd nvd-cache-primer
+NVD_APIKEY_SEDR=<your-nvd-api-key> ./gradlew dependencyCheckUpdate
+----
+// end::root[]
+
+== License
+
+This project is part of the _Software Engineering Done Right_ repository.
+See link:../LICENSE[LICENSE] for details.

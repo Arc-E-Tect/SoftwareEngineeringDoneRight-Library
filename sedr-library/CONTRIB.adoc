@@ -1,0 +1,15 @@
+= Contributing to sedr-library
+:toc: left
+:icons: font
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/sedr-library-build.yml`
+* `.github/workflows/sedr-library-release.yml`
+* `release.config.js`
+* `package.json`
+
+Configuration cache is disabled throughout.
+`resolveVersion` calls `gh release list` at configuration time to determine the library version, which is not compatible with configuration cache.

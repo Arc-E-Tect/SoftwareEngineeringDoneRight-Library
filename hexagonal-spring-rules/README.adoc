@@ -11,13 +11,15 @@ image:https://img.shields.io/badge/Gradle-9.x-02303A?logo=gradle[Gradle 9.x,link
 The Spring Rules project publishes the `architecture-validator-hexagonal-spring-rules` rule pack.
 It is consumed by the Architecture Validator plugin as an external rule pack dependency.
 
+// tag::root[]
 == Artifact Coordinates
 
-[source]
-----
-groupId:    com.arc-e-tect.architecture-validator
-artifactId: architecture-validator-hexagonal-spring-rules
-----
+[cols="1,1"]
+|===
+|Latest version |_Not yet released_
+|Group ID       |`com.arc-e-tect.architecture-validator`
+|Artifact ID    |`architecture-validator-hexagonal-spring-rules`
+|===
 
 == Requirements
 
@@ -37,10 +39,20 @@ Run from this project directory.
 ./gradlew clean build
 ----
 
-== Use in a Consumer Project
+== Adding the Dependency
 
-Add the rule pack to `testArchitectureImplementation`.
+The rule pack will be published to Maven Central; no repository declaration or authentication will be required.
+Add it to `testArchitectureImplementation` in a project that already applies the Architecture Validator plugin.
 
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    testArchitectureImplementation("com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:<version>")
+}
+----
+
+.Gradle (Groovy DSL)
 [source,groovy]
 ----
 dependencies {
@@ -54,25 +66,59 @@ The plugin discovers these tests on the classpath and includes them in the gener
 
 The default rules target Spring-specific architectural boundaries, including dependency direction and domain isolation.
 
-Source test classes include:
+[cols="1,3"]
+|===
+|Class |Checks
 
-* `SpringHexagonalArchitectureTest`
-* `DomainIsolationTest`
-* `DependencyDirectionTest`
-* `PortContractTest`
+|`SpringHexagonalArchitectureTest`
+|Controllers only call in-ports, services do not access repositories directly (must go through an out-port), repositories are only reached through out-ports, and Spring components live in the expected Hexagonal layer.
 
-== Release and CI
+|`DomainIsolationTest`
+|The domain model depends only on Java core and other domain classes, the application core carries no Spring, persistence, or validation framework dependencies, and application services stay free of Spring stereotypes.
 
-This project has independent workflows and release configuration.
+|`DependencyDirectionTest`
+|Dependencies flow inward only, the core never depends on adapters or adapter implementations, adapters depend only on ports (not concrete services), and only the configuration layer wires concrete services directly.
 
-* `.github/workflows/spring-rules-build.yml`
-* `.github/workflows/spring-rules-release.yml`
-* `.github/workflows/spring-rules-security-scan.yml`
-* `release.config.js`
-* `package.json`
+|`PortContractTest`
+|In-ports and out-ports are interfaces, and port signatures reference only Java core and domain model types with no framework leakage into port contracts.
+|===
 
-Build jobs use configuration cache where compatible.
-Publish jobs keep `--no-configuration-cache` for publishing tasks.
+== Architecture Validator Properties
+
+The rules read package boundaries from system properties set by the Architecture Validator plugin's `architectureValidator` extension.
+
+[cols="1,3"]
+|===
+|Property |Purpose
+
+|`architectureValidator.basePackage`
+|Root package to validate.
+
+|`architectureValidator.inPorts`
+|Comma-separated in-port packages.
+
+|`architectureValidator.outPorts`
+|Comma-separated out-port packages.
+
+|`architectureValidator.domainModel`
+|Comma-separated domain model packages.
+
+|`architectureValidator.adapters`
+|Comma-separated adapter packages.
+
+|`architectureValidator.applicationServices`
+|Comma-separated application service packages.
+|===
+
+== Example Project
+
+A self-contained example demonstrating a Spring Hexagonal architecture violation is at link:../examples/architecture-validator/single-module-spring/[`examples/architecture-validator/single-module-spring/`].
+See link:../examples/architecture-validator/single-module-spring/README.adoc[its README] for full details.
+
+== Contributing
+
+See link:CONTRIB.adoc[CONTRIB.adoc] for this project's release and CI workflow details.
+// end::root[]
 
 == License
 
