@@ -55,4 +55,4 @@ out/
 gradle-plugin-publishing.md
 sedr-library-maven-central-publishing.md
 
-/**/req_prompts.md
+/**/*prompts.md
