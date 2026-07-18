@@ -53,6 +53,13 @@ class DomainIsolationTest {
                 .should().onlyDependOnClassesThat()
                 .resideInAnyPackage(RulePackConfiguration.merge(
                         RulePackConfiguration.domainModel(),
+                        "java.util..",
+                        "java.lang..",
+                        "java.time.."))
+                .because("Domain model classes must stay framework free")
+                .check(classes);
+    }
+
     /**
      * Validates that the core application layer has no Spring or persistence framework dependencies.
      * 
@@ -61,13 +68,6 @@ class DomainIsolationTest {
      * This ensures the business logic remains framework-agnostic and can be evolved
      * independently of infrastructure choices.
      */
-                        "java.util..",
-                        "java.lang..",
-                        "java.time.."))
-                .because("Domain model classes must stay framework free")
-                .check(classes);
-    }
-
     @Test
     void coreApplicationLayerShouldHaveNoFrameworkDependencies() {
         Assumptions.assumeFalse(
