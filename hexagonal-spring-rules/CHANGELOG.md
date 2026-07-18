@@ -1,3 +1,15 @@
+# [0.5.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.7...v0.5.0) (2026-07-18)
+
+
+### ✨ New and updated features
+
+* **hexagonal-spring-rules:** add new architecture rules and examples ([#41](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/41)) ([8a0a226](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/8a0a2262f0d74f9d646ab1c0711e297865556cff)), closes [#41](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/41)
+
+
+### 📝 Documentation
+
+* **sedr-library:** update README version to 0.4.7 [skip ci] ([4b590b1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4b590b1e1d6c24b54a7499b90341d3e7c9eb2267))
+
 ## [0.4.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.0...v0.4.1) (2026-06-12)
 
 
