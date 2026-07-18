@@ -1,4 +1,4 @@
-package com.arc_e_tect.fixtures.violating.port.inputNotInterface.application.port.in;
+package com.arc_e_tect.fixtures.violating.port.inputNotInterface.application.port.inbound;
 
 import com.arc_e_tect.fixtures.violating.port.inputNotInterface.domain.model.PortDomain;
 

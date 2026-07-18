@@ -1,4 +1,4 @@
-package com.arc_e_tect.fixtures.violating.port.signatureLeak.application.port.in;
+package com.arc_e_tect.fixtures.violating.port.signatureLeak.application.port.inbound;
 
 import org.springframework.context.ApplicationContext;
 

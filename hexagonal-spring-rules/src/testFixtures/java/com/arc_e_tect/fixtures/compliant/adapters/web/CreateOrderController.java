@@ -1,6 +1,6 @@
 package com.arc_e_tect.fixtures.compliant.adapters.web;
 
-import com.arc_e_tect.fixtures.compliant.application.port.in.CreateOrderUseCase;
+import com.arc_e_tect.fixtures.compliant.application.port.inbound.CreateOrderUseCase;
 import org.springframework.stereotype.Controller;
 
 @Controller

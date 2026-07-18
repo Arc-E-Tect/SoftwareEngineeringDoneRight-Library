@@ -1,7 +1,7 @@
 package com.arc_e_tect.fixtures.regression.serviceImplementsPort.application.service;
 
-import com.arc_e_tect.fixtures.regression.serviceImplementsPort.application.port.in.CreateOrderUseCase;
-import com.arc_e_tect.fixtures.regression.serviceImplementsPort.application.port.out.OrderStorePort;
+import com.arc_e_tect.fixtures.regression.serviceImplementsPort.application.port.inbound.CreateOrderUseCase;
+import com.arc_e_tect.fixtures.regression.serviceImplementsPort.application.port.outbound.OrderStorePort;
 import org.springframework.stereotype.Service;
 
 /**

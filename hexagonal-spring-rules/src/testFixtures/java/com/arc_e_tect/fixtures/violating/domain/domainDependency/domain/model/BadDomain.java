@@ -1,6 +1,6 @@
 package com.arc_e_tect.fixtures.violating.domain.domainDependency.domain.model;
 
-import com.arc_e_tect.fixtures.violating.domain.domainDependency.application.port.out.ForbiddenPort;
+import com.arc_e_tect.fixtures.violating.domain.domainDependency.application.port.outbound.ForbiddenPort;
 
 public class BadDomain {
 

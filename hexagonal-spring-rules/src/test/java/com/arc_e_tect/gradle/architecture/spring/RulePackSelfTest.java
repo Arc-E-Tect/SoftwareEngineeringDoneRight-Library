@@ -82,8 +82,8 @@ class RulePackSelfTest {
     void rulePackShouldPassAllCoreRulesWhenFixturesAreCompliant() {
         configure(
                 COMPLIANT_BASE,
-                COMPLIANT_BASE + ".application.port.in..",
-                COMPLIANT_BASE + ".application.port.out..",
+                COMPLIANT_BASE + ".application.port.inbound..",
+                COMPLIANT_BASE + ".application.port.outbound..",
                 COMPLIANT_BASE + ".domain.model..",
                 COMPLIANT_BASE + ".adapters.web..," + COMPLIANT_BASE + ".adapters.persistence..",
                 COMPLIANT_BASE + ".application.service.."
@@ -119,8 +119,8 @@ class RulePackSelfTest {
     void springHexagonalArchitectureShouldPassServicesRuleWhenServiceImplementsItsOwnInPort() {
         configure(
                 SERVICE_IMPLEMENTS_PORT_BASE,
-                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.in..",
-                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.out..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.inbound..",
+                SERVICE_IMPLEMENTS_PORT_BASE + ".application.port.outbound..",
                 SERVICE_IMPLEMENTS_PORT_BASE + ".domain.model..",
                 SERVICE_IMPLEMENTS_PORT_BASE + ".adapters..",
                 SERVICE_IMPLEMENTS_PORT_BASE + ".application.service.."
@@ -139,8 +139,8 @@ class RulePackSelfTest {
     void cycleFreedomTestShouldFailAdapterRuleWhenAdapterPackagesFormACycle() {
         configure(
                 CYCLE_BASE,
-                CYCLE_BASE + ".application.port.in..",
-                CYCLE_BASE + ".application.port.out..",
+                CYCLE_BASE + ".application.port.inbound..",
+                CYCLE_BASE + ".application.port.outbound..",
                 CYCLE_BASE + ".domain.model..",
                 // Deliberately a floating "..X.." wildcard, not anchored to CYCLE_BASE like the
                 // other fixture configuration in this file: this matches how the real Architecture
@@ -165,8 +165,8 @@ class RulePackSelfTest {
     void springHexagonalArchitectureShouldFailControllersRuleWhenControllerDependsOnService() {
         configure(
                 SPRING_CONTROLLERS_BASE,
-                SPRING_CONTROLLERS_BASE + ".application.port.in..",
-                SPRING_CONTROLLERS_BASE + ".application.port.out..",
+                SPRING_CONTROLLERS_BASE + ".application.port.inbound..",
+                SPRING_CONTROLLERS_BASE + ".application.port.outbound..",
                 SPRING_CONTROLLERS_BASE + ".domain.model..",
                 SPRING_CONTROLLERS_BASE + ".adapters..",
                 SPRING_CONTROLLERS_BASE + ".application.service.."
@@ -184,8 +184,8 @@ class RulePackSelfTest {
     void springHexagonalArchitectureShouldFailServicesRuleWhenServiceDependsOnRepository() {
         configure(
                 SPRING_SERVICES_BASE,
-                SPRING_SERVICES_BASE + ".application.port.in..",
-                SPRING_SERVICES_BASE + ".application.port.out..",
+                SPRING_SERVICES_BASE + ".application.port.inbound..",
+                SPRING_SERVICES_BASE + ".application.port.outbound..",
                 SPRING_SERVICES_BASE + ".domain.model..",
                 SPRING_SERVICES_BASE + ".adapters..",
                 SPRING_SERVICES_BASE + ".application.service.."
@@ -203,8 +203,8 @@ class RulePackSelfTest {
     void springHexagonalArchitectureShouldFailRepositoryAccessRuleWhenRepositoryIsUsedOutsideAllowedLayers() {
         configure(
                 SPRING_REPOSITORIES_BASE,
-                SPRING_REPOSITORIES_BASE + ".application.port.in..",
-                SPRING_REPOSITORIES_BASE + ".application.port.out..",
+                SPRING_REPOSITORIES_BASE + ".application.port.inbound..",
+                SPRING_REPOSITORIES_BASE + ".application.port.outbound..",
                 SPRING_REPOSITORIES_BASE + ".domain.model..",
                 SPRING_REPOSITORIES_BASE + ".adapters..",
                 SPRING_REPOSITORIES_BASE + ".application.service.."
@@ -222,8 +222,8 @@ class RulePackSelfTest {
     void springHexagonalArchitectureShouldFailComponentLayerRuleWhenComponentIsOutsideHexagonalPackages() {
         configure(
                 SPRING_COMPONENTS_BASE,
-                SPRING_COMPONENTS_BASE + ".application.port.in..",
-                SPRING_COMPONENTS_BASE + ".application.port.out..",
+                SPRING_COMPONENTS_BASE + ".application.port.inbound..",
+                SPRING_COMPONENTS_BASE + ".application.port.outbound..",
                 SPRING_COMPONENTS_BASE + ".domain.model..",
                 SPRING_COMPONENTS_BASE + ".adapters..",
                 SPRING_COMPONENTS_BASE + ".application.service.."
@@ -241,8 +241,8 @@ class RulePackSelfTest {
     void domainIsolationShouldFailDomainDependencyRuleWhenDomainDependsOnPortContract() {
         configure(
                 DOMAIN_DEPENDENCY_BASE,
-                DOMAIN_DEPENDENCY_BASE + ".application.port.in..",
-                DOMAIN_DEPENDENCY_BASE + ".application.port.out..",
+                DOMAIN_DEPENDENCY_BASE + ".application.port.inbound..",
+                DOMAIN_DEPENDENCY_BASE + ".application.port.outbound..",
                 DOMAIN_DEPENDENCY_BASE + ".domain.model..",
                 DOMAIN_DEPENDENCY_BASE + ".adapters..",
                 DOMAIN_DEPENDENCY_BASE + ".application.service.."
@@ -259,8 +259,8 @@ class RulePackSelfTest {
     void domainIsolationShouldFailFrameworkDependencyRuleWhenDomainUsesSpringTypes() {
         configure(
                 DOMAIN_FRAMEWORK_BASE,
-                DOMAIN_FRAMEWORK_BASE + ".application.port.in..",
-                DOMAIN_FRAMEWORK_BASE + ".application.port.out..",
+                DOMAIN_FRAMEWORK_BASE + ".application.port.inbound..",
+                DOMAIN_FRAMEWORK_BASE + ".application.port.outbound..",
                 DOMAIN_FRAMEWORK_BASE + ".domain.model..",
                 DOMAIN_FRAMEWORK_BASE + ".adapters..",
                 DOMAIN_FRAMEWORK_BASE + ".application.service.."
@@ -272,8 +272,8 @@ class RulePackSelfTest {
 
         configure(
                 DOMAIN_FRAMEWORK_BASE,
-                DOMAIN_FRAMEWORK_BASE + ".application.port.in..",
-                DOMAIN_FRAMEWORK_BASE + ".application.port.out..",
+                DOMAIN_FRAMEWORK_BASE + ".application.port.inbound..",
+                DOMAIN_FRAMEWORK_BASE + ".application.port.outbound..",
                 DOMAIN_FRAMEWORK_BASE + ".domain.framework..",
                 DOMAIN_FRAMEWORK_BASE + ".adapters..",
                 DOMAIN_FRAMEWORK_BASE + ".application.service.."
@@ -289,8 +289,8 @@ class RulePackSelfTest {
     void domainIsolationShouldFailServiceStereotypeRuleWhenApplicationServiceIsAnnotatedWithService() {
         configure(
                 DOMAIN_SERVICE_STEREOTYPE_BASE,
-                DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.port.in..",
-                DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.port.out..",
+                DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.port.inbound..",
+                DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.port.outbound..",
                 DOMAIN_SERVICE_STEREOTYPE_BASE + ".domain.model..",
                 DOMAIN_SERVICE_STEREOTYPE_BASE + ".adapters..",
                 DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.service.."
@@ -307,8 +307,8 @@ class RulePackSelfTest {
     void dependencyDirectionShouldFailCoreRuleWhenCoreDependsOnAdapters() {
         configure(
                 DEPENDENCY_CORE_BASE,
-                DEPENDENCY_CORE_BASE + ".application.port.in..",
-                DEPENDENCY_CORE_BASE + ".application.port.out..",
+                DEPENDENCY_CORE_BASE + ".application.port.inbound..",
+                DEPENDENCY_CORE_BASE + ".application.port.outbound..",
                 DEPENDENCY_CORE_BASE + ".domain.model..",
                 DEPENDENCY_CORE_BASE + ".adapters..",
                 DEPENDENCY_CORE_BASE + ".application.service.."
@@ -325,8 +325,8 @@ class RulePackSelfTest {
     void dependencyDirectionShouldFailCoreRuleWhenOnlySplitAdapterPropertiesAreConfigured() {
         configure(
                 DEPENDENCY_CORE_BASE,
-                DEPENDENCY_CORE_BASE + ".application.port.in..",
-                DEPENDENCY_CORE_BASE + ".application.port.out..",
+                DEPENDENCY_CORE_BASE + ".application.port.inbound..",
+                DEPENDENCY_CORE_BASE + ".application.port.outbound..",
                 DEPENDENCY_CORE_BASE + ".domain.model..",
                 "",
                 DEPENDENCY_CORE_BASE + ".application.service.."
@@ -349,8 +349,8 @@ class RulePackSelfTest {
     void dependencyDirectionShouldFailAdapterRuleWhenAdapterDependsOnServiceImplementation() {
         configure(
                 DEPENDENCY_ADAPTER_BASE,
-                DEPENDENCY_ADAPTER_BASE + ".application.port.in..",
-                DEPENDENCY_ADAPTER_BASE + ".application.port.out..",
+                DEPENDENCY_ADAPTER_BASE + ".application.port.inbound..",
+                DEPENDENCY_ADAPTER_BASE + ".application.port.outbound..",
                 DEPENDENCY_ADAPTER_BASE + ".domain.model..",
                 DEPENDENCY_ADAPTER_BASE + ".application.domain.service.adapter..",
                 DEPENDENCY_ADAPTER_BASE + ".application.domain.service.impl.."
@@ -367,8 +367,8 @@ class RulePackSelfTest {
     void dependencyDirectionShouldFailConfigurationRuleWhenNonConfigurationDependsOnServiceImplementation() {
         configure(
                 DEPENDENCY_NON_CONFIG_BASE,
-                DEPENDENCY_NON_CONFIG_BASE + ".application.port.in..",
-                DEPENDENCY_NON_CONFIG_BASE + ".application.port.out..",
+                DEPENDENCY_NON_CONFIG_BASE + ".application.port.inbound..",
+                DEPENDENCY_NON_CONFIG_BASE + ".application.port.outbound..",
                 DEPENDENCY_NON_CONFIG_BASE + ".domain.model..",
                 DEPENDENCY_NON_CONFIG_BASE + ".adapters..",
                 DEPENDENCY_NON_CONFIG_BASE + ".application.service.."
@@ -385,8 +385,8 @@ class RulePackSelfTest {
     void portContractShouldFailInputPortRuleWhenInputPortIsAConcreteClass() {
         configure(
                 PORT_INPUT_BASE,
-                PORT_INPUT_BASE + ".application.port.in..",
-                PORT_INPUT_BASE + ".application.port.out..",
+                PORT_INPUT_BASE + ".application.port.inbound..",
+                PORT_INPUT_BASE + ".application.port.outbound..",
                 PORT_INPUT_BASE + ".domain.model..",
                 PORT_INPUT_BASE + ".adapters..",
                 PORT_INPUT_BASE + ".application.service.."
@@ -403,8 +403,8 @@ class RulePackSelfTest {
     void portContractShouldFailOutputPortRuleWhenOutputPortIsAConcreteClass() {
         configure(
                 PORT_OUTPUT_BASE,
-                PORT_OUTPUT_BASE + ".application.port.in..",
-                PORT_OUTPUT_BASE + ".application.port.out..",
+                PORT_OUTPUT_BASE + ".application.port.inbound..",
+                PORT_OUTPUT_BASE + ".application.port.outbound..",
                 PORT_OUTPUT_BASE + ".domain.model..",
                 PORT_OUTPUT_BASE + ".adapters..",
                 PORT_OUTPUT_BASE + ".application.service.."
@@ -421,8 +421,8 @@ class RulePackSelfTest {
     void portContractShouldFailSignatureRuleWhenPortExposesFrameworkType() {
         configure(
                 PORT_SIGNATURE_BASE,
-                PORT_SIGNATURE_BASE + ".application.port.in..",
-                PORT_SIGNATURE_BASE + ".application.port.out..",
+                PORT_SIGNATURE_BASE + ".application.port.inbound..",
+                PORT_SIGNATURE_BASE + ".application.port.outbound..",
                 PORT_SIGNATURE_BASE + ".domain.model..",
                 PORT_SIGNATURE_BASE + ".adapters..",
                 PORT_SIGNATURE_BASE + ".application.service.."
