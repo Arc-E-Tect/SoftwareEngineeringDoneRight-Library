@@ -74,7 +74,7 @@ final class RulePackConfiguration {
         }
 
         if (inPorts().length == 0 && outPorts().length == 0 && domainModel().length == 0) {
-            throw new AssertionError("architectureValidator.inPorts, architectureValidator.outPorts, and architectureValidator.domainModel are all empty. Configure at least one of these via the Architecture Validator plugin's architectureValidator { inPorts = 'com.example.myapp.application.port.in'; outPorts = 'com.example.myapp.application.port.out'; domainModel = 'com.example.myapp.domain.model' } extension.");
+            throw new AssertionError("architectureValidator.inPorts, architectureValidator.outPorts, and architectureValidator.domainModel are all empty. Configure at least one of these via the Architecture Validator plugin's architectureValidator { inPorts = 'com.example.myapp.application.port.inbound'; outPorts = 'com.example.myapp.application.port.outbound'; domainModel = 'com.example.myapp.domain.model' } extension.");
         }
     }
 

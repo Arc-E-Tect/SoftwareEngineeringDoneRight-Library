@@ -64,8 +64,10 @@ class CycleFreedomTest {
     }
 
     private static String toSlicePattern(String packageRoot) {
-        String normalized = packageRoot.trim();
+        String trimmed = packageRoot.trim();
+        boolean matchesAnyPrefix = trimmed.startsWith("..");
 
+        String normalized = trimmed;
         while (normalized.startsWith("..")) {
             normalized = normalized.substring(2);
         }
@@ -78,6 +80,13 @@ class CycleFreedomTest {
             normalized = normalized.substring(0, normalized.length() - 1);
         }
 
-        return normalized.isEmpty() ? "(**)" : normalized + ".(**)";
+        if (normalized.isEmpty()) {
+            return "(**)";
+        }
+
+        // ArchUnit slice patterns anchor to the start of the fully-qualified class name unless
+        // prefixed with "..", so a leading ".." in the configured package root must be preserved,
+        // otherwise nested packages (the normal case) never match and the check passes vacuously.
+        return (matchesAnyPrefix ? ".." : "") + normalized + ".(**)";
     }
 }

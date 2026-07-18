@@ -47,6 +47,8 @@ class RulePackSelfTest {
     private static final String PORT_OUTPUT_BASE = "com.arc_e_tect.fixtures.violating.port.outputNotInterface";
     private static final String PORT_SIGNATURE_BASE = "com.arc_e_tect.fixtures.violating.port.signatureLeak";
 
+    private static final String CYCLE_BASE = "com.arc_e_tect.fixtures.violating.cycle";
+
     private final Map<String, String> originalProperties = new HashMap<>();
 
     @BeforeEach
@@ -85,6 +87,8 @@ class RulePackSelfTest {
         DependencyDirectionTest dependencyRules = new DependencyDirectionTest();
         PortContractTest portRules = new PortContractTest();
 
+        CycleFreedomTest cycleRules = new CycleFreedomTest();
+
         assertAll(
                 () -> assertDoesNotThrow(springRules::controllersShouldOnlyCallInPorts),
                 () -> assertDoesNotThrow(springRules::servicesShouldNotAccessRepositoriesDirectly),
@@ -98,8 +102,36 @@ class RulePackSelfTest {
                 () -> assertDoesNotThrow(dependencyRules::onlyConfigurationMayDependOnServiceImplementations),
                 () -> assertDoesNotThrow(portRules::inputPortsShouldBeInterfaces),
                 () -> assertDoesNotThrow(portRules::outputPortsShouldBeInterfaces),
-                () -> assertDoesNotThrow(portRules::portsShouldOnlyDependOnJavaCoreAndDomainModel)
+                () -> assertDoesNotThrow(portRules::portsShouldOnlyDependOnJavaCoreAndDomainModel),
+                () -> assertDoesNotThrow(cycleRules::adapterPackagesShouldBeFreeOfCycles),
+                () -> assertDoesNotThrow(cycleRules::domainModelShouldBeFreeOfCycles)
         );
+    }
+
+    @Test
+    void cycleFreedomTestShouldFailAdapterRuleWhenAdapterPackagesFormACycle() {
+        configure(
+                CYCLE_BASE,
+                CYCLE_BASE + ".application.port.in..",
+                CYCLE_BASE + ".application.port.out..",
+                CYCLE_BASE + ".domain.model..",
+                // Deliberately a floating "..X.." wildcard, not anchored to CYCLE_BASE like the
+                // other fixture configuration in this file: this matches how the real Architecture
+                // Validator plugin sends its default adapters pattern (e.g. "..adapter..",
+                // "..adapters.."). An anchored, fully-qualified value would not exercise the
+                // leading-".." handling this test is targeting.
+                "..adapters..",
+                CYCLE_BASE + ".application.service.."
+        );
+
+        CycleFreedomTest rules = new CycleFreedomTest();
+
+        // Regression test for a bug where CycleFreedomTest stripped the leading ".." from
+        // configured package roots before building the ArchUnit slice pattern, anchoring it to
+        // the start of the fully-qualified class name so nested packages (the normal case, as
+        // exercised here by a base package several segments deep) never matched and the check
+        // passed vacuously regardless of real cycles.
+        assertThrows(AssertionError.class, rules::adapterPackagesShouldBeFreeOfCycles);
     }
 
     @Test
