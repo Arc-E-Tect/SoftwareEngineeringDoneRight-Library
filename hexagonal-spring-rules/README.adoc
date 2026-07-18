@@ -84,6 +84,9 @@ The default rules target Spring-specific architectural boundaries, including dep
 
 |`RulePackConfigurationTest`
 |Fails fast when required Architecture Validator properties are missing so the rule pack cannot pass with empty class imports.
+
+|`TypeLeakageTest`
+|Ports must not expose JPA entities or web DTO packages, and the domain model must not reference JPA entities.
 |===
 
 == Architecture Validator Properties
