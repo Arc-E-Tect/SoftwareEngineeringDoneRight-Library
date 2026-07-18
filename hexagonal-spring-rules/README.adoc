@@ -16,7 +16,7 @@ It is consumed by the Architecture Validator plugin as an external rule pack dep
 
 [cols="1,1"]
 |===
-|Latest version |_Not yet released_
+|Latest version |`0.5.0`
 |Group ID       |`com.arc-e-tect.architecture-validator`
 |Artifact ID    |`architecture-validator-hexagonal-spring-rules`
 |===
@@ -48,7 +48,7 @@ Add it to `testArchitectureImplementation` in a project that already applies the
 [source,kotlin]
 ----
 dependencies {
-    testArchitectureImplementation("com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:<version>")
+    testArchitectureImplementation("com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:0.5.0")
 }
 ----
 
@@ -56,7 +56,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:<version>'
+    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules:0.5.0'
 }
 ----
 
