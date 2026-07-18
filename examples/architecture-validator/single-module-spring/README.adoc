@@ -3,7 +3,7 @@
 
 // tag::root[]
 This example enables the companion Spring rule pack.
-It demonstrates a direct dependency from a Spring service to a Spring repository in the adapter layer.
+It demonstrates a direct dependency from an application service to a Spring repository adapter, bypassing the outbound port.
 
 == Files and Purpose
 
@@ -12,7 +12,7 @@ It demonstrates a direct dependency from a Spring service to a Spring repository
 |File |Purpose
 
 |`.../application/service/OrderService.java`
-|A Spring `@Service` that depends directly on `OrderRepository` and triggers the rule violation under test.
+|A plain application service (deliberately not annotated `@Service` — see `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`) that depends directly on `OrderRepository`, triggering the rule violations under test.
 
 |`.../adapter/persistence/OrderRepository.java`
 |Adapter-layer Spring repository reached directly by the service instead of through an out-port.
@@ -20,7 +20,7 @@ It demonstrates a direct dependency from a Spring service to a Spring repository
 |`.../adapter/web/OrderController.java`
 |Inbound web adapter calling the use case.
 
-|`.../application/port/in/OrderUseCase.java`
+|`.../application/port/inbound/OrderUseCase.java`
 |Inbound port interface.
 
 |`.../application/domain/model/Order.java`
@@ -44,8 +44,14 @@ The current sample is intentionally non-compliant, so both commands are expected
 
 == Expected violations
 
-`OrderService` is a Spring `@Service` that depends directly on `OrderRepository`.
-That violates the Spring-flavoured Hexagonal rules because the service bypasses an outbound port and reaches into the adapter layer directly.
+`OrderService` depends directly on `OrderRepository`, an adapter-layer Spring `@Repository`, instead of going through an outbound port.
+That single design mistake trips several rules from different angles:
+
+* `DependencyDirectionTest.coreApplicationLayerShouldNotDependOnAdapters` — the application core must not depend on adapter-layer classes.
+* `SpringHexagonalArchitectureTest.repositoriesShouldOnlyBeAccessedViaOutPorts` — `@Repository` classes may only be reached through an outbound port, an adapter, or configuration.
+* The plugin's built-in generated `HexagonalArchitectureTest.application_services_must_not_depend_on_adapters` rule, which checks the same thing independently of the external rule pack.
+
+Note: `SpringHexagonalArchitectureTest.servicesShouldNotAccessRepositoriesDirectly` does not fire here because it only inspects `@Service`-annotated classes, and this rule pack expects application services to stay plain (see `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`) — so `OrderService` intentionally carries no Spring stereotype.
 
 == Reports
 
@@ -54,7 +60,7 @@ The XML report is under `build/reports/architecture-validator/xml/`.
 
 == Fix
 
-Introduce an outbound port in `application.port.out`.
+Introduce an outbound port in `application.port.outbound`.
 Make the service depend on that port.
 Move the repository implementation behind an adapter that satisfies the port contract.
 // end::root[]
