@@ -67,7 +67,7 @@ jobs:
           NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
 
       - name: Save NVD Database Cache
-        if: steps.nvd-update.outputs.nvd_update_timed_out != 'true' && steps.nvd-update.outputs.nvd_update_failed != 'true'
+        if: steps.nvd-update.outputs.nvd_update_failed != 'true'
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.gradle/dependency-check-data

@@ -9,6 +9,7 @@ repositories {
 dependencyCheck {
     nvd {
         apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+        delay = 800
     }
     failBuildOnCVSS = 9
     format = 'HTML'
