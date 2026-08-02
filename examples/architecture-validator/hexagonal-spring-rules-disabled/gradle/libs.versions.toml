@@ -6,7 +6,7 @@ architecture-validator-iff = { id = "com.arc-e-tect.architecture-validator", ver
 
 [versions]
 
-architecture-validator-iff = "0.7.2"
+architecture-validator-iff = "1.6.0"
 architecture-validator-hexagonal-spring-rules-iff = "0.5.0"
 spring-context-iff = "7.0.8"
 
@@ -14,3 +14,4 @@ spring-context-iff = "7.0.8"
 
 architecture-validator-hexagonal-spring-rules-iff = { module = "com.arc-e-tect.architecture-validator:architecture-validator-hexagonal-spring-rules", version.ref = "architecture-validator-hexagonal-spring-rules-iff" }
 spring-context-iff = { module = "org.springframework:spring-context", version.ref = "spring-context-iff" }
+
