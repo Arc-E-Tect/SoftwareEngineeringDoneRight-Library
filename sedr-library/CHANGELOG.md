@@ -1,3 +1,26 @@
+## [0.5.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.5.0...v0.5.1) (2026-08-08)
+
+
+### 🐛 Bug Fixes
+
+* **examples:** remove mavenLocal now that dependencies are released ([#42](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/42)) ([9b20913](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9b209137b7e4f16dc64b7980f52338b80fec9404)), closes [#42](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/42)
+* **ci:** stabilize security scan reporting and SEDR scan scope ([#49](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/49)) ([f5c7df2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f5c7df2ce7911c241abd859e1cb9a2a55379c8fa)), closes [#49](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/49)
+* **CI:** stop the NVD cache refresh from timing out on every cold sync ([#46](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/46)) ([cbaebf3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/cbaebf318f235d49b2c2b9e4b2b8cbd97efcc27e)), closes [#46](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/46)
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 0.5.0 [skip ci] ([5c8b553](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/5c8b553fc89232747372f771e3faa2ac0b79316a))
+
+
+### 🔧 Misc
+
+* Change NVD cache refresh schedule to weekly ([#45](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/45)) ([83c3552](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/83c3552048f491c02ab4f0bc8faf824145496675)), closes [#45](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/45)
+* dependency updates for Library projects ([#43](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/43)) ([fa70e5e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/fa70e5e4f460e585169560ff1de8934ab988ee82)), closes [#43](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/43)
+* dependency updates for Library projects ([#47](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/47)) ([398933c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/398933c66f272be3598471f31ffb5d108be685bd)), closes [#47](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/47)
+* dependency updates for Library projects ([#48](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/48)) ([105111d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/105111d488070ee639077d28c89bfdeec592840a)), closes [#48](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/48)
+* **Sedr Library:** update npm packages ([#44](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/44)) ([821da37](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/821da37c9407fcc7010614271f10420665abfc43)), closes [#44](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/44)
+
 ## [0.4.7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/v0.4.6...v0.4.7) (2026-07-18)
 
 
