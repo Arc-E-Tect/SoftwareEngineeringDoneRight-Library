@@ -99,20 +99,9 @@ jobs:
           name: sedr-library-build-reports
           path: sedr-library/build/reports/**
 
-  Security-Scan:
-    needs: [Calculate-Version]
-    uses: ./.github/workflows/security-scan.yml
-    with:
-      semantic_version: ${{ needs.Calculate-Version.outputs.next_version }}
-      project_name: sedr-library
-      reports_subpath: build/reports
-      fail_on_fatal: true
-    secrets:
-      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
-
   Release-sedr-library:
     name: Release SEDR Library
-    needs: [Calculate-Version, Build, Security-Scan]
+    needs: [Calculate-Version, Build]
     if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
@@ -218,7 +207,7 @@ jobs:
 
   Workflow-Summary:
     name: Workflow Summary
-    needs: [Build, Security-Scan, Publish, Update-README, Release-sedr-library, Determine-Release-Type]
+    needs: [Build, Publish, Update-README, Release-sedr-library, Determine-Release-Type]
     if: always()
     runs-on: ubuntu-latest
     steps:

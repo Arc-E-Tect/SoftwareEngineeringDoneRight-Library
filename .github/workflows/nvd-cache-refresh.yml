@@ -1,8 +1,9 @@
-name: NVD Cache Refresh
+name: NVD Cache Refresh & Vulnerability Scan
 
 on:
   schedule:
-    - cron: '17 2 * * 1'
+    - cron: '17 2 * * 1'  # Every Monday at 02:17 UTC
+    - cron: '0 7 * * 5'   # Every Friday at 07:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -85,3 +86,65 @@ jobs:
             echo "- Update timed out: ${{ steps.nvd-update.outputs.nvd_update_timed_out || 'false' }}"
             echo "- Update failed: ${{ steps.nvd-update.outputs.nvd_update_failed || 'false' }}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  Read-Version-Spring-Rules:
+    name: Read Architecture Validator Spring Rules Version
+    needs: refresh-nvd-cache
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Read version from gradle.properties
+        id: read-version
+        run: |
+          VERSION=$(grep -oP 'version\s*=\s*\K\S+' hexagonal-spring-rules/gradle.properties)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  Security-Scan-Spring-Rules:
+    name: Vulnerability Scan - Architecture Validator Spring Rules
+    needs: Read-Version-Spring-Rules
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      project_name: 'hexagonal-spring-rules'
+      semantic_version: ${{ needs.Read-Version-Spring-Rules.outputs.version }}
+      fail_on_fatal: true
+      reports_subpath: build/reports
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+  Read-Version-Sedr-Library:
+    name: Read SEDR Library Version
+    needs: refresh-nvd-cache
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Read version from gradle.properties
+        id: read-version
+        run: |
+          VERSION=$(grep -oP 'version\s*=\s*\K\S+' sedr-library/gradle.properties)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  Security-Scan-Sedr-Library:
+    name: Vulnerability Scan - SEDR Library
+    needs: Read-Version-Sedr-Library
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      project_name: 'sedr-library'
+      semantic_version: ${{ needs.Read-Version-Sedr-Library.outputs.version }}
+      fail_on_fatal: true
+      reports_subpath: build/reports
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
