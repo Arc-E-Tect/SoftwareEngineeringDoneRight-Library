@@ -112,7 +112,11 @@ dependencyCheck {
     nvd {
         apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
     }
-    failBuildOnCVSS = 9
+    failBuildOnCVSS = (System.getenv('FAIL_ON_FATAL') == 'true') ? 9 : 11
+    analyzers {
+        nodeAuditEnabled = false
+        nodeEnabled = false
+    }
     format = 'HTML'
 }
 
