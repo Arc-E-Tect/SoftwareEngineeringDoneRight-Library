@@ -45,7 +45,7 @@ No repository declaration or authentication is required.
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.5.1")
+    implementation("com.arc-e-tect.sedr.utils:sedr-library:0.5.2")
 }
 ----
 
@@ -53,7 +53,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.5.1'
+    implementation 'com.arc-e-tect.sedr.utils:sedr-library:0.5.2'
 }
 ----
 
@@ -63,7 +63,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect.sedr.utils</groupId>
     <artifactId>sedr-library</artifactId>
-    <version>0.5.1</version>
+    <version>0.5.2</version>
 </dependency>
 ----
 
@@ -79,7 +79,7 @@ The Gradle builds in this repository use Gradle's native JaCoCo support, with th
 [source,kotlin]
 ----
 dependencies {
-    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.5.1"))
+    testImplementation(testFixtures("com.arc-e-tect.sedr.utils:sedr-library:0.5.2"))
 }
 ----
 
@@ -87,7 +87,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.5.1')
+    testImplementation testFixtures('com.arc-e-tect.sedr.utils:sedr-library:0.5.2')
 }
 ----
 
