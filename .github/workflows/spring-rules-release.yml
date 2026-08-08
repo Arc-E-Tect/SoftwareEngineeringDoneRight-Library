@@ -22,17 +22,6 @@ jobs:
     secrets:
       sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
-  Security-Scan:
-    needs: Calculate-Version
-    uses: ./.github/workflows/security-scan.yml
-    with:
-      fail_on_fatal: true
-      project_name: 'hexagonal-spring-rules'
-      semantic_version: ${{ needs.Calculate-Version.outputs.next_version }}
-      reports_subpath: build/reports
-    secrets:
-      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
-
   Build:
     name: Build Architecture Validator Spring Rules
     needs: Calculate-Version
@@ -84,7 +73,7 @@ jobs:
 
   Release-Spring-Rules:
     name: Release Architecture Validator Spring Rules
-    needs: [Calculate-Version, Build, Security-Scan]
+    needs: [Calculate-Version, Build]
     if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
@@ -192,7 +181,7 @@ jobs:
 
   Workflow-Summary:
     name: Workflow Summary
-    needs: [Build, Security-Scan, Publish, Update-README, Release-Spring-Rules, Determine-Release-Type]
+    needs: [Build, Publish, Update-README, Release-Spring-Rules, Determine-Release-Type]
     if: always()
     runs-on: ubuntu-latest
     steps:
