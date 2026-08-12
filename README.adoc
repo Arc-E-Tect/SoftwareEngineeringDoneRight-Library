@@ -22,6 +22,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`hexagonal-spring-rules/`
 |Published Spring-focused external architecture rule pack for the Architecture Validator plugin.
 
+|`api-detector-core/`
+|Published shared domain model and scanning logic for the SEDR API detector Gradle plugins (Shadow, Mirage, Doppelganger API Detector).
+
 |`nvd-cache-primer/`
 |Internal utility project that primes and validates the shared OWASP Dependency-Check NVD cache used by this repository's security-scan workflows. Not published.
 
@@ -38,6 +41,9 @@ include::sedr-library/README.adoc[tag=root,leveloffset=+1]
 == hexagonal-spring-rules
 include::hexagonal-spring-rules/README.adoc[tag=root,leveloffset=+1]
 
+== api-detector-core
+include::api-detector-core/README.adoc[tag=root,leveloffset=+1]
+
 == nvd-cache-primer
 include::nvd-cache-primer/README.adoc[tag=root,leveloffset=+1]
 
@@ -52,4 +58,4 @@ include::examples/sedr-library/jacoco-marker/README.adoc[tag=root,leveloffset=+1
 == License
 
 This repository is licensed under the terms in link:LICENSE[LICENSE].
-Published sub-projects (`sedr-library/`, `hexagonal-spring-rules/`) are part of the same repository and license.
+Published sub-projects (`sedr-library/`, `hexagonal-spring-rules/`, `api-detector-core/`) are part of the same repository and license.

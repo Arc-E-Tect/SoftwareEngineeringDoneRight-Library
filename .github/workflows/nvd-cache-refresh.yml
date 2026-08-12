@@ -147,3 +147,34 @@ jobs:
       reports_subpath: build/reports
     secrets:
       NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}
+
+  Read-Version-Api-Detector-Core:
+    name: Read API Detector Core Version
+    needs: refresh-nvd-cache
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Read version from gradle.properties
+        id: read-version
+        run: |
+          VERSION=$(grep -oP 'version\s*=\s*\K\S+' api-detector-core/gradle.properties)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  Security-Scan-Api-Detector-Core:
+    name: Vulnerability Scan - API Detector Core
+    needs: Read-Version-Api-Detector-Core
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      project_name: 'api-detector-core'
+      semantic_version: ${{ needs.Read-Version-Api-Detector-Core.outputs.version }}
+      fail_on_fatal: true
+      reports_subpath: build/reports
+    secrets:
+      NVD_APIKEY_SEDR: ${{ secrets.NVD_APIKEY_SEDR }}

@@ -1,0 +1,11 @@
+get:
+  operationId: listUsers
+  tags: [Users]
+  responses:
+    '200':
+      description: OK
+post:
+  operationId: createUser
+  responses:
+    '201':
+      description: Created

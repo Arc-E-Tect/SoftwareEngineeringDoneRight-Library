@@ -1,0 +1,10 @@
+get:
+  operationId: listItems
+  responses:
+    '200':
+      description: OK
+post:
+  operationId: createItem
+  responses:
+    '201':
+      description: Created
