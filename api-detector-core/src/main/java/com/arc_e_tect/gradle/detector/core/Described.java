@@ -25,3 +25,4 @@ public interface Described {
      */
     String path();
 }
+
