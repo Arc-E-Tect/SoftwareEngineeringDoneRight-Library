@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,6 +124,45 @@ class OpenApiEndpointCollectorTest {
         assertThatThrownBy(() -> collector.collect(garbage))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("failed to parse OpenAPI document");
+    }
+
+    @Test
+    @DisplayName("collect(File) with no callback still collects endpoints exactly as before")
+    void collectWithoutCallbackStillCollectsEndpoints() {
+        List<DescribedEndpoint> endpoints = collector.collect(
+                resource("openapi/single-file/openapi.yaml"), file -> { });
+
+        assertThat(endpoints).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("invokes the callback once for the root document, even when it has no $ref at all")
+    void invokesCallbackForRootDocumentWithNoRefs() {
+        List<File> resolved = new ArrayList<>();
+
+        collector.collect(resource("openapi/single-file/openapi.yaml"), resolved::add);
+
+        assertThat(resolved).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("invokes the callback once for the root document and once for each distinct referenced document")
+    void invokesCallbackForRootAndEachReferencedDocument() {
+        List<File> resolved = new ArrayList<>();
+
+        collector.collect(resource("openapi/with-ref/openapi.yaml"), resolved::add);
+
+        assertThat(resolved).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("the callback receives the referenced document's own file, not just the root")
+    void callbackReceivesTheReferencedDocumentFile() {
+        List<File> resolved = new ArrayList<>();
+
+        collector.collect(resource("openapi/with-ref/openapi.yaml"), resolved::add);
+
+        assertThat(resolved).anyMatch(file -> file.getName().equals("users.yaml"));
     }
 
     private static File resource(String name) {
