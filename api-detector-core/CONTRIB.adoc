@@ -1,0 +1,26 @@
+= Contributing to api-detector-core
+:toc: left
+:icons: font
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/api-detector-core-build.yml`
+* `.github/workflows/api-detector-core-release.yml`
+* `release.config.js`
+* `first-release-patch-analyzer.js`
+* `package.json`
+
+Release tags use this module's own scoped namespace (`api-detector-core-v*`), independent of the
+shared `v*` tag stream used by `sedr-library`. `first-release-patch-analyzer.js` forces the first
+real release after the seeded `api-detector-core-v0.0.0` baseline tag to compute as `0.0.1`
+regardless of the triggering commit's type.
+
+Security scanning does not run from this module's own workflows - it's wired into the shared
+`.github/workflows/nvd-cache-refresh.yml` schedule via a `Read-Version-Api-Detector-Core` /
+`Security-Scan-Api-Detector-Core` job pair, matching the pattern used for `sedr-library` and
+`hexagonal-spring-rules`.
+
+Configuration cache is disabled throughout.
+`resolveVersion` calls `gh release list` at configuration time to determine the library version, which is not compatible with configuration cache.

@@ -1,0 +1,107 @@
+= api-detector-core
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+Shared domain model and scanning logic for the SEDR API detector Gradle plugins - Shadow API
+Detector, Mirage API Detector, and Doppelganger API Detector.
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |`0.0.1`
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`api-detector-core`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|===
+
+== What's Included
+
+[cols="1,2,3"]
+|===
+|Area |Package |Description
+
+|`model`
+|`com.arc_e_tect.gradle.detector.core.model`
+|`Endpoint`, `HttpVerb`, `PathTemplates`, and `PathMatcher` - the shared representation of a REST endpoint and the logic for comparing endpoint paths, including `matchesConcrete(concretePath, templatePath)` for matching a concrete example path (e.g. from a contract test) against a templated endpoint path.
+
+|`openapi`
+|`com.arc_e_tect.gradle.detector.core.openapi`
+|`DescribedEndpoint` and `OpenApiEndpointCollector` - collects the endpoints described by an OpenAPI document, following relative `$ref`s across files.
+
+|`scan`
+|`com.arc_e_tect.gradle.detector.core.scan`
+|`ControllerScanner` - scans Spring `@RestController` classes for the endpoints they implement.
+
+|`detect`
+|`com.arc_e_tect.gradle.detector.core.detect`
+|`ContractSetOperations` - set difference/intersection operations over endpoint collections, used by Shadow and Mirage API Detector.
+
+|`Described`
+|`com.arc_e_tect.gradle.detector.core`
+|Interface implemented by both `Endpoint` and `DescribedEndpoint` so scanning/collection code can operate on either uniformly.
+|===
+
+== Adding the Dependency
+
+The library is published to https://central.sonatype.com/artifact/com.arc-e-tect/api-detector-core[Maven Central].
+No repository declaration or authentication is required.
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    implementation("com.arc-e-tect:api-detector-core:0.0.1")
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    implementation 'com.arc-e-tect:api-detector-core:0.0.1'
+}
+----
+
+.Maven
+[source,xml]
+----
+<dependency>
+    <groupId>com.arc-e-tect</groupId>
+    <artifactId>api-detector-core</artifactId>
+    <version>0.0.1</version>
+</dependency>
+----
+
+== Who Consumes This
+
+This library is not a Gradle plugin and has no use on its own - it exists to be shared by the
+API detector plugin family in the
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle[SoftwareEngineeringDoneRight-Gradle]
+repository: `shadow-api-detector`, `mirage-api-detector`, and `doppelganger-api-detector` (and
+transitively, `api-only-suite`, which composes all three). It moved here, and became a real
+published artifact, because those plugins previously consumed it as an in-repo
+`project(':api-detector-core')` dependency that was never published anywhere public - fine for
+building those plugins themselves, but it meant their own published artifacts declared a runtime
+dependency on a coordinate nobody could actually resolve.
+
+== Contributing
+
+See link:CONTRIB.adoc[CONTRIB.adoc] for this project's release and CI workflow details.
+// end::root[]
+
+== License
+
+This project is part of the _Software Engineering Done Right_ repository.
+See link:../LICENSE[LICENSE] for details.

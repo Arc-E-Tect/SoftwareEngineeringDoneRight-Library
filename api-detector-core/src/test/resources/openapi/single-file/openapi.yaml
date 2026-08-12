@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Single File Test API
+  version: "1.0"
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      tags: [Users]
+      responses:
+        '200':
+          description: OK
+    post:
+      operationId: createUser
+      responses:
+        '201':
+          description: Created
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [Users, Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    delete:
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content

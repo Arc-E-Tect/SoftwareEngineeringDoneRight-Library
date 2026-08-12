@@ -1,0 +1,216 @@
+name: API Detector Core - Release
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api-detector-core/*.gradle'
+      - 'api-detector-core/gradle/**'
+      - 'api-detector-core/src/main/**'
+
+# ---------------------------------------------------------------------------
+# Concurrency control — prevents incorrect semantic version calculation when
+# multiple branches are merged to `main` in quick succession.
+#
+# How it works:
+#   GitHub Actions assigns every workflow run to the named `group`. If a run
+#   is already active for that group when a new run is triggered, the new run
+#   is *queued* (held in a pending state) until the active run finishes.
+#
+# Why `cancel-in-progress: false`:
+#   Setting this to `true` would cancel the running workflow and start the
+#   new one immediately — but that would skip the release entirely for the
+#   first commit. With `false`, every merged commit is processed in order:
+#     merge A  →  run A starts  (calculates v1.0.1, tags, publishes)
+#     merge B  →  run B queued
+#     run A finishes  →  run B starts (now calculates v1.0.2 correctly)
+#
+# Why a fixed group name instead of `github.ref`:
+#   Using `github.ref` would create a separate queue per branch. Since all
+#   releases always come from `main`, a fixed name is equivalent — and makes
+#   the intention explicit.
+# ---------------------------------------------------------------------------
+concurrency:
+  group: api-detector-core-release
+  cancel-in-progress: false
+
+jobs:
+  Calculate-Version:
+    uses: ./.github/workflows/semantic-version-calculate.yml
+    with:
+      fail_on_empty_version: true
+      project_dir: api-detector-core
+      DEBUG: true
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Build:
+    name: Build API Detector Core
+    needs: Calculate-Version
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./api-detector-core/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Update version in Gradle property file
+        run: |
+          echo "VERSION=${{ env.VERSION }}"
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Build API Detector Core
+        run: |
+          cd api-detector-core
+          chmod +x ./gradlew
+          ./gradlew build
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
+
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: api-detector-core-build-reports
+          path: api-detector-core/build/reports/**
+
+  Release-api-detector-core:
+    name: Release API Detector Core
+    needs: [Calculate-Version, Build]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    uses: ./.github/workflows/semantic-version-apply.yml
+    with:
+      project_dir: api-detector-core
+    secrets:
+      sem_rel_token_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  Publish:
+    name: Publish API Detector Core
+    needs: [Calculate-Version, Release-api-detector-core]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_PROPERTIES_FILE: ./api-detector-core/gradle.properties
+      GRADLE_VERSION_REGEX: version\s*=\s*[0-9]\\+\.[0-9]\\+\.[0-9]\\+[a-zA-Z0-9.-]*
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Update version in Gradle property file
+        run: |
+          echo "VERSION=${{ env.VERSION }}"
+          echo ===== Before - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+          sed -i "s/${{ env.GRADLE_VERSION_REGEX }}/version = ${{ env.VERSION }}/g" ${{ env.GRADLE_PROPERTIES_FILE }}
+          echo ===== After - ${{ env.GRADLE_PROPERTIES_FILE }} =====
+          cat ${{ env.GRADLE_PROPERTIES_FILE }}
+
+      - name: Publish API Detector Core
+        run: |
+          cd api-detector-core
+          echo "Publishing to Maven Central via jReleaser"
+          ./gradlew publishMavenPublicationToStagingDeployRepository
+          ./gradlew jreleaserDeploy
+        env:
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.SIGNING_KEY }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.SIGNING_PASSWORD }}
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+
+  Update-README:
+    name: Update README version
+    needs: [Calculate-Version, Publish]
+    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.SEDR_AUTOMATION_TOKEN }}
+
+      - name: Update version in api-detector-core README
+        run: |
+          sed -i "s/|Latest version |.\`[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*\`/|Latest version |\`${{ env.VERSION }}\`/" api-detector-core/README.adoc
+          sed -i "s/api-detector-core:[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*/api-detector-core:${{ env.VERSION }}/g" api-detector-core/README.adoc
+          sed -i "s|<version>[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[a-zA-Z0-9.-]*</version>|<version>${{ env.VERSION }}</version>|" api-detector-core/README.adoc
+
+      - name: Upload updated api-detector-core README
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: api-detector-core-readme-${{ env.VERSION }}
+          path: api-detector-core/README.adoc
+
+      - name: Commit and push updated api-detector-core README
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add api-detector-core/README.adoc
+          git diff --cached --quiet || git commit -m "docs(api-detector-core): update README version to ${{ env.VERSION }} [skip ci]"
+          git push
+
+  Determine-Release-Type:
+    needs: [Calculate-Version]
+    uses: ./.github/workflows/determine-release-type.yml
+
+  Workflow-Summary:
+    name: Workflow Summary
+    needs: [Build, Publish, Update-README, Release-api-detector-core, Determine-Release-Type]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Output build completion
+        run: |
+          echo "API Detector Core ${{ needs.Determine-Release-Type.outputs.release_type }} release workflow completed"
+          echo "::notice title=Release Complete::API Detector Core ${{ needs.Determine-Release-Type.outputs.release_type }} release workflow completed"
