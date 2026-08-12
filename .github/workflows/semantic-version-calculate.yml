@@ -130,15 +130,26 @@ jobs:
         id: check_tag
         run: |
           VERSION="${{ steps.calculate_semantic_version.outputs.next_version }}"
+          PROJECT_DIR="${{ env.PROJECT_DIR || '.' }}"
           
-          # Check if tag exists with or without 'v' prefix
+          # Determine the tag prefix based on the project directory
+          # Projects in subdirectories use project-specific tag format: <project>-v<version>
+          # Root projects use the default format: v<version>
+          if [ "$PROJECT_DIR" = "." ]; then
+            TAG_PREFIX=""
+          else
+            # Extract the directory name and use it as the tag prefix
+            TAG_PREFIX="$(basename "$PROJECT_DIR")-"
+          fi
+          
+          # Check if tag exists with the appropriate format
           TAG_EXISTS=false
-          if git rev-parse "refs/tags/${VERSION}" >/dev/null 2>&1; then
+          if git rev-parse "refs/tags/${TAG_PREFIX}${VERSION}" >/dev/null 2>&1; then
             TAG_EXISTS=true
-            EXISTING_TAG="${VERSION}"
-          elif git rev-parse "refs/tags/v${VERSION}" >/dev/null 2>&1; then
+            EXISTING_TAG="${TAG_PREFIX}${VERSION}"
+          elif git rev-parse "refs/tags/${TAG_PREFIX}v${VERSION}" >/dev/null 2>&1; then
             TAG_EXISTS=true
-            EXISTING_TAG="v${VERSION}"
+            EXISTING_TAG="${TAG_PREFIX}v${VERSION}"
           fi
           
           echo "tag_exists=${TAG_EXISTS}" >> "$GITHUB_OUTPUT"
