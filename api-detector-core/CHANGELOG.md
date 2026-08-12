@@ -1,3 +1,15 @@
+# [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.1.0...api-detector-core-v0.2.0) (2026-08-12)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** add ScanProgressReporter for visible long-scan progress ([#56](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/56)) ([9357bc9](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9357bc90a5726e792100c96d3c01e4bb0ed5efee)), closes [#56](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/56)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 0.1.0 [skip ci] ([14c5f16](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/14c5f165dbcdb7cf5347cef29ba8708c93eb3444))
+
 # [0.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.0.1...api-detector-core-v0.1.0) (2026-08-12)
 
 
