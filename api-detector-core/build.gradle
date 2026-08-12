@@ -68,9 +68,16 @@ dependencies {
     implementation libs.javaparser.core
     implementation libs.swagger.parser
 
+    // Only for org.gradle.api.logging.Logger, the sole Gradle type ScanProgressReporter's public
+    // API accepts. compileOnly: the real implementation is always supplied by whichever Gradle
+    // version a consuming plugin task actually runs under, so it must not be bundled/pinned here.
+    compileOnly gradleApi()
+
     testImplementation libs.junit.jupiter
     testImplementation libs.assertj.core
     testRuntimeOnly    libs.junit.platform.launcher
+    // Needed at test runtime too, to hand-write a Logger test double (RecordingLogger).
+    testImplementation gradleApi()
 }
 
 publishing {

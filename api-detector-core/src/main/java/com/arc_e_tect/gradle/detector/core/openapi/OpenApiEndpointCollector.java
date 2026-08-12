@@ -14,7 +14,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,19 +33,56 @@ public class OpenApiEndpointCollector {
     private static final Pattern OPENAPI_32_JSON_PATTERN =
         Pattern.compile("(\"openapi\"\\s*:\\s*\")3\\.2(?:\\.\\d+)?(\")");
 
+    /**
+     * Matches a {@code $ref} entry's target in either YAML ({@code $ref: 'foo.yaml#/...'}) or
+     * JSON ({@code "$ref": "foo.json#/..."}) syntax, capturing everything up to the closing quote
+     * or a {@code #} fragment marker, whichever comes first. A same-document ref (starting
+     * directly with {@code #}) captures an empty group.
+     */
+    private static final Pattern REF_TARGET_PATTERN = Pattern.compile("\\$ref\\s*:\\s*[\"']([^\"'#]*)");
+
     /** Creates a new {@code OpenApiEndpointCollector}. */
     public OpenApiEndpointCollector() {}
 
     /**
      * Parses {@code rootDocument} and every document it links to (relative {@code $ref}s are
      * resolved automatically), and returns the verb + path template pair described by every
-     * operation found.
+     * operation found. Equivalent to {@link #collect(File, Consumer)} with a callback that does
+     * nothing.
      *
      * @param rootDocument the root OpenAPI document (JSON or YAML)
      * @return possibly-empty list of described endpoints, never {@code null}
      * @throws IllegalStateException if the document cannot be parsed
      */
     public List<DescribedEndpoint> collect(File rootDocument) {
+        return collect(rootDocument, file -> { });
+    }
+
+    /**
+     * Parses {@code rootDocument} and every document it links to (relative {@code $ref}s are
+     * resolved automatically), and returns the verb + path template pair described by every
+     * operation found.
+     *
+     * <p>{@code onDocumentResolved} is invoked once for {@code rootDocument} itself and once for
+     * every distinct document reachable from it via a relative {@code $ref}, so a caller can drive
+     * a progress indicator during what would otherwise be a single opaque, potentially long-running
+     * call - the underlying parser resolves {@code $ref}s internally and offers no such callback of
+     * its own. The set of documents is discovered by a lightweight, best-effort textual scan for
+     * {@code $ref} entries (the same "read the file as data" approach the plugins' own WireMock and
+     * Spring Cloud Contract scanners use), run <em>before</em> the real parse; it does not replace
+     * or influence actual {@code $ref} resolution, which is still performed by the parser exactly
+     * as it is for {@link #collect(File)}. A document that can't be read for this discovery pass is
+     * silently skipped - the real parse below still surfaces the failure normally.</p>
+     *
+     * @param rootDocument       the root OpenAPI document (JSON or YAML)
+     * @param onDocumentResolved invoked once per distinct document discovered, including the root;
+     *                           never {@code null}
+     * @return possibly-empty list of described endpoints, never {@code null}
+     * @throws IllegalStateException if the document cannot be parsed
+     */
+    public List<DescribedEndpoint> collect(File rootDocument, Consumer<File> onDocumentResolved) {
+        discoverReferencedDocuments(rootDocument, new HashSet<>(), onDocumentResolved);
+
         ParseOptions options = new ParseOptions();
         options.setResolve(true);
         options.setResolveFully(true);
@@ -75,6 +115,47 @@ public class OpenApiEndpointCollector {
 
     private static List<String> operationTags(Operation operation) {
         return operation.getTags() == null ? List.of() : List.copyOf(operation.getTags());
+    }
+
+    /**
+     * Recursively discovers every document reachable from {@code document} via a relative
+     * {@code $ref}, invoking {@code onDocumentResolved} once for each distinct document the first
+     * time it's encountered. {@code visited} guards against revisiting a document already seen -
+     * both to avoid infinite recursion on a {@code $ref} cycle and to guarantee each document is
+     * reported at most once.
+     */
+    private void discoverReferencedDocuments(File document, Set<File> visited, Consumer<File> onDocumentResolved) {
+        if (!visited.add(canonicalOrAbsolute(document))) {
+            return;
+        }
+        onDocumentResolved.accept(document);
+        if (!document.isFile()) {
+            return;
+        }
+
+        String content;
+        try {
+            content = Files.readString(document.toPath());
+        } catch (IOException e) {
+            return;
+        }
+
+        Matcher matcher = REF_TARGET_PATTERN.matcher(content);
+        while (matcher.find()) {
+            String refPath = matcher.group(1);
+            if (refPath.isBlank() || refPath.contains("://")) {
+                continue;
+            }
+            discoverReferencedDocuments(new File(document.getParentFile(), refPath), visited, onDocumentResolved);
+        }
+    }
+
+    private File canonicalOrAbsolute(File file) {
+        try {
+            return file.getCanonicalFile();
+        } catch (IOException e) {
+            return file.getAbsoluteFile();
+        }
     }
 
     private static SwaggerParseResult parse(File rootDocument, ParseOptions options) {
