@@ -6,8 +6,7 @@ on:
     paths:
       - 'hexagonal-spring-rules/**'
       - 'examples/architecture-validator/single-module-spring/**'
-      - '.github/workflows/**'
-      - '.github/actions/**'
+      - '.github/workflows/spring-rules-build.yml'
 
 jobs:
   Calculate-Version:
