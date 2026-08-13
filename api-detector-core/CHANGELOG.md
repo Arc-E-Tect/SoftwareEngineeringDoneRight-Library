@@ -1,3 +1,21 @@
+# [0.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.2.0...api-detector-core-v0.3.0) (2026-08-13)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** add ContractProgressTableWriter for shared Progress Over Time reporting ([#59](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/59)) ([dd4d36a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/dd4d36a66b9368db625ae60f3076c55a437f2417)), closes [#59](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/59)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 0.2.0 [skip ci] ([2f68414](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2f68414924323241bc547ad74669a2fc2daa1b71))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#58](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/58)) ([83dff89](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/83dff89406e7e025a7b96f3d62ac2c2006458de2)), closes [#58](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/58)
+* Make workflow triggers more specific and add progress reporter ([#57](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/57)) ([10c64dc](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/10c64dc344e4e9c25886b80781d3661111d42a72)), closes [#57](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/57)
+
 # [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.1.0...api-detector-core-v0.2.0) (2026-08-12)
 
 
