@@ -1,0 +1,25 @@
+= Contributing to the Geo Tracker Lens Pack
+:toc: left
+:toc-title: Contents
+
+The geo tracker lens pack follows the same release and CI conventions as the other published
+projects in the _Software Engineering Done Right_ repository.
+
+== Local build
+
+Run from this project directory:
+
+[source,bash]
+----
+./gradlew clean build
+----
+
+== Release flow
+
+The `geo-tracker-lens-pack-release.yml` workflow publishes the pack to Maven Central through
+JReleaser after the semantic version has been calculated and applied.
+
+== Documentation
+
+The tutorial that explains how to write a Tracker Lens pack from scratch lives in the
+Tracker Lens plugin documentation in the Gradle repository.
