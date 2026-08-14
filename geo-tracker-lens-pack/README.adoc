@@ -12,7 +12,7 @@ Geography-inspired external lens pack for the Tracker Lens Gradle plugin.
 
 [cols="1,1"]
 |===
-|Latest version |`1.0.0`
+|Latest version |`1.0.1`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`geo-tracker-lens-pack`
 |===
@@ -55,7 +55,7 @@ Add it to `lensStyle` in a project that already applies the Tracker Lens plugin.
 [source,kotlin]
 ----
 dependencies {
-    lensStyle("com.arc-e-tect:geo-tracker-lens-pack:1.0.0")
+    lensStyle("com.arc-e-tect:geo-tracker-lens-pack:1.0.1")
 }
 ----
 
@@ -63,7 +63,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    lensStyle 'com.arc-e-tect:geo-tracker-lens-pack:1.0.0'
+    lensStyle 'com.arc-e-tect:geo-tracker-lens-pack:1.0.1'
 }
 ----
 
