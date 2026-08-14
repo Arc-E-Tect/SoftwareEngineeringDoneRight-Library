@@ -87,8 +87,8 @@ jobs:
           
           # Extract version information using multiple patterns for compatibility
           # Try modern format first (v23+): "Published release X.Y.Z" or "The next release version is X.Y.Z"
-          CURRENT_VERSION=$(echo "$OUTPUT" | grep -oP '(?:Found git tag|last release|Published release|Current release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
-          NEXT_VERSION=$(echo "$OUTPUT" | grep -oP '(?:The next release version is|would publish release|Publishing release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
+          CURRENT_VERSION=$(echo "$OUTPUT" | grep -oiP '(?:Found git tag|last release|Published release|Current release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
+          NEXT_VERSION=$(echo "$OUTPUT" | grep -oiP '(?:the next release version is|would publish release|publishing release)\s+v?\K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -1)
           
           # Fallback: check git tags directly (more reliable than parsing output)
           if [ -z "$CURRENT_VERSION" ]; then
