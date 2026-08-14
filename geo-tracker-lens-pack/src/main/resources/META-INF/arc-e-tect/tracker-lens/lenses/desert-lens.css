@@ -1,0 +1,17 @@
+:root {
+    --dashboard-bg: #2a1904;
+    --dashboard-surface: #563817;
+    --dashboard-text: #fff6e8;
+    --dashboard-stage-1: #c47a2c;
+    --dashboard-stage-2: #e0a458;
+    --dashboard-stage-3: #f0cc6b;
+}
+
+.dashboard {
+    background: var(--dashboard-bg);
+    color: var(--dashboard-text);
+}
+
+.metric-card {
+    background: linear-gradient(135deg, rgba(94, 56, 17, 0.94), rgba(59, 35, 10, 0.94));
+}
