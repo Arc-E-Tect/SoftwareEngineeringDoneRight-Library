@@ -22,6 +22,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`hexagonal-spring-rules/`
 |Published Spring-focused external architecture rule pack for the Architecture Validator plugin.
 
+|`geo-tracker-lens-pack/`
+|Published geography-inspired external lens pack for the Tracker Lens plugin.
+
 |`api-detector-core/`
 |Published shared domain model and scanning logic for the SEDR API detector Gradle plugins (Shadow, Mirage, Doppelganger API Detector).
 
@@ -40,6 +43,9 @@ include::sedr-library/README.adoc[tag=root,leveloffset=+1]
 
 == hexagonal-spring-rules
 include::hexagonal-spring-rules/README.adoc[tag=root,leveloffset=+1]
+
+== geo-tracker-lens-pack
+include::geo-tracker-lens-pack/README.adoc[tag=root,leveloffset=+1]
 
 == api-detector-core
 include::api-detector-core/README.adoc[tag=root,leveloffset=+1]
