@@ -38,6 +38,7 @@ dist/
 # Gradle
 .gradle/
 build/
+bin/
 
 # Kotlin
 .kotlin/
