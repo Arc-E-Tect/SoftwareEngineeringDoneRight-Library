@@ -1,3 +1,40 @@
+# [1.0.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.3.0...api-detector-core-v1.0.0) (2026-08-15)
+
+
+### ✨ New and updated features
+
+* add geo-tracker-lens-pack library with independent release pipeline ([#60](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/60)) ([1730931](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1730931112ca9f592c26ae3352e0557dc2b7a6c7)), closes [#60](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/60)
+* **api-detector-core:** separate real implementation evidence from stub evidence in contract history ([#64](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/64)) ([0775933](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0775933ed474bd56960f8adc4e1810f35c0f402e)), closes [#64](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/64)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** detect first semantic release version in calculate workflow ([#61](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/61)) ([3a80fe1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/3a80fe1389591e9bff33b7aae6f81c5c1dad3e3a)), closes [#61](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/61)
+* **geo-tracker-lens-pack:** use https scm connection for Maven Central metadata ([#63](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/63)) ([5bb98c0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/5bb98c0a5404cfc73ab24e240faa14cdd55955ec)), closes [#63](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/63)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 0.3.0 [skip ci] ([9c63eac](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9c63eacd0b067ac5cec8f8178a56ae13da1ce414))
+* **geo-tracker-lens-pack:** update README version to 1.0.0 [skip ci] ([ab46583](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ab4658331fd2ad7a5e6c2ea0553caf3ff2976eb2))
+* **geo-tracker-lens-pack:** update README version to 1.0.1 [skip ci] ([1ac70e4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1ac70e48d1bbce838c4d2ff5f5f16de66ff384ab))
+
+
+### 🔧 Misc
+
+* **geo-tracker-lens-pack:** trigger release pipeline after CI fix ([b2440cc](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b2440cc8d036a5cddcbba0d5a6c6f8cec62db039))
+
+
+### BREAKING CHANGE
+
+* **api-detector-core:** contractHistoryFile written by a previous version of this
+library (9 fields, no stubbedAt) is no longer readable by
+ContractHistoryStore.load() - it now throws
+LegacyContractHistoryFormatException instead of loading it under the old,
+now-ambiguous implementedAt semantics. Consumers must migrate existing
+history files (mirage-api-detector's new migrateContractHistory task) or
+start a fresh history file before upgrading.
+
 # [0.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.2.0...api-detector-core-v0.3.0) (2026-08-13)
 
 
