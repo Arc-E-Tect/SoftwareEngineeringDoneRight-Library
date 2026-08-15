@@ -15,10 +15,12 @@ import java.util.stream.Stream;
  * Doppelganger API Detector's own reports, from a loaded/advanced {@link ContractProgressRecord}
  * history map.
  *
- * <p>Always renders all three lifecycle stages - declared, implemented, verified - regardless of
- * which stages the calling plugin itself has evidence for: a plugin that never observes
- * verification evidence (Shadow, Mirage) simply never advances {@code verifiedAt} on any record,
- * so that row correctly and honestly reads {@code 0} rather than being omitted.</p>
+ * <p>Always renders all four lifecycle stages - declared, implemented, stubbed, verified -
+ * regardless of which stages the calling plugin itself has evidence for: a plugin that never
+ * observes verification evidence (Shadow, Mirage) simply never advances {@code verifiedAt} on any
+ * record, and a plugin that never scans WireMock stubs (Shadow, Doppelganger, or Mirage outside
+ * {@code scanMocks = true}) simply never advances {@code stubbedAt} - either way the corresponding
+ * row correctly and honestly reads {@code 0} rather than being omitted.</p>
  */
 public class ContractProgressTableWriter {
 
@@ -43,7 +45,7 @@ public class ContractProgressTableWriter {
         Instant now = Instant.now();
         Instant trackedSince = history.values().stream()
                 .flatMap(record -> Stream.of(
-                        record.declaredAt(), record.implementedAt(), record.verifiedAt(),
+                        record.declaredAt(), record.implementedAt(), record.stubbedAt(), record.verifiedAt(),
                         record.lastSeenAt(), record.removedAt()))
                 .filter(instant -> instant != null)
                 .min(Comparator.naturalOrder())
@@ -61,6 +63,7 @@ public class ContractProgressTableWriter {
         writer.println();
         writeWindowedMetric(writer, "Declared", history, now, ContractProgressRecord::declaredAt);
         writeWindowedMetric(writer, "Implemented", history, now, ContractProgressRecord::implementedAt);
+        writeWindowedMetric(writer, "Stubbed", history, now, ContractProgressRecord::stubbedAt);
         writeWindowedMetric(writer, "Verified", history, now, ContractProgressRecord::verifiedAt);
         writer.println("| Removed (no longer seen)");
         writer.println("| " + removedNotSeen);

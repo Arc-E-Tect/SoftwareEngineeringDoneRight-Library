@@ -30,6 +30,11 @@ import java.util.regex.Pattern;
  * {@link ContractProgressRecord#path()} are free text and need escaping. Warnings are logged via
  * {@code java.util.logging}, the JDK's own built-in facility, rather than adding a logging
  * dependency this plain library otherwise has no need for.</p>
+ *
+ * <p>{@link #load(File)} recognises the pre-{@code stubbedAt} 9-field format left behind by
+ * versions of this library before {@code stubbedAt} existed, and refuses to load it - see
+ * {@link LegacyContractHistoryFormatException}. A caller migrating such a file forward should use
+ * {@link #loadLegacy(File)} instead to read its content.</p>
  */
 public class ContractHistoryStore {
 
@@ -39,6 +44,25 @@ public class ContractHistoryStore {
     private static final String NULLABLE_STRING_FIELD = "(?:null|" + STRING_FIELD + ")";
     private static final String INSTANT_FIELD = "(null|\"[^\"]*\")";
     private static final Pattern LINE_PATTERN = Pattern.compile(
+            "^\\{"
+            + "\"fingerprint\":" + STRING_FIELD + ","
+            + "\"verb\":" + STRING_FIELD + ","
+            + "\"path\":" + STRING_FIELD + ","
+            + "\"declaringClass\":" + NULLABLE_STRING_FIELD + ","
+            + "\"declaredAt\":" + INSTANT_FIELD + ","
+            + "\"implementedAt\":" + INSTANT_FIELD + ","
+            + "\"stubbedAt\":" + INSTANT_FIELD + ","
+            + "\"verifiedAt\":" + INSTANT_FIELD + ","
+            + "\"lastSeenAt\":" + INSTANT_FIELD + ","
+            + "\"removedAt\":" + INSTANT_FIELD
+            + "\\}$");
+
+    /**
+     * Matches the pre-{@code stubbedAt} 9-field line shape, used only to distinguish a genuinely
+     * legacy-format file (see {@link LegacyContractHistoryFormatException}) from a line that's
+     * simply malformed.
+     */
+    private static final Pattern LEGACY_LINE_PATTERN = Pattern.compile(
             "^\\{"
             + "\"fingerprint\":" + STRING_FIELD + ","
             + "\"verb\":" + STRING_FIELD + ","
@@ -61,6 +85,8 @@ public class ContractHistoryStore {
      * @return the records keyed by fingerprint; empty when {@code file} doesn't exist. A line that
      *         fails to parse is skipped with a {@code WARN}-level log message identifying the line
      *         number - it never fails the build.
+     * @throws LegacyContractHistoryFormatException if {@code file} is written in the pre-
+     *         {@code stubbedAt} 9-field format; use {@link #loadLegacy(File)} to read it instead
      */
     public Map<String, ContractProgressRecord> load(File file) {
         Map<String, ContractProgressRecord> records = new LinkedHashMap<>();
@@ -68,12 +94,7 @@ public class ContractHistoryStore {
             return records;
         }
 
-        List<String> lines;
-        try {
-            lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new IllegalStateException("apiDetectorCore: could not read contract history file: " + file, e);
-        }
+        List<String> lines = readLines(file);
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -81,9 +102,48 @@ public class ContractHistoryStore {
                 continue;
             }
             ContractProgressRecord record = parseLine(line);
+            if (record != null) {
+                records.put(record.fingerprint(), record);
+                continue;
+            }
+            if (LEGACY_LINE_PATTERN.matcher(line).matches()) {
+                throw new LegacyContractHistoryFormatException(file);
+            }
+            LOGGER.log(Level.WARNING,
+                    "apiDetectorCore: skipping malformed contract history line {0} in {1}",
+                    new Object[] {i + 1, file});
+        }
+        return records;
+    }
+
+    /**
+     * Loads {@code file} as the pre-{@code stubbedAt} 9-field NDJSON format, for use by a
+     * migration task upgrading it to the current 10-field format. Every parsed record's
+     * {@link ContractProgressRecord#stubbedAt()} is {@code null}, since the legacy format has no
+     * such field to read it from.
+     *
+     * @param file the legacy-format NDJSON history file; need not exist
+     * @return the records keyed by fingerprint; empty when {@code file} doesn't exist. A line that
+     *         fails to parse is skipped with a {@code WARN}-level log message identifying the line
+     *         number - it never fails the build.
+     */
+    public Map<String, ContractProgressRecord> loadLegacy(File file) {
+        Map<String, ContractProgressRecord> records = new LinkedHashMap<>();
+        if (!file.isFile()) {
+            return records;
+        }
+
+        List<String> lines = readLines(file);
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.isBlank()) {
+                continue;
+            }
+            ContractProgressRecord record = parseLegacyLine(line);
             if (record == null) {
                 LOGGER.log(Level.WARNING,
-                        "apiDetectorCore: skipping malformed contract history line {0} in {1}",
+                        "apiDetectorCore: skipping malformed legacy contract history line {0} in {1}",
                         new Object[] {i + 1, file});
                 continue;
             }
@@ -112,6 +172,14 @@ public class ContractHistoryStore {
         }
     }
 
+    private List<String> readLines(File file) {
+        try {
+            return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("apiDetectorCore: could not read contract history file: " + file, e);
+        }
+    }
+
     private String toJson(ContractProgressRecord record) {
         return "{"
                 + "\"fingerprint\":\"" + record.fingerprint() + "\","
@@ -120,6 +188,7 @@ public class ContractHistoryStore {
                 + "\"declaringClass\":" + nullableStringJson(record.declaringClass()) + ","
                 + "\"declaredAt\":" + instantJson(record.declaredAt()) + ","
                 + "\"implementedAt\":" + instantJson(record.implementedAt()) + ","
+                + "\"stubbedAt\":" + instantJson(record.stubbedAt()) + ","
                 + "\"verifiedAt\":" + instantJson(record.verifiedAt()) + ","
                 + "\"lastSeenAt\":" + instantJson(record.lastSeenAt()) + ","
                 + "\"removedAt\":" + instantJson(record.removedAt())
@@ -165,6 +234,29 @@ public class ContractHistoryStore {
                     matcher.group(4) == null ? null : unescape(matcher.group(4)),
                     parseInstant(matcher.group(5)),
                     parseInstant(matcher.group(6)),
+                    parseInstant(matcher.group(7)),
+                    parseInstant(matcher.group(8)),
+                    parseInstant(matcher.group(9)),
+                    parseInstant(matcher.group(10)));
+        } catch (DateTimeParseException | IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private ContractProgressRecord parseLegacyLine(String line) {
+        Matcher matcher = LEGACY_LINE_PATTERN.matcher(line);
+        if (!matcher.matches()) {
+            return null;
+        }
+        try {
+            return new ContractProgressRecord(
+                    matcher.group(1),
+                    HttpVerb.valueOf(matcher.group(2)),
+                    unescape(matcher.group(3)),
+                    matcher.group(4) == null ? null : unescape(matcher.group(4)),
+                    parseInstant(matcher.group(5)),
+                    parseInstant(matcher.group(6)),
+                    null,
                     parseInstant(matcher.group(7)),
                     parseInstant(matcher.group(8)),
                     parseInstant(matcher.group(9)));

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("ContractHistoryStore")
 class ContractHistoryStoreTest {
@@ -40,6 +41,7 @@ class ContractHistoryStoreTest {
                 "3c7a1f0e9b224dd1", HttpVerb.GET, "/orders/{id}", "com.acme.OrderController",
                 Instant.parse("2026-01-10T09:00:00Z"),
                 Instant.parse("2026-01-20T14:30:00Z"),
+                Instant.parse("2026-01-15T10:00:00Z"),
                 Instant.parse("2026-02-05T08:15:00Z"),
                 Instant.parse("2026-08-12T07:00:00Z"),
                 null);
@@ -56,7 +58,7 @@ class ContractHistoryStoreTest {
         File file = tempDir.resolve("history.ndjson").toFile();
         ContractProgressRecord record = new ContractProgressRecord(
                 "9e01b4d2f7a63c58", HttpVerb.DELETE, "/orders/{id}", null,
-                Instant.parse("2026-03-01T09:00:00Z"), null, null,
+                Instant.parse("2026-03-01T09:00:00Z"), null, null, null,
                 Instant.parse("2026-08-12T07:00:00Z"), null);
 
         store.save(file, List.of(record));
@@ -66,12 +68,43 @@ class ContractHistoryStoreTest {
     }
 
     @Test
+    @DisplayName("round-trips a null stubbedAt")
+    void roundTripsNullStubbedAt() {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        ContractProgressRecord record = new ContractProgressRecord(
+                "9e01b4d2f7a63c59", HttpVerb.GET, "/orders/{id}", "com.acme.OrderController",
+                Instant.parse("2026-03-01T09:00:00Z"), Instant.parse("2026-03-02T09:00:00Z"), null, null,
+                Instant.parse("2026-08-12T07:00:00Z"), null);
+
+        store.save(file, List.of(record));
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded.get("9e01b4d2f7a63c59").stubbedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("round-trips a non-null stubbedAt")
+    void roundTripsNonNullStubbedAt() {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        Instant stubbedAt = Instant.parse("2026-01-15T10:00:00Z");
+        ContractProgressRecord record = new ContractProgressRecord(
+                "9e01b4d2f7a63c60", HttpVerb.GET, "/orders/{id}", null,
+                Instant.parse("2026-01-10T09:00:00Z"), null, stubbedAt, null,
+                Instant.parse("2026-08-12T07:00:00Z"), null);
+
+        store.save(file, List.of(record));
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded.get("9e01b4d2f7a63c60").stubbedAt()).isEqualTo(stubbedAt);
+    }
+
+    @Test
     @DisplayName("round-trips a path and declaringClass containing quotes and backslashes")
     void roundTripsQuotesAndBackslashes() {
         File file = tempDir.resolve("history.ndjson").toFile();
         ContractProgressRecord record = new ContractProgressRecord(
                 "abc0000000000000", HttpVerb.GET, "/orders/\"weird\"/\\path\\", "com.acme.\"Weird\\Class",
-                Instant.parse("2026-01-01T00:00:00Z"), null, null,
+                Instant.parse("2026-01-01T00:00:00Z"), null, null, null,
                 Instant.parse("2026-01-01T00:00:00Z"), null);
 
         store.save(file, List.of(record));
@@ -86,11 +119,11 @@ class ContractHistoryStoreTest {
         File file = tempDir.resolve("history.ndjson").toFile();
         ContractProgressRecord second = new ContractProgressRecord(
                 "bbbb000000000000", HttpVerb.GET, "/b", null,
-                Instant.parse("2026-01-01T00:00:00Z"), null, null,
+                Instant.parse("2026-01-01T00:00:00Z"), null, null, null,
                 Instant.parse("2026-01-01T00:00:00Z"), null);
         ContractProgressRecord first = new ContractProgressRecord(
                 "aaaa000000000000", HttpVerb.GET, "/a", null,
-                Instant.parse("2026-01-01T00:00:00Z"), null, null,
+                Instant.parse("2026-01-01T00:00:00Z"), null, null, null,
                 Instant.parse("2026-01-01T00:00:00Z"), null);
 
         store.save(file, List.of(second, first));
@@ -106,7 +139,7 @@ class ContractHistoryStoreTest {
         File file = tempDir.resolve("history.ndjson").toFile();
         String validLine = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"GET\",\"path\":\"/a\","
                 + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
-                + "\"implementedAt\":null,\"verifiedAt\":null,"
+                + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
                 + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
         Files.writeString(file.toPath(), "not valid json at all\n" + validLine + "\n", StandardCharsets.UTF_8);
 
@@ -121,12 +154,53 @@ class ContractHistoryStoreTest {
         File file = tempDir.resolve("history.ndjson").toFile();
         String validLine = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"GET\",\"path\":\"/a\","
                 + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
-                + "\"implementedAt\":null,\"verifiedAt\":null,"
+                + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
                 + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
         Files.writeString(file.toPath(), "\n" + validLine + "\n\n", StandardCharsets.UTF_8);
 
         Map<String, ContractProgressRecord> loaded = store.load(file);
 
         assertThat(loaded).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("load throws LegacyContractHistoryFormatException when the file is in the pre-stubbedAt 9-field format")
+    void loadThrowsOnLegacyNineFieldFormat() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String legacyLine = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"GET\",\"path\":\"/a\","
+                + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), legacyLine + "\n", StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> store.load(file))
+                .isInstanceOf(LegacyContractHistoryFormatException.class)
+                .hasMessageContaining(file.toString());
+    }
+
+    @Test
+    @DisplayName("loadLegacy reads a pre-stubbedAt 9-field file, defaulting stubbedAt to null")
+    void loadLegacyReadsNineFieldFormatWithNullStubbedAt() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String legacyLine = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"GET\",\"path\":\"/a\","
+                + "\"declaringClass\":\"com.acme.OrderController\",\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":\"2026-01-02T00:00:00Z\",\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-03T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), legacyLine + "\n", StandardCharsets.UTF_8);
+
+        Map<String, ContractProgressRecord> loaded = store.loadLegacy(file);
+
+        ContractProgressRecord record = loaded.get("aaaa000000000000");
+        assertThat(record.declaringClass()).isEqualTo("com.acme.OrderController");
+        assertThat(record.implementedAt()).isEqualTo(Instant.parse("2026-01-02T00:00:00Z"));
+        assertThat(record.stubbedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("loadLegacy returns an empty map when the file does not exist")
+    void loadLegacyReturnsEmptyMapWhenFileDoesNotExist() {
+        File missingFile = tempDir.resolve("missing.ndjson").toFile();
+
+        assertThat(store.loadLegacy(missingFile)).isEmpty();
     }
 }
