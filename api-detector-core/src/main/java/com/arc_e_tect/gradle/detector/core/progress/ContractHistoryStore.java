@@ -35,10 +35,23 @@ import java.util.regex.Pattern;
  * versions of this library before {@code stubbedAt} existed, and refuses to load it - see
  * {@link LegacyContractHistoryFormatException}. A caller migrating such a file forward should use
  * {@link #loadLegacy(File)} instead to read its content.</p>
+ *
+ * <p>{@link #save(File, Collection)} always writes a {@code {"schemaVersion":N}} marker as the
+ * file's own first line, giving a future format change something to check against and a clean
+ * place to branch reading logic on. Purely additive: a file written before this existed simply has
+ * no such line, and both {@link #load(File)} and {@link #loadLegacy(File)} tolerate that by
+ * treating a missing marker exactly like a present one - the marker is never required on read.</p>
  */
 public class ContractHistoryStore {
 
     private static final Logger LOGGER = Logger.getLogger(ContractHistoryStore.class.getName());
+
+    /**
+     * The current schema version, written as the file's own first line by every {@link #save}. See
+     * this class's own javadoc for why this is purely additive and never required on read.
+     */
+    private static final int CURRENT_SCHEMA_VERSION = 1;
+    private static final Pattern SCHEMA_VERSION_LINE = Pattern.compile("^\\{\"schemaVersion\":(\\d+)\\}$");
 
     private static final String STRING_FIELD = "\"((?:[^\"\\\\]|\\\\.)*)\"";
     private static final String NULLABLE_STRING_FIELD = "(?:null|" + STRING_FIELD + ")";
@@ -101,6 +114,9 @@ public class ContractHistoryStore {
             if (line.isBlank()) {
                 continue;
             }
+            if (i == 0 && SCHEMA_VERSION_LINE.matcher(line).matches()) {
+                continue;
+            }
             ContractProgressRecord record = parseLine(line);
             if (record != null) {
                 records.put(record.fingerprint(), record);
@@ -140,6 +156,9 @@ public class ContractHistoryStore {
             if (line.isBlank()) {
                 continue;
             }
+            if (i == 0 && SCHEMA_VERSION_LINE.matcher(line).matches()) {
+                continue;
+            }
             ContractProgressRecord record = parseLegacyLine(line);
             if (record == null) {
                 LOGGER.log(Level.WARNING,
@@ -164,6 +183,7 @@ public class ContractHistoryStore {
         sorted.sort(Comparator.comparing(ContractProgressRecord::fingerprint));
 
         try (PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8)) {
+            writer.println("{\"schemaVersion\":" + CURRENT_SCHEMA_VERSION + "}");
             for (ContractProgressRecord record : sorted) {
                 writer.println(toJson(record));
             }
