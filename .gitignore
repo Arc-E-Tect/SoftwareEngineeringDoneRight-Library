@@ -57,3 +57,6 @@ gradle-plugin-publishing.md
 sedr-library-maven-central-publishing.md
 
 /**/*prompts.md
+
+# Scratch/validation projects (matches the Gradle repo's own convention)
+/tmp/
