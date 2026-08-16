@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.0.0...api-detector-core-v1.1.0) (2026-08-16)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** write and tolerate a schema-version marker ([#65](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/65)) ([e27d53f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/e27d53f35342df40c9473e7ec5a08e0dc55d6e56)), closes [#65](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/65)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.0.0 [skip ci] ([ebb1c5f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ebb1c5f34010a47c92ee94e1536c43d89092686f))
+
 # [1.0.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v0.3.0...api-detector-core-v1.0.0) (2026-08-15)
 
 
