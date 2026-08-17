@@ -4,7 +4,14 @@
 
 module.exports = {
     branches: ["main"],
-    tagFormat: "v${version}",
+    // Scoped to this module's own tag namespace so its version history is independent of the
+    // other modules in this repo. Previously this was the unscoped "v${version}" format, which
+    // hexagonal-spring-rules also fell back to by default, so the two projects' tags collided
+    // and their version counters became interleaved. build.gradle's local-dev version resolver
+    // already expected a "sedr-library-v" prefix, so this now matches. A
+    // "sedr-library-v0.5.2" tag is seeded on the commit that was the last real release under the
+    // old shared scheme, so numbering continues from there instead of restarting.
+    tagFormat: "sedr-library-v${version}",
     plugins: [
         ["@semantic-release/commit-analyzer", {
             preset: 'angular',
