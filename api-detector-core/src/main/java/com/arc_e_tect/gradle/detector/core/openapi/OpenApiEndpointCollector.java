@@ -5,17 +5,21 @@ import com.arc_e_tect.gradle.detector.core.model.PathTemplates;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -82,7 +86,64 @@ public class OpenApiEndpointCollector {
      */
     public List<DescribedEndpoint> collect(File rootDocument, Consumer<File> onDocumentResolved) {
         discoverReferencedDocuments(rootDocument, new HashSet<>(), onDocumentResolved);
+        OpenAPI openApi = parseOpenApi(rootDocument);
 
+        List<DescribedEndpoint> endpoints = new ArrayList<>();
+        Paths paths = openApi.getPaths();
+        if (paths == null) {
+            return endpoints;
+        }
+        paths.forEach((path, item) -> item.readOperationsMap().forEach((method, operation) ->
+                endpoints.add(new DescribedEndpoint(
+                        HttpVerb.valueOf(method.name()),
+                        PathTemplates.normalize(path),
+                        operation.getOperationId(),
+                        operationTags(operation)))));
+        return endpoints;
+    }
+
+    /**
+     * Parses {@code rootDocument} and returns the path component of its first declared
+     * {@code servers} entry's {@code url} - e.g. {@code http://localhost:9011/crm-service} yields
+     * {@code /crm-service} - normalised via {@link PathTemplates#normalize(String)}.
+     *
+     * <p>An OpenAPI document's {@code paths} are always relative to that base path: a client
+     * actually requests {@code <server url>/<path>}, but every operation's declared path (and every
+     * path a {@code @RequestMapping}-derived scan produces) omits it. A WireMock stub mapping, in
+     * contrast, records the full request path a client actually sends, base path included. This is
+     * the default source for stripping it back off before comparing the two - see
+     * {@code mirageApiDetector.basePath} in the Mirage API Detector plugin, which falls back to
+     * this method's result when left unconfigured.</p>
+     *
+     * @param rootDocument the root OpenAPI document (JSON or YAML)
+     * @return the first server's base path, or {@link Optional#empty()} when the document declares
+     *         no {@code servers} entry, its {@code url} is blank, or that URL has no path component
+     *         (e.g. {@code http://localhost:9011} alone, with nothing to strip)
+     * @throws IllegalStateException if the document cannot be parsed
+     */
+    public Optional<String> firstServerBasePath(File rootDocument) {
+        OpenAPI openApi = parseOpenApi(rootDocument);
+        List<Server> servers = openApi.getServers();
+        if (servers == null || servers.isEmpty()) {
+            return Optional.empty();
+        }
+        String url = servers.get(0).getUrl();
+        if (url == null || url.isBlank()) {
+            return Optional.empty();
+        }
+        String path;
+        try {
+            path = new URI(url).getPath();
+        } catch (URISyntaxException e) {
+            return Optional.empty();
+        }
+        if (path == null || path.isBlank() || path.equals("/")) {
+            return Optional.empty();
+        }
+        return Optional.of(PathTemplates.normalize(path));
+    }
+
+    private OpenAPI parseOpenApi(File rootDocument) {
         ParseOptions options = new ParseOptions();
         options.setResolve(true);
         options.setResolveFully(true);
@@ -98,19 +159,7 @@ public class OpenApiEndpointCollector {
             throw new IllegalStateException(
                     "apiDetectorCore: failed to parse OpenAPI document " + rootDocument + ": " + messages);
         }
-
-        List<DescribedEndpoint> endpoints = new ArrayList<>();
-        Paths paths = openApi.getPaths();
-        if (paths == null) {
-            return endpoints;
-        }
-        paths.forEach((path, item) -> item.readOperationsMap().forEach((method, operation) ->
-                endpoints.add(new DescribedEndpoint(
-                        HttpVerb.valueOf(method.name()),
-                        PathTemplates.normalize(path),
-                        operation.getOperationId(),
-                        operationTags(operation)))));
-        return endpoints;
+        return openApi;
     }
 
     private static List<String> operationTags(Operation operation) {

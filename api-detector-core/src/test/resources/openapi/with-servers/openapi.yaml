@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: With Servers Test API
+  version: "1.0"
+servers:
+  - url: http://localhost:9011/crm-service
+    description: Generated server url
+paths:
+  /v1/users:
+    get:
+      operationId: listUsers
+      responses:
+        '200':
+          description: OK

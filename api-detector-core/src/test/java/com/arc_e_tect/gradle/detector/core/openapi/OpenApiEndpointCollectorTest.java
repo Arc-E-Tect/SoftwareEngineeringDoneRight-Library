@@ -8,6 +8,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -163,6 +164,31 @@ class OpenApiEndpointCollectorTest {
         collector.collect(resource("openapi/with-ref/openapi.yaml"), resolved::add);
 
         assertThat(resolved).anyMatch(file -> file.getName().equals("users.yaml"));
+    }
+
+    @Test
+    @DisplayName("firstServerBasePath() returns the path component of the first server's url")
+    void firstServerBasePathReturnsPathComponentOfFirstServerUrl() {
+        Optional<String> basePath = collector.firstServerBasePath(resource("openapi/with-servers/openapi.yaml"));
+
+        assertThat(basePath).contains("/crm-service");
+    }
+
+    @Test
+    @DisplayName("firstServerBasePath() is empty when the document declares no servers entry")
+    void firstServerBasePathEmptyWhenNoServersDeclared() {
+        Optional<String> basePath = collector.firstServerBasePath(resource("openapi/single-file/openapi.yaml"));
+
+        assertThat(basePath).isEmpty();
+    }
+
+    @Test
+    @DisplayName("firstServerBasePath() is empty when the first server's url has no path component")
+    void firstServerBasePathEmptyWhenServerUrlHasNoPath() {
+        Optional<String> basePath =
+                collector.firstServerBasePath(resource("openapi/with-rootless-server/openapi.yaml"));
+
+        assertThat(basePath).isEmpty();
     }
 
     private static File resource(String name) {
