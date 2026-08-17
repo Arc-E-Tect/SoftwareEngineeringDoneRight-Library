@@ -4,6 +4,14 @@
 
 module.exports = {
     branches: ["main"],
+    // Scoped to this module's own tag namespace so its version history is independent of the
+    // other modules in this repo. Previously this had no explicit tagFormat, which meant it fell
+    // back to semantic-release's default "v${version}" - the same format sedr-library used
+    // explicitly, so the two projects' tags collided and their version counters became
+    // interleaved. A "hexagonal-spring-rules-v0.5.0" tag is seeded on the commit that was the
+    // last real release under the old shared scheme, so numbering continues from there instead
+    // of restarting.
+    tagFormat: "hexagonal-spring-rules-v${version}",
     plugins: [
         ["@semantic-release/commit-analyzer", {
             preset: 'angular',
