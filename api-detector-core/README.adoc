@@ -62,7 +62,7 @@ No repository declaration or authentication is required.
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect:api-detector-core:1.1.0")
+    implementation("com.arc-e-tect:api-detector-core:1.2.0")
 }
 ----
 
@@ -70,7 +70,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect:api-detector-core:1.1.0'
+    implementation 'com.arc-e-tect:api-detector-core:1.2.0'
 }
 ----
 
@@ -80,7 +80,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect</groupId>
     <artifactId>api-detector-core</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 ----
 
