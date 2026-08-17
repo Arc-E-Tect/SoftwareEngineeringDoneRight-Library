@@ -37,14 +37,13 @@ def resolveVersion = {
         def proc = cmd.execute()
         proc.waitForOrKill(10_000)
         def tag = proc.text.readLines()
-            .findAll { it.startsWith('architecture-validator-hexagonal-spring-rules-v') || it.startsWith('spring-rules-v') }
+            .findAll { it.startsWith('hexagonal-spring-rules-v') }
             .sort()
             .last()
 
         if (tag) {
             def v = tag
-                .replaceFirst(/^architecture-validator-hexagonal-spring-rules-v/, '')
-                .replaceFirst(/^spring-rules-v/, '')
+                .replaceFirst(/^hexagonal-spring-rules-v/, '')
             logger.lifecycle('[hexagonal-spring-rules] version from GitHub release: ' + v)
             return v
         }
