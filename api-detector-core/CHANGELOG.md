@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.1.0...api-detector-core-v1.2.0) (2026-08-17)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** add PathTemplates.stripBasePath and OpenApiEndpointCollector.firstServerBasePath ([#66](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/66)) ([865e711](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/865e71197d01e32ee8d96e52eae9c661fbe9501f)), closes [#66](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/66)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.1.0 [skip ci] ([1680e7b](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1680e7b6bdb4233a3c056711fa2777412017b3ac))
+
 # [1.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.0.0...api-detector-core-v1.1.0) (2026-08-16)
 
 
