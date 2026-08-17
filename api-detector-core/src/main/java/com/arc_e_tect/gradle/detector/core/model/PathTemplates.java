@@ -52,6 +52,36 @@ public final class PathTemplates {
         return segment.startsWith("{") && segment.endsWith("}");
     }
 
+    /**
+     * Removes a leading {@code basePath} segment from {@code path}, both normalised via
+     * {@link #normalize(String)} first. Meant for a path recorded against the full request URL a
+     * real client actually sends - e.g. one read from a WireMock stub mapping file, which always
+     * includes whatever deployment-time context path the server runs under - so it can be compared
+     * against a path template that never includes one, such as an OpenAPI-declared path or one
+     * read from a {@code @RequestMapping} annotation.
+     *
+     * @param path     the path to strip {@code basePath} from
+     * @param basePath the base path to remove; blank or {@code "/"} - i.e. no real base path -
+     *                 leaves {@code path} unchanged
+     * @return {@code path}, normalised, with a leading {@code basePath} removed; unchanged
+     *         (other than normalising) when {@code path} doesn't actually start with
+     *         {@code basePath}, so a mismatched configuration never corrupts an unrelated path
+     */
+    public static String stripBasePath(String path, String basePath) {
+        String normalizedPath = normalize(path);
+        String normalizedBase = normalize(basePath);
+        if (normalizedBase.equals("/")) {
+            return normalizedPath;
+        }
+        if (normalizedPath.equals(normalizedBase)) {
+            return "/";
+        }
+        if (normalizedPath.startsWith(normalizedBase + "/")) {
+            return normalizedPath.substring(normalizedBase.length());
+        }
+        return normalizedPath;
+    }
+
     private static String blankToEmpty(String s) {
         return s == null ? "" : s.trim();
     }
