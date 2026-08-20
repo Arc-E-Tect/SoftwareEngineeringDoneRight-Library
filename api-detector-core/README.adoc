@@ -26,6 +26,14 @@ Detector, Mirage API Detector, and Doppelganger API Detector.
 |Gradle |9.x
 |===
 
+== OpenAPI Compatibility
+
+api-detector-core supports OpenAPI v3 documents.
+In practice, this means OpenAPI 3.0.x, 3.1.x, and 3.2.x.
+OpenAPI v2 (Swagger 2.0) is not supported.
+OpenAPI 2 compatibility conversion is explicitly excluded from the runtime classpath.
+The library uses `io.swagger.parser.v3:swagger-parser-v3` only.
+
 == What's Included
 
 [cols="1,2,3"]
