@@ -1,3 +1,23 @@
+## [1.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.2.0...api-detector-core-v1.2.1) (2026-08-20)
+
+
+### 🐛 Bug Fixes
+
+* **hexagonal-spring-rules:** give module its own semantic-release tag namespace ([#67](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/67)) ([613a69a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/613a69ac3caeb5c372ead3529ed13107e1b04320)), closes [#67](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/67)
+* **sedr-library:** give module its own semantic-release tag namespace ([#68](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/68)) ([ff2eb0d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ff2eb0d44c14d245cb6d8ab7075de29044dc209f)), closes [#68](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/68) [#67](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/67)
+* **api-detector-core:** update swagger-parser dependency and document OpenAPI v3 support ([#70](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/70)) ([352b03e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/352b03e3d4881b653fd7d394a3eaf3d9d25da7bd)), closes [#70](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/70)
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 1.0.0 [skip ci] ([140934e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/140934e3826c25a66f46a2023e9234830e69c191))
+* **api-detector-core:** update README version to 1.2.0 [skip ci] ([6656c7f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/6656c7f2ee73c09c083fb62cc25a953f2c874234))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/69)) ([d46b898](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d46b8989dc5df17e9b8baf946a5bff48a26c6a10)), closes [#69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/69)
+
 # [1.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.1.0...api-detector-core-v1.2.0) (2026-08-17)
 
 
