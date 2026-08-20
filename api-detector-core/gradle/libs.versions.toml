@@ -18,7 +18,7 @@ owaspDependencycheck = "13.0.0"
 [libraries]
 
 javaparser-core = { module = "com.github.javaparser:javaparser-core", version.ref = "javaparser" }
-swagger-parser = { module = "io.swagger.parser.v3:swagger-parser", version.ref = "swagger-parser" }
+swagger-parser = { module = "io.swagger.parser.v3:swagger-parser-v3", version.ref = "swagger-parser" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
