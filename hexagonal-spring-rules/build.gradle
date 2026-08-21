@@ -85,6 +85,7 @@ dependencyCheck {
         nodeAuditEnabled = false
         nodeEnabled = false
     }
+    format = 'HTML'
 }
 
 dependencies {
