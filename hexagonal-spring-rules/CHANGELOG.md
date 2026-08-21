@@ -1,3 +1,23 @@
+## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.0...hexagonal-spring-rules-v1.0.1) (2026-08-21)
+
+
+### 🐛 Bug Fixes
+
+* **hexagonal-spring-rules:** align dependency-check config with sibling projects ([#71](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/71)) ([769f76a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/769f76a9434bd11469189eab2c8d8dbc74112a12)), closes [#71](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/71)
+* **sedr-library:** give module its own semantic-release tag namespace ([#68](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/68)) ([ff2eb0d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ff2eb0d44c14d245cb6d8ab7075de29044dc209f)), closes [#68](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/68) [#67](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/67)
+* **api-detector-core:** update swagger-parser dependency and document OpenAPI v3 support ([#70](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/70)) ([352b03e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/352b03e3d4881b653fd7d394a3eaf3d9d25da7bd)), closes [#70](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/70)
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 1.0.0 [skip ci] ([140934e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/140934e3826c25a66f46a2023e9234830e69c191))
+* **api-detector-core:** update README version to 1.2.1 [skip ci] ([b4230b2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b4230b254bf6fe7b1114844a639e127235b0499b))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/69)) ([d46b898](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d46b8989dc5df17e9b8baf946a5bff48a26c6a10)), closes [#69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/69)
+
 # [1.0.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v0.5.0...hexagonal-spring-rules-v1.0.0) (2026-08-17)
 
 
