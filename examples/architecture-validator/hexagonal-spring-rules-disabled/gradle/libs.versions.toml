@@ -7,8 +7,8 @@ architecture-validator-iff = { id = "com.arc-e-tect.architecture-validator", ver
 [versions]
 
 architecture-validator-iff = "4.0.0"
-architecture-validator-hexagonal-spring-rules-iff = "1.0.0"
-spring-context-iff = "7.0.8"
+architecture-validator-hexagonal-spring-rules-iff = "1.0.1"
+spring-context-iff = "7.0.9"
 
 [libraries]
 
