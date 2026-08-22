@@ -67,6 +67,7 @@ repositories {
 dependencies {
     implementation libs.javaparser.core
     implementation libs.swagger.parser
+    implementation libs.snakeyaml
 
     // Only for org.gradle.api.logging.Logger, the sole Gradle type ScanProgressReporter's public
     // API accepts. compileOnly: the real implementation is always supplied by whichever Gradle
