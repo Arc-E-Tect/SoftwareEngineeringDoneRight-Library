@@ -1,3 +1,27 @@
+# [1.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.2.1...api-detector-core-v1.3.0) (2026-08-22)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** add shared exclusion rule engine ([#73](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/73)) ([bb77af8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/bb77af8a47a0f7045a9c8c8d8f4718396ac36215)), closes [#73](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/73)
+
+
+### 🐛 Bug Fixes
+
+* **hexagonal-spring-rules:** align dependency-check config with sibling projects ([#71](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/71)) ([769f76a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/769f76a9434bd11469189eab2c8d8dbc74112a12)), closes [#71](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/71)
+
+
+### 📝 Documentation
+
+* **sedr-library:** update README version to 1.0.0 [skip ci] ([2838a47](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2838a47f11ced6e3f30b79a5b91a47a4d7fd2337))
+* **hexagonal-spring-rules:** update README version to 1.0.1 [skip ci] ([0c115a7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0c115a740e22ca7151034c2e31e58e98511e4702))
+* **api-detector-core:** update README version to 1.2.1 [skip ci] ([b4230b2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b4230b254bf6fe7b1114844a639e127235b0499b))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#72](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/72)) ([2f7c387](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2f7c38719bcb98ae9f4cff9fc0f5dd0ef6db7969)), closes [#72](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/72)
+
 ## [1.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.2.0...api-detector-core-v1.2.1) (2026-08-20)
 
 
