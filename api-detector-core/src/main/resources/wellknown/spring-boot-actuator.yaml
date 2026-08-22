@@ -1,0 +1,9 @@
+# Spring Boot Actuator management endpoints. These are provided by the framework's own
+# auto-configuration (org.springframework.boot.actuate.endpoint), not a hand-written
+# @RestController, so they are structurally invisible to ControllerScanner even when they are
+# documented and fully functional at runtime. A single glob is used - rather than an enumerated
+# endpoint list - since which actuator endpoints are actually exposed is configurable per
+# application (management.endpoints.web.exposure.include) and would otherwise drift out of sync
+# with Spring's own list.
+exclusions:
+  - "/actuator/**"
