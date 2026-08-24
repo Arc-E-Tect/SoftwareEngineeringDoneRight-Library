@@ -98,7 +98,8 @@ public class OpenApiEndpointCollector {
                         HttpVerb.valueOf(method.name()),
                         PathTemplates.normalize(path),
                         operation.getOperationId(),
-                        operationTags(operation)))));
+                        operationTags(operation),
+                        operationResponseCodes(operation)))));
         return endpoints;
     }
 
@@ -164,6 +165,17 @@ public class OpenApiEndpointCollector {
 
     private static List<String> operationTags(Operation operation) {
         return operation.getTags() == null ? List.of() : List.copyOf(operation.getTags());
+    }
+
+    /**
+     * Returns the operation's declared response codes exactly as keyed in its {@code responses}
+     * map (e.g. {@code "200"}, {@code "404"}, {@code "5XX"}, {@code "default"}), sorted.
+     */
+    private static List<String> operationResponseCodes(Operation operation) {
+        if (operation.getResponses() == null) {
+            return List.of();
+        }
+        return operation.getResponses().keySet().stream().sorted().toList();
     }
 
     /**

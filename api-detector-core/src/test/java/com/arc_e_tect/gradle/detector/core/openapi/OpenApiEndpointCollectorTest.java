@@ -67,6 +67,36 @@ class OpenApiEndpointCollectorTest {
     }
 
     @Test
+    @DisplayName("collects the declared response codes of each operation, sorted")
+    void collectsResponseCodes() {
+        List<DescribedEndpoint> endpoints = collector.collect(resource("openapi/single-file/openapi.yaml"));
+
+        assertThat(endpoints)
+                .filteredOn(e -> e.verb() == HttpVerb.GET && e.path().equals("/users/{id}"))
+                .extracting(DescribedEndpoint::responseCodes)
+                .containsExactly(List.of("200", "404"));
+    }
+
+    @Test
+    @DisplayName("returns an empty response code list for an operation with a single declared response")
+    void collectsSingleResponseCode() {
+        List<DescribedEndpoint> endpoints = collector.collect(resource("openapi/single-file/openapi.yaml"));
+
+        assertThat(endpoints)
+                .filteredOn(e -> e.verb() == HttpVerb.GET && e.path().equals("/users"))
+                .extracting(DescribedEndpoint::responseCodes)
+                .containsExactly(List.of("200"));
+    }
+
+    @Test
+    @DisplayName("the legacy 4-arg constructor still compiles and defaults responseCodes to empty")
+    void legacyFourArgConstructorDefaultsResponseCodesToEmpty() {
+        DescribedEndpoint endpoint = new DescribedEndpoint(HttpVerb.GET, "/legacy", "legacyOp", List.of("Tag"));
+
+        assertThat(endpoint.responseCodes()).isEmpty();
+    }
+
+    @Test
     @DisplayName("follows a relative $ref to an external path-item document")
     void followsRelativeRef() {
         List<DescribedEndpoint> endpoints = collector.collect(resource("openapi/with-ref/openapi.yaml"));
