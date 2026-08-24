@@ -1,3 +1,20 @@
+# [1.4.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.3.0...api-detector-core-v1.4.0) (2026-08-24)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** add declared response codes to DescribedEndpoint ([#75](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/75)) ([f8a39c7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f8a39c700d49b2e9162c2d9fbacdbc00236c8e29)), closes [#75](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/75)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.3.0 [skip ci] ([eb2f1b7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/eb2f1b7a56d8c4babff4ec2f2fef404ca0f011dc))
+
+
+### 🔧 Misc
+
+* **Jacoco Marker:** update java dependency versions ([#74](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/74)) ([fd93f62](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/fd93f62aecf2b0d501b436e491c342fc80ee4e56)), closes [#74](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/74)
+
 # [1.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.2.1...api-detector-core-v1.3.0) (2026-08-22)
 
 
