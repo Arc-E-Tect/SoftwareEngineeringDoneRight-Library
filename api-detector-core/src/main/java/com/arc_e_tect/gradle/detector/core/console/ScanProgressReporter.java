@@ -6,9 +6,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 /**
- * Emits periodic, low-overhead {@code LIFECYCLE}-level status lines for a long-running scan loop
- * (controller scanning, OpenAPI {@code $ref} resolution, verification-evidence scanning, ...), so
- * a consumer watching the build knows the task is still alive and roughly how far along it is.
+ * Emits periodic, low-overhead status lines for a long-running scan loop (controller scanning,
+ * OpenAPI {@code $ref} resolution, verification-evidence scanning, ...), so a consumer watching
+ * the build knows the task is still alive and roughly how far along it is.
  *
  * <p>Deliberately built only on the public {@link Logger} API - one plain line per status update,
  * never overwriting a line in place - rather than Gradle's internal, unsupported rich-console
@@ -17,12 +17,14 @@ import java.util.function.LongSupplier;
  * changed shape across versions and offers no compatibility guarantee. This is a deliberate
  * trade-off in exchange for forward/backward compatibility, not an oversight.</p>
  *
- * <p>A status line is emitted every {@code everyNItems} items <strong>or</strong> every
- * {@code everySeconds} seconds since the last emission, whichever comes first - never on every
- * single item, and never silent for more than {@code everySeconds} regardless of how many items
- * are processed in between. {@link #complete()} always emits a final summary line, even if the
- * most recent {@link #step()} landed inside the throttle window - the final line is never
- * suppressed by throttling.</p>
+ * <p>{@link #step()} lines are emitted at {@code INFO} level - visible only with {@code --info} -
+ * every {@code everyNItems} items <strong>or</strong> every {@code everySeconds} seconds since the
+ * last emission, whichever comes first - never on every single item, and never silent for more
+ * than {@code everySeconds} regardless of how many items are processed in between. {@link
+ * #complete()} always emits its final summary line at {@code LIFECYCLE} level, visible by default,
+ * regardless of whether the most recent {@link #step()} landed inside the throttle window - the
+ * final line is never suppressed by throttling. Pair this with a {@code DetectorStageReporter} for
+ * the always-visible top-level "[N/M] stage" headers a plugin task prints around each phase.</p>
  */
 public final class ScanProgressReporter {
 
@@ -50,7 +52,8 @@ public final class ScanProgressReporter {
      * every {@value #DEFAULT_EVERY_SECONDS} seconds) and the real wall-clock time source. Prefer
      * {@link #determinate(Logger, String, int)} or {@link #indeterminate(Logger, String)}.
      *
-     * @param logger     the logger status lines are emitted to, at {@code LIFECYCLE} level
+     * @param logger     the logger status lines are emitted to - {@link #step} at {@code INFO}
+     *                   level, {@link #complete()} at {@code LIFECYCLE} level
      * @param phaseLabel short label identifying the scan phase, e.g. {@code "Scanning @RestController classes"}
      * @param total      the total number of items expected, or a negative number for an
      *                   indeterminate-total scan (the total isn't known ahead of time)
@@ -62,7 +65,8 @@ public final class ScanProgressReporter {
     /**
      * Creates a reporter with an explicit throttle and the real wall-clock time source.
      *
-     * @param logger       the logger status lines are emitted to, at {@code LIFECYCLE} level
+     * @param logger       the logger status lines are emitted to - {@link #step} at {@code INFO}
+     *                     level, {@link #complete()} at {@code LIFECYCLE} level
      * @param phaseLabel   short label identifying the scan phase
      * @param total        the total number of items expected, or a negative number for an
      *                     indeterminate-total scan
@@ -78,7 +82,8 @@ public final class ScanProgressReporter {
      * Creates a reporter with an explicit throttle and time source, for use by tests that need to
      * control elapsed time without a real {@code Thread.sleep}.
      *
-     * @param logger         the logger status lines are emitted to, at {@code LIFECYCLE} level
+     * @param logger         the logger status lines are emitted to - {@link #step} at {@code INFO}
+     *                       level, {@link #complete()} at {@code LIFECYCLE} level
      * @param phaseLabel     short label identifying the scan phase
      * @param total          the total number of items expected, or a negative number for an
      *                       indeterminate-total scan
@@ -103,7 +108,8 @@ public final class ScanProgressReporter {
      * Creates a reporter for a scan whose total item count is known ahead of time. Emitted lines
      * include a running fraction and percentage, e.g. {@code "Scanning @RestController classes: 150/438 (34%)"}.
      *
-     * @param logger     the logger status lines are emitted to, at {@code LIFECYCLE} level
+     * @param logger     the logger status lines are emitted to - {@link #step} at {@code INFO}
+     *                   level, {@link #complete()} at {@code LIFECYCLE} level
      * @param phaseLabel short label identifying the scan phase
      * @param total      the total number of items expected; {@code 0} is valid and not an error
      * @return a new determinate-mode reporter, using the default throttle
@@ -116,7 +122,8 @@ public final class ScanProgressReporter {
      * Creates a reporter for a scan whose total item count isn't known ahead of time. Emitted
      * lines report only a running count, e.g. {@code "Resolving OpenAPI documents: 27 processed so far"}.
      *
-     * @param logger     the logger status lines are emitted to, at {@code LIFECYCLE} level
+     * @param logger     the logger status lines are emitted to - {@link #step} at {@code INFO}
+     *                   level, {@link #complete()} at {@code LIFECYCLE} level
      * @param phaseLabel short label identifying the scan phase
      * @return a new indeterminate-mode reporter, using the default throttle
      */
@@ -125,16 +132,18 @@ public final class ScanProgressReporter {
     }
 
     /**
-     * Records one item processed, emitting a status line if the throttle window has elapsed.
-     * Equivalent to {@link #step(String)} with no detail.
+     * Records one item processed, emitting an {@code INFO}-level status line - visible only with
+     * {@code --info} - if the throttle window has elapsed. Equivalent to {@link #step(String)}
+     * with no detail.
      */
     public void step() {
         step(null);
     }
 
     /**
-     * Records one item processed, emitting a status line - with {@code detail} appended, when
-     * given - if the throttle window has elapsed.
+     * Records one item processed, emitting an {@code INFO}-level status line - visible only with
+     * {@code --info}, with {@code detail} appended when given - if the throttle window has
+     * elapsed.
      *
      * @param detail short description of the current item, appended to the line only when this
      *               call itself results in an emission; or {@code null}/blank for no detail
@@ -145,17 +154,18 @@ public final class ScanProgressReporter {
         boolean dueByCount = (count - lastEmittedCount) >= everyNItems;
         boolean dueByTime = (now - lastEmittedNanos) >= everyNanos;
         if (dueByCount || dueByTime) {
-            logger.lifecycle(progressLine(detail));
+            logger.info(progressLine(detail));
             lastEmittedCount = count;
             lastEmittedNanos = now;
         }
     }
 
     /**
-     * Emits a final summary line unconditionally, regardless of throttling state - the last
-     * {@link #step()} may have landed inside the throttle window, but this line is never
-     * suppressed. Safe to call on a reporter that never had {@link #step()} called at all (the
-     * {@code 0}-items-processed case).
+     * Emits a final summary line unconditionally at {@code LIFECYCLE} level - visible by default,
+     * regardless of throttling state. The last {@link #step()} may have landed inside the throttle
+     * window (or never fired at all, since its lines are {@code INFO}-only), but this line is
+     * never suppressed. Safe to call on a reporter that never had {@link #step()} called at all
+     * (the {@code 0}-items-processed case).
      */
     public void complete() {
         logger.lifecycle(phaseLabel + ": done, " + count + " item(s)");
