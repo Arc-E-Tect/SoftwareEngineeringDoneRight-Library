@@ -11,7 +11,7 @@ Shared Java annotations and utilities for _Software Engineering Done Right_ proj
 
 [cols="1,1"]
 |===
-|Latest version |`0.4.6`
+|Latest version |`1.0.0`
 |Group ID       |`com.arc-e-tect.sedr.utils`
 |Artifact ID    |`sedr-library`
 |===
