@@ -23,7 +23,7 @@ class ScanProgressReporterTest {
             reporter.step();
         }
 
-        assertThat(logger.lifecycleMessages()).isEmpty();
+        assertThat(logger.infoMessages()).isEmpty();
     }
 
     @Test
@@ -36,7 +36,7 @@ class ScanProgressReporterTest {
             reporter.step();
         }
 
-        assertThat(logger.lifecycleMessages()).containsExactly("Scanning: 5/100 (5%)");
+        assertThat(logger.infoMessages()).containsExactly("Scanning: 5/100 (5%)");
     }
 
     @Test
@@ -49,7 +49,7 @@ class ScanProgressReporterTest {
             reporter.step();
         }
 
-        assertThat(logger.lifecycleMessages()).hasSize(1);
+        assertThat(logger.infoMessages()).hasSize(1);
     }
 
     @Test
@@ -62,7 +62,7 @@ class ScanProgressReporterTest {
         nanos.set(1_000_000_000L); // 1 second, less than the 2-second throttle
         reporter.step();
 
-        assertThat(logger.lifecycleMessages()).isEmpty();
+        assertThat(logger.infoMessages()).isEmpty();
     }
 
     @Test
@@ -75,7 +75,7 @@ class ScanProgressReporterTest {
         nanos.set(2_000_000_000L); // exactly 2 seconds
         reporter.step();
 
-        assertThat(logger.lifecycleMessages()).containsExactly("Scanning: 1/100 (1%)");
+        assertThat(logger.infoMessages()).containsExactly("Scanning: 1/100 (1%)");
     }
 
     @Test
@@ -110,7 +110,7 @@ class ScanProgressReporterTest {
             reporter.step();
         }
 
-        assertThat(logger.lifecycleMessages()).containsExactly("Resolving: 3 processed so far");
+        assertThat(logger.infoMessages()).containsExactly("Resolving: 3 processed so far");
     }
 
     @Test
@@ -133,7 +133,7 @@ class ScanProgressReporterTest {
 
         reporter.step("UserController.java");
 
-        assertThat(logger.lifecycleMessages()).containsExactly("Scanning: 1/100 (1%) - UserController.java");
+        assertThat(logger.infoMessages()).containsExactly("Scanning: 1/100 (1%) - UserController.java");
     }
 
     private LongSupplier fixedClock(long value) {

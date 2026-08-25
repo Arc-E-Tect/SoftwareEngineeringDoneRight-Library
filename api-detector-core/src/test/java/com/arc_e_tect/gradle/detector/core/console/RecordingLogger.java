@@ -9,12 +9,14 @@ import java.util.List;
 
 /**
  * Hand-written {@link Logger} test double that records every message passed to
- * {@link #lifecycle(String)}/{@link #lifecycle(String, Object...)} and no-ops everything else -
- * this codebase's tests use hand-written fakes rather than a mocking framework.
+ * {@link #lifecycle(String)}/{@link #lifecycle(String, Object...)} and
+ * {@link #info(String)}/{@link #info(String, Object...)}, and no-ops everything else - this
+ * codebase's tests use hand-written fakes rather than a mocking framework.
  */
 class RecordingLogger implements Logger {
 
     private final List<String> lifecycleMessages = new ArrayList<>();
+    private final List<String> infoMessages = new ArrayList<>();
 
     /** Creates a new {@code RecordingLogger}. */
     RecordingLogger() {}
@@ -26,6 +28,15 @@ class RecordingLogger implements Logger {
      */
     List<String> lifecycleMessages() {
         return lifecycleMessages;
+    }
+
+    /**
+     * Every message passed to {@code info(...)}, in call order.
+     *
+     * @return the recorded info messages
+     */
+    List<String> infoMessages() {
+        return infoMessages;
     }
 
     @Override
@@ -163,11 +174,13 @@ class RecordingLogger implements Logger {
 
     @Override
     public boolean isInfoEnabled() {
-        return false;
+        return true;
     }
 
     @Override
-    public void info(String msg) {}
+    public void info(String msg) {
+        infoMessages.add(msg);
+    }
 
     @Override
     public void info(String format, Object arg) {}
@@ -176,10 +189,14 @@ class RecordingLogger implements Logger {
     public void info(String format, Object arg1, Object arg2) {}
 
     @Override
-    public void info(String format, Object... arguments) {}
+    public void info(String format, Object... arguments) {
+        infoMessages.add(format);
+    }
 
     @Override
-    public void info(String msg, Throwable t) {}
+    public void info(String msg, Throwable t) {
+        infoMessages.add(msg);
+    }
 
     @Override
     public boolean isInfoEnabled(Marker marker) {
