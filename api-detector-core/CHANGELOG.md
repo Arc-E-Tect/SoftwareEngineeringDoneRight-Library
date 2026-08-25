@@ -1,3 +1,20 @@
+# [1.5.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.4.0...api-detector-core-v1.5.0) (2026-08-25)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** quiet default detector console output to stage headers ([#77](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/77)) ([d270839](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d2708391cc6408f50339cd8b1447b4591d1db0fa)), closes [#77](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/77)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** correct the Latest-version sed pattern in two release workflows ([#76](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/76)) ([a02c3ce](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a02c3ce1f04ac70f5d72a79878e2c7ea8c73755f)), closes [#76](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/76)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.4.0 [skip ci] ([4491ed5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4491ed592af244fedfd7529096d31e891cc460a1))
+
 # [1.4.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.3.0...api-detector-core-v1.4.0) (2026-08-24)
 
 
