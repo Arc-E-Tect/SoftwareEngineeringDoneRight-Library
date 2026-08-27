@@ -1,3 +1,15 @@
+## [1.5.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.0...api-detector-core-v1.5.1) (2026-08-27)
+
+
+### 🐛 Bug Fixes
+
+* **api-detector-core:** make EndpointFingerprint tolerant of path-variable naming differences ([#78](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/78)) ([493a356](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/493a3566e4cb81f0d868a5fc9e44bbe32999086c)), closes [#78](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/78)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.5.0 [skip ci] ([04175b5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/04175b58f6a195269970bd6f77a8359ce9063b16))
+
 # [1.5.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.4.0...api-detector-core-v1.5.0) (2026-08-25)
 
 
