@@ -1,5 +1,6 @@
 package com.arc_e_tect.gradle.detector.core.progress;
 
+import com.arc_e_tect.gradle.detector.core.model.Endpoint;
 import com.arc_e_tect.gradle.detector.core.model.HttpVerb;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -141,11 +142,12 @@ class ContractHistoryStoreTest {
         store.save(file, List.of());
 
         List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-        assertThat(lines.get(0)).isEqualTo("{\"schemaVersion\":1}");
+        assertThat(lines.get(0)).isEqualTo("{\"schemaVersion\":\"1.1.0\"}");
     }
 
     @Test
-    @DisplayName("load tolerates a file with no schema-version marker, exactly like one that has it")
+    @DisplayName("load tolerates a file with no schema-version marker, exactly like one that has it - "
+            + "recomputing the record's fingerprint, since a headerless file predates fingerprint canonicalisation")
     void loadToleratesAFileWithNoSchemaVersionMarker() throws IOException {
         File file = tempDir.resolve("history.ndjson").toFile();
         String validLine = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"GET\",\"path\":\"/a\","
@@ -153,10 +155,13 @@ class ContractHistoryStoreTest {
                 + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
                 + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
         Files.writeString(file.toPath(), validLine + "\n", StandardCharsets.UTF_8);
+        String realFingerprint = new EndpointFingerprint().fingerprint(
+                new Endpoint(HttpVerb.GET, "/a", null, null, null, 0));
 
         Map<String, ContractProgressRecord> loaded = store.load(file);
 
-        assertThat(loaded).containsOnlyKeys("aaaa000000000000");
+        assertThat(loaded).containsOnlyKeys(realFingerprint);
+        assertThat(loaded.get(realFingerprint).fingerprint()).isEqualTo(realFingerprint);
     }
 
     @Test
@@ -182,7 +187,11 @@ class ContractHistoryStoreTest {
                 + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
                 + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
                 + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
-        Files.writeString(file.toPath(), "not valid json at all\n" + validLine + "\n", StandardCharsets.UTF_8);
+        // A current-version header keeps this test isolated from the fingerprint-migration
+        // behaviour covered separately below - it would otherwise recompute "aaaa000000000000"
+        // into the record's real fingerprint, unrelated to what this test actually checks.
+        Files.writeString(file.toPath(),
+                "{\"schemaVersion\":\"1.1.0\"}\nnot valid json at all\n" + validLine + "\n", StandardCharsets.UTF_8);
 
         Map<String, ContractProgressRecord> loaded = store.load(file);
 
@@ -243,5 +252,152 @@ class ContractHistoryStoreTest {
         File missingFile = tempDir.resolve("missing.ndjson").toFile();
 
         assertThat(store.loadLegacy(missingFile)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("load migrates a legacy bare-integer schema-version marker, recomputing every fingerprint")
+    void loadMigratesLegacyBareIntegerSchemaVersionMarker() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String line = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{customerId}\","
+                + "\"declaringClass\":\"com.acme.CustomerController\",\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":\"2026-01-01T00:00:00Z\",\"stubbedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), "{\"schemaVersion\":1}\n" + line + "\n", StandardCharsets.UTF_8);
+        String realFingerprint = new EndpointFingerprint().fingerprint(
+                new Endpoint(HttpVerb.PUT, "/customers/{customerId}", null, null, null, 0));
+
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded).containsOnlyKeys(realFingerprint);
+    }
+
+    @Test
+    @DisplayName("load merges two records that collide onto the same fingerprint after migration, "
+            + "taking the earliest non-null stage timestamp of each")
+    void loadMergesCollidingRecordsTakingEarliestStageTimestamps() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        // Both describe PUT /customers/{anything} - only the placeholder's own name differs -
+        // so they collide onto the same fingerprint once that stops mattering.
+        String declared = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{customerId}\","
+                + "\"declaringClass\":\"com.acme.CustomerController\",\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":\"2026-01-05T00:00:00Z\",\"stubbedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-05T00:00:00Z\",\"removedAt\":null}";
+        String stubbed = "{\"fingerprint\":\"bbbb000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{id}\","
+                + "\"declaringClass\":null,\"declaredAt\":null,"
+                + "\"implementedAt\":null,\"stubbedAt\":\"2026-01-02T00:00:00Z\",\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-10T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), declared + "\n" + stubbed + "\n", StandardCharsets.UTF_8);
+        String realFingerprint = new EndpointFingerprint().fingerprint(
+                new Endpoint(HttpVerb.PUT, "/customers/{customerId}", null, null, null, 0));
+
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded).hasSize(1);
+        ContractProgressRecord merged = loaded.get(realFingerprint);
+        assertThat(merged.declaringClass()).isEqualTo("com.acme.CustomerController");
+        assertThat(merged.declaredAt()).isEqualTo(Instant.parse("2026-01-01T00:00:00Z"));
+        assertThat(merged.implementedAt()).isEqualTo(Instant.parse("2026-01-05T00:00:00Z"));
+        assertThat(merged.stubbedAt()).isEqualTo(Instant.parse("2026-01-02T00:00:00Z"));
+        assertThat(merged.lastSeenAt()).isEqualTo(Instant.parse("2026-01-10T00:00:00Z"));
+    }
+
+    @Test
+    @DisplayName("load prefers a colliding record's path from the more authoritative source: declared over stubbed")
+    void loadPrefersDeclaredPathOverStubbedPathWhenMergingCollidingRecords() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String declared = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{customerId}\","
+                + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
+        String stubbed = "{\"fingerprint\":\"bbbb000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{id}\","
+                + "\"declaringClass\":null,\"declaredAt\":null,"
+                + "\"implementedAt\":null,\"stubbedAt\":\"2026-01-02T00:00:00Z\",\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-02T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), declared + "\n" + stubbed + "\n", StandardCharsets.UTF_8);
+        String realFingerprint = new EndpointFingerprint().fingerprint(
+                new Endpoint(HttpVerb.PUT, "/customers/{customerId}", null, null, null, 0));
+
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded.get(realFingerprint).path()).isEqualTo("/customers/{customerId}");
+    }
+
+    @Test
+    @DisplayName("load only keeps removedAt on a merged record when both colliding records agree it was removed")
+    void loadOnlyKeepsRemovedAtWhenBothCollidingRecordsAgree() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String active = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{customerId}\","
+                + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-05T00:00:00Z\",\"removedAt\":null}";
+        String removed = "{\"fingerprint\":\"bbbb000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{id}\","
+                + "\"declaringClass\":null,\"declaredAt\":null,"
+                + "\"implementedAt\":null,\"stubbedAt\":\"2026-01-02T00:00:00Z\",\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-03T00:00:00Z\",\"removedAt\":\"2026-01-04T00:00:00Z\"}";
+        Files.writeString(file.toPath(), active + "\n" + removed + "\n", StandardCharsets.UTF_8);
+        String realFingerprint = new EndpointFingerprint().fingerprint(
+                new Endpoint(HttpVerb.PUT, "/customers/{customerId}", null, null, null, 0));
+
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded.get(realFingerprint).removedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("load does not migrate a file already at the current schema version")
+    void loadDoesNotMigrateAFileAlreadyAtTheCurrentSchemaVersion() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String line = "{\"fingerprint\":\"aaaa000000000000\",\"verb\":\"PUT\",\"path\":\"/customers/{customerId}\","
+                + "\"declaringClass\":null,\"declaredAt\":\"2026-01-01T00:00:00Z\","
+                + "\"implementedAt\":null,\"stubbedAt\":null,\"verifiedAt\":null,"
+                + "\"lastSeenAt\":\"2026-01-01T00:00:00Z\",\"removedAt\":null}";
+        Files.writeString(file.toPath(), "{\"schemaVersion\":\"1.1.0\"}\n" + line + "\n", StandardCharsets.UTF_8);
+
+        Map<String, ContractProgressRecord> loaded = store.load(file);
+
+        assertThat(loaded).containsOnlyKeys("aaaa000000000000");
+    }
+
+    @Test
+    @DisplayName("save appends a migration audit entry recording fromVersion/toVersion/migratedAt "
+            + "when the file it overwrites predates the current schema version")
+    void saveAppendsMigrationAuditEntryForAStaleFile() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        Files.writeString(file.toPath(), "{\"schemaVersion\":1}\n", StandardCharsets.UTF_8);
+
+        store.save(file, List.of());
+
+        List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+        assertThat(lines.get(0))
+                .contains("\"schemaVersion\":\"1.1.0\"")
+                .contains("\"migrations\":[")
+                .contains("\"fromVersion\":\"1.0.0\"")
+                .contains("\"toVersion\":\"1.1.0\"")
+                .containsPattern("\"migratedAt\":\"[^\"]+\"");
+    }
+
+    @Test
+    @DisplayName("save does not append a migration audit entry for a brand-new file")
+    void saveDoesNotAppendMigrationAuditEntryForBrandNewFile() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+
+        store.save(file, List.of());
+
+        List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+        assertThat(lines.get(0)).isEqualTo("{\"schemaVersion\":\"1.1.0\"}").doesNotContain("migrations");
+    }
+
+    @Test
+    @DisplayName("save carries an existing migration audit trail forward unchanged when the file is already current")
+    void saveCarriesExistingMigrationAuditTrailForward() throws IOException {
+        File file = tempDir.resolve("history.ndjson").toFile();
+        String existingHeader = "{\"schemaVersion\":\"1.1.0\",\"migrations\":"
+                + "[{\"fromVersion\":\"1.0.0\",\"toVersion\":\"1.1.0\",\"migratedAt\":\"2026-01-01T00:00:00Z\"}]}";
+        Files.writeString(file.toPath(), existingHeader + "\n", StandardCharsets.UTF_8);
+
+        store.save(file, List.of());
+
+        List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+        assertThat(lines.get(0)).isEqualTo(existingHeader);
     }
 }

@@ -1,5 +1,6 @@
 package com.arc_e_tect.gradle.detector.core.progress;
 
+import com.arc_e_tect.gradle.detector.core.Described;
 import com.arc_e_tect.gradle.detector.core.model.HttpVerb;
 
 import java.time.Instant;
@@ -47,5 +48,5 @@ public record ContractProgressRecord(
         Instant stubbedAt,
         Instant verifiedAt,
         Instant lastSeenAt,
-        Instant removedAt) {
+        Instant removedAt) implements Described {
 }
