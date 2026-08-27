@@ -58,4 +58,33 @@ class EndpointFingerprintTest {
 
         assertThat(fingerprinter.fingerprint(get)).isNotEqualTo(fingerprinter.fingerprint(delete));
     }
+
+    @Test
+    @DisplayName("produces the same fingerprint regardless of a placeholder segment's variable name")
+    void producesSameFingerprintRegardlessOfPlaceholderName() {
+        Endpoint customerId = new Endpoint(HttpVerb.PUT, "/customers/{customerId}", "com.acme.A", "a()", "A.java", 1);
+        Endpoint id = new Endpoint(HttpVerb.PUT, "/customers/{id}", "com.acme.A", "a()", "A.java", 1);
+
+        assertThat(fingerprinter.fingerprint(customerId)).isEqualTo(fingerprinter.fingerprint(id));
+    }
+
+    @Test
+    @DisplayName("produces the same fingerprint regardless of a placeholder segment's variable name, across multiple placeholders")
+    void producesSameFingerprintRegardlessOfPlaceholderNameAcrossMultiplePlaceholders() {
+        Endpoint named = new Endpoint(
+                HttpVerb.DELETE, "/persons/{personId}/addresses/{addressId}", "com.acme.A", "a()", "A.java", 1);
+        Endpoint generic = new Endpoint(
+                HttpVerb.DELETE, "/persons/{id}/addresses/{id}", "com.acme.A", "a()", "A.java", 1);
+
+        assertThat(fingerprinter.fingerprint(named)).isEqualTo(fingerprinter.fingerprint(generic));
+    }
+
+    @Test
+    @DisplayName("still produces different fingerprints for different literal segments either side of a placeholder")
+    void stillProducesDifferentFingerprintsForDifferentLiteralSegments() {
+        Endpoint customers = new Endpoint(HttpVerb.PUT, "/customers/{id}", "com.acme.A", "a()", "A.java", 1);
+        Endpoint persons = new Endpoint(HttpVerb.PUT, "/persons/{id}", "com.acme.A", "a()", "A.java", 1);
+
+        assertThat(fingerprinter.fingerprint(customers)).isNotEqualTo(fingerprinter.fingerprint(persons));
+    }
 }
