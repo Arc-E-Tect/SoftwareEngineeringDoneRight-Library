@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URL;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,11 +49,81 @@ class LiteralPathResolverTest {
         assertThat(resolve("methodCallArgument", "delete")).isEmpty();
     }
 
+    @Test
+    @DisplayName("without a PropertyResolutionContext, does not resolve a configured helper-method call")
+    void doesNotResolveHelperMethodWithoutContext() {
+        assertThat(resolve("helperMethodArgument", "post")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves a configured helper-method call against the merged property map")
+    void resolvesHelperMethodCall() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("users.registrations", "/v1/users/registrations"),
+                Set.of("ApiEndpoints.get"));
+        assertThat(resolve("helperMethodArgument", "post", context)).contains("/v1/users/registrations");
+    }
+
+    @Test
+    @DisplayName("does not resolve a helper-method call whose key is absent from the property map")
+    void doesNotResolveHelperMethodWithUnknownKey() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("users.registrations", "/v1/users/registrations"),
+                Set.of("ApiEndpoints.get"));
+        assertThat(resolve("helperMethodUnknownKeyArgument", "post", context)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("does not resolve a method call that is not a configured helper-method convention")
+    void doesNotResolveUnconfiguredHelperMethod() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("users.registrations", "/v1/users/registrations"),
+                Set.of("SomeOtherClass.get"));
+        assertThat(resolve("helperMethodArgument", "post", context)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("without a PropertyResolutionContext, does not resolve a @Value-annotated field")
+    void doesNotResolveValueAnnotationWithoutContext() {
+        assertThat(resolve("valueAnnotationArgument", "get")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves a @Value-annotated field against the merged property map")
+    void resolvesValueAnnotation() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("users.by-username", "/v1/users/{username}"), Set.of());
+        assertThat(resolve("valueAnnotationArgument", "get", context)).contains("/v1/users/{username}");
+    }
+
+    @Test
+    @DisplayName("falls back to the @Value default when the key is absent from the property map")
+    void resolvesValueAnnotationDefaultFallback() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(Map.of(), Set.of());
+        assertThat(resolve("valueAnnotationWithDefaultArgument", "get", context)).contains("/v1/fallback");
+    }
+
+    @Test
+    @DisplayName("does not resolve a @Value-annotated field with no default whose key is absent")
+    void doesNotResolveValueAnnotationWithoutDefaultOrKey() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(Map.of(), Set.of());
+        assertThat(resolve("valueAnnotationUnknownKeyNoDefaultArgument", "get", context)).isEmpty();
+    }
+
     /**
      * Parses the fixture, finds the named default method, and resolves the first argument of the
-     * call to {@code verbMethodName} within it (e.g. {@code get}/{@code post}/{@code delete}).
+     * call to {@code verbMethodName} within it (e.g. {@code get}/{@code post}/{@code delete}),
+     * without any {@link PropertyResolutionContext}.
      */
     private Optional<String> resolve(String methodName, String verbMethodName) {
+        return resolve(methodName, verbMethodName, PropertyResolutionContext.empty());
+    }
+
+    /**
+     * As {@link #resolve(String, String)}, but resolving with the given
+     * {@link PropertyResolutionContext}.
+     */
+    private Optional<String> resolve(String methodName, String verbMethodName, PropertyResolutionContext context) {
         CompilationUnit cu = parseFixture();
         MethodDeclaration method = cu.findAll(MethodDeclaration.class).stream()
                 .filter(m -> m.getNameAsString().equals(methodName))
@@ -62,7 +134,7 @@ class LiteralPathResolverTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No such call in " + methodName + ": " + verbMethodName));
         Expression argument = call.getArgument(0);
-        return LiteralPathResolver.resolve(argument);
+        return LiteralPathResolver.resolve(argument, context);
     }
 
     private CompilationUnit parseFixture() {
