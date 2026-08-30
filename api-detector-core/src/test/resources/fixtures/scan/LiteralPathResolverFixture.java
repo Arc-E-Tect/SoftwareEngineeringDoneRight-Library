@@ -4,6 +4,8 @@ public interface LiteralPathResolverFixture {
 
     String USER_BY_USERNAME_PATH = "/v1/users/{username}";
 
+    String COMPLETION_PATH = ApiEndpoints.get("users.registrations.completion");
+
     Object client();
 
     default void literalArgument() {
@@ -29,6 +31,10 @@ public interface LiteralPathResolverFixture {
 
     default void helperMethodUnknownKeyArgument() {
         client().post(ApiEndpoints.get("users.unknown"));
+    }
+
+    default void helperMethodFieldConstantArgument() {
+        client().get(COMPLETION_PATH);
     }
 
     default void valueAnnotationArgument() {
@@ -62,6 +68,7 @@ public interface LiteralPathResolverFixture {
         static String get(String key) {
             return switch (key) {
                 case "users.registrations" -> "/v1/users/registrations";
+                case "users.registrations.completion" -> "/v1/users/registrations/completion/{verificationLink}";
                 default -> throw new IllegalArgumentException("Unknown key: " + key);
             };
         }
