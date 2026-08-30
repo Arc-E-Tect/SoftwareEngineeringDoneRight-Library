@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.2...api-detector-core-v1.6.0) (2026-08-30)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** resolve helper-method and @Value-injected request paths ([#80](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/80)) ([ef1f02f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ef1f02ffed33218053a494206ee980b926a393d4)), closes [#80](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/80)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.5.2 [skip ci] ([2bd9453](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2bd9453314870bd9867b93ed8f4146b858c8ffcf))
+
 ## [1.5.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.1...api-detector-core-v1.5.2) (2026-08-30)
 
 
