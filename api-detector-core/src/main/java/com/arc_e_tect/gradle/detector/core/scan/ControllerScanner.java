@@ -166,11 +166,12 @@ public class ControllerScanner {
         List<String> values = new ArrayList<>();
         if (expr.isArrayInitializerExpr()) {
             expr.asArrayInitializerExpr().getValues().forEach(e -> values.addAll(extractStringValues(e)));
-        } else if (expr.isStringLiteralExpr()) {
-            values.add(expr.asStringLiteralExpr().asString());
+        } else {
+            LiteralPathResolver.resolve(expr).ifPresent(values::add);
         }
-        // Anything else (e.g. a reference to a constant) cannot be resolved without a
-        // classpath and is silently ignored - the annotation contributes no path in that case.
+        // Anything LiteralPathResolver can't resolve either (e.g. a value computed at runtime, or
+        // a constant declared in a different compilation unit) is silently ignored - the
+        // annotation contributes no path in that case.
         return values;
     }
 

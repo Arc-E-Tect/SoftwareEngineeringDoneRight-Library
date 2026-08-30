@@ -175,6 +175,31 @@ class ControllerScannerTest {
     }
 
     @Test
+    @DisplayName("resolves a mapping annotation argument that references a literal-initialized field constant")
+    void resolvesFieldConstantPathArgument() throws Exception {
+        List<Endpoint> endpoints = scanner.scan(fixture("ConstantPathControllerFixture.java"));
+
+        assertThat(endpoints)
+                .filteredOn(e -> e.methodSignature().startsWith("getUser"))
+                .extracting(Endpoint::verb, Endpoint::path)
+                .containsExactly(tuple(HttpVerb.GET, "/api/users/{username}"));
+    }
+
+    @Test
+    @DisplayName("still cannot resolve a mapping annotation argument computed by a method call")
+    void doesNotResolveMethodCallPathArgument() throws Exception {
+        List<Endpoint> endpoints = scanner.scan(fixture("ConstantPathControllerFixture.java"));
+
+        // An unresolvable argument falls back to the same empty-path behavior as an omitted one
+        // (see combinesBasePathWithNoArgGetMapping above) - the point of this test is only that
+        // the method call's actual return value, "/api/dynamic", is never used as-is.
+        assertThat(endpoints)
+                .filteredOn(e -> e.methodSignature().startsWith("getDynamic"))
+                .extracting(Endpoint::path)
+                .doesNotContain("/api/dynamic");
+    }
+
+    @Test
     @DisplayName("returns empty list when the file is not valid Java")
     void returnsEmptyListForUnparsableFile(@TempDir Path tempDir) throws Exception {
         File garbage = new File(tempDir.toFile(), "NotJava.java");
