@@ -83,6 +83,22 @@ class LiteralPathResolverTest {
     }
 
     @Test
+    @DisplayName("without a PropertyResolutionContext, does not resolve a field constant initialized by a helper-method call")
+    void doesNotResolveHelperMethodFieldConstantWithoutContext() {
+        assertThat(resolve("helperMethodFieldConstantArgument", "get")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves a field constant initialized by a configured helper-method call against the merged property map")
+    void resolvesHelperMethodFieldConstant() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("users.registrations.completion", "/v1/users/registrations/completion/{verificationLink}"),
+                Set.of("ApiEndpoints.get"));
+        assertThat(resolve("helperMethodFieldConstantArgument", "get", context))
+                .contains("/v1/users/registrations/completion/{verificationLink}");
+    }
+
+    @Test
     @DisplayName("without a PropertyResolutionContext, does not resolve a @Value-annotated field")
     void doesNotResolveValueAnnotationWithoutContext() {
         assertThat(resolve("valueAnnotationArgument", "get")).isEmpty();

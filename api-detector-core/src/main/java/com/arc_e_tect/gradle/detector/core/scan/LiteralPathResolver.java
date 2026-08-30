@@ -117,11 +117,20 @@ public final class LiteralPathResolver {
             return Optional.empty();
         }
 
-        Optional<String> literal = field.flatMap(VariableDeclarator::getInitializer)
+        Optional<Expression> initializer = field.flatMap(VariableDeclarator::getInitializer);
+
+        Optional<String> literal = initializer
                 .filter(Expression::isStringLiteralExpr)
                 .map(init -> init.asStringLiteralExpr().asString());
         if (literal.isPresent()) {
             return literal;
+        }
+
+        Optional<String> viaHelperMethod = initializer
+                .filter(Expression::isMethodCallExpr)
+                .flatMap(init -> resolveHelperMethodCall(init.asMethodCallExpr(), context));
+        if (viaHelperMethod.isPresent()) {
+            return viaHelperMethod;
         }
 
         return field.flatMap(v -> v.findAncestor(FieldDeclaration.class))
