@@ -1,3 +1,15 @@
+## [1.5.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.1...api-detector-core-v1.5.2) (2026-08-30)
+
+
+### 🐛 Bug Fixes
+
+* **api-detector-core:** resolve a mapping-annotation argument that names a literal-initialized constant ([#79](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/79)) ([a53aae4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a53aae4084befe16b5e47afd8fad8d782a2bf32f)), closes [#79](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/79)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.5.1 [skip ci] ([bda808d](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/bda808deacc26757055a85443515dad2d00535a2))
+
 ## [1.5.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.0...api-detector-core-v1.5.1) (2026-08-27)
 
 
