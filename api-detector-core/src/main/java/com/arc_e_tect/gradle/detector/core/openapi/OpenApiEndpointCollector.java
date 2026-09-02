@@ -105,8 +105,8 @@ public class OpenApiEndpointCollector {
 
     /**
      * Parses {@code rootDocument} and returns the path component of its first declared
-     * {@code servers} entry's {@code url} - e.g. {@code http://localhost:9011/crm-service} yields
-     * {@code /crm-service} - normalised via {@link PathTemplates#normalize(String)}.
+     * {@code servers} entry's {@code url} - e.g. {@code http://localhost:9011/user-account-service} yields
+     * {@code /user-account-service} - normalised via {@link PathTemplates#normalize(String)}.
      *
      * <p>An OpenAPI document's {@code paths} are always relative to that base path: a client
      * actually requests {@code <server url>/<path>}, but every operation's declared path (and every

@@ -73,30 +73,30 @@ class PathTemplatesTest {
     @Test
     @DisplayName("stripBasePath() removes a matching leading segment")
     void stripBasePathRemovesMatchingLeadingSegment() {
-        assertThat(PathTemplates.stripBasePath("/crm-service/v1/users", "/crm-service"))
+        assertThat(PathTemplates.stripBasePath("/user-account-service/v1/users", "/user-account-service"))
                 .isEqualTo("/v1/users");
     }
 
     @Test
     @DisplayName("stripBasePath() reduces an exact match to the root path")
     void stripBasePathReducesExactMatchToRoot() {
-        assertThat(PathTemplates.stripBasePath("/crm-service", "/crm-service")).isEqualTo("/");
+        assertThat(PathTemplates.stripBasePath("/user-account-service", "/user-account-service")).isEqualTo("/");
     }
 
     @Test
     @DisplayName("stripBasePath() leaves a non-matching path unchanged, other than normalising it")
     void stripBasePathLeavesNonMatchingPathUnchanged() {
-        assertThat(PathTemplates.stripBasePath("/other/v1/users", "/crm-service"))
+        assertThat(PathTemplates.stripBasePath("/other/v1/users", "/user-account-service"))
                 .isEqualTo("/other/v1/users");
     }
 
     @Test
     @DisplayName("stripBasePath() never strips a segment that merely shares a prefix")
     void stripBasePathNeverStripsAMerePrefixMatch() {
-        // "/crm-service-admin/..." must not be treated as starting with "/crm-service" - only a
+        // "/user-account-service-admin/..." must not be treated as starting with "/user-account-service" - only a
         // full path segment boundary counts as a match.
-        assertThat(PathTemplates.stripBasePath("/crm-service-admin/v1/users", "/crm-service"))
-                .isEqualTo("/crm-service-admin/v1/users");
+        assertThat(PathTemplates.stripBasePath("/user-account-service-admin/v1/users", "/user-account-service"))
+                .isEqualTo("/user-account-service-admin/v1/users");
     }
 
     @Test
@@ -115,7 +115,7 @@ class PathTemplatesTest {
     @Test
     @DisplayName("stripBasePath() normalises both the path and the base path first")
     void stripBasePathNormalisesBothArguments() {
-        assertThat(PathTemplates.stripBasePath("crm-service//v1/users/", "crm-service"))
+        assertThat(PathTemplates.stripBasePath("user-account-service//v1/users/", "user-account-service"))
                 .isEqualTo("/v1/users");
     }
 }

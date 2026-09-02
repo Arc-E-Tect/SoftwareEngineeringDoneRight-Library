@@ -201,7 +201,7 @@ class OpenApiEndpointCollectorTest {
     void firstServerBasePathReturnsPathComponentOfFirstServerUrl() {
         Optional<String> basePath = collector.firstServerBasePath(resource("openapi/with-servers/openapi.yaml"));
 
-        assertThat(basePath).contains("/crm-service");
+        assertThat(basePath).contains("/user-account-service");
     }
 
     @Test
