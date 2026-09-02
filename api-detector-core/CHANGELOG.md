@@ -1,3 +1,21 @@
+# [1.7.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.6.1...api-detector-core-v1.7.0) (2026-09-02)
+
+
+### ✨ New and updated features
+
+* **dsl-updater-core:** add shared engine for a plugin's own updateDSL task ([#82](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/82)) ([d956909](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d9569093fc5170f9e3b1859871fa0ba188a7e881)), closes [#82](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/82)
+
+
+### 🐛 Bug Fixes
+
+* Fix literal path resolver for helper method field constants ([#83](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/83)) ([17b4000](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/17b4000bac9f3f378ffd572dc100b7ddf3879360))
+
+
+### 📝 Documentation
+
+* **dsl-updater-core:** update README version to 1.0.0 [skip ci] ([3ba506e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/3ba506e6a4af0818b70c15c2d4470eea1302a31b))
+* **api-detector-core:** update README version to 1.6.1 [skip ci] ([e1dd05f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/e1dd05f9b36af499e9c5c5e6460b6012f43c9f12))
+
 ## [1.6.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.6.0...api-detector-core-v1.6.1) (2026-08-30)
 
 
