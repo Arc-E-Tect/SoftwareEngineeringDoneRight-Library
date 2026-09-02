@@ -3,7 +3,7 @@ info:
   title: With Servers Test API
   version: "1.0"
 servers:
-  - url: http://localhost:9011/crm-service
+  - url: http://localhost:9011/user-account-service
     description: Generated server url
 paths:
   /v1/users:
