@@ -14,7 +14,7 @@ plugin's new features reach existing consumers' build files without changing beh
 
 [cols="1,1"]
 |===
-|Latest version |`1.0.0-PRERELEASE`
+|Latest version |`1.0.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`dsl-updater-core`
 |===
@@ -79,7 +79,7 @@ No repository declaration or authentication is required.
 [source,kotlin]
 ----
 dependencies {
-    implementation("com.arc-e-tect:dsl-updater-core:1.0.0-PRERELEASE")
+    implementation("com.arc-e-tect:dsl-updater-core:1.0.0")
 }
 ----
 
@@ -87,7 +87,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    implementation 'com.arc-e-tect:dsl-updater-core:1.0.0-PRERELEASE'
+    implementation 'com.arc-e-tect:dsl-updater-core:1.0.0'
 }
 ----
 
@@ -97,7 +97,7 @@ dependencies {
 <dependency>
     <groupId>com.arc-e-tect</groupId>
     <artifactId>dsl-updater-core</artifactId>
-    <version>1.0.0-PRERELEASE</version>
+    <version>1.0.0</version>
 </dependency>
 ----
 
