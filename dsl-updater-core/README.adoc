@@ -1,0 +1,119 @@
+= dsl-updater-core
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+Shared engine behind a Gradle plugin's own `updateDSL` task: locates a named extension block in a
+project's `build.gradle` and adds any of the plugin's DSL properties missing from it, set to their
+default values. Setting an added property explicitly afterwards is a no-op, which is what lets a
+plugin's new features reach existing consumers' build files without changing behavior.
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |`1.0.0`
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`dsl-updater-core`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|===
+
+== Groovy DSL Only
+
+This module understands `build.gradle` (Groovy DSL) files: enough Groovy syntax (strings, GString
+interpolation, comments, nested braces) to find a named top-level block and to tell an existing
+top-level assignment from one that's merely nested inside another block, a string, or a comment.
+Kotlin DSL (`build.gradle.kts`) is not supported.
+
+== What's Included
+
+[cols="1,3"]
+|===
+|Type |Description
+
+|`DslPropertySpec`
+|One DSL property: a `scalar(name, defaultLiteral, doc)` assignment, or a `container(name, doc, containerStub)` nested block (e.g. a `NamedDomainObjectContainer`-backed block like `trackers { register(...) { ... } }`).
+
+|`DslExtensionSchema`
+|A plugin's full, hand-declared property list for one extension block, in the order properties should appear when a fresh block is generated. Hand-declared rather than reflected: a `Property<T>` getter tells you a name and type, not its default, doc comment, or intended ordering.
+
+|`UpdateDslOptions`
+|The two flags a plugin's `updateDSL` task exposes: `generateDsl` (synthesize a whole new block when none exists) and `cleanupDsl` (strip every comment from inside the managed block).
+
+|`UpdateDslResult`
+|What one run did: whether the block existed already, whether a new one was generated, which properties were added, and whether anything was cleaned up - for a caller to log under `--info` or to decide whether the file needs rewriting.
+
+|`DslUpdater`
+|The engine itself: `DslUpdater.update(originalSource, schema, options)` returns the new source text plus an `UpdateDslResult`.
+|===
+
+== What It Guarantees
+
+* An existing assignment is *never* touched, even when its value differs from the schema default -
+  the only thing ever added is a *missing* property, which is exactly what makes setting it
+  explicitly a no-op.
+* Content inside the block this module doesn't recognize (helper calls, conditionals, anything not
+  a known property) is preserved byte-for-byte.
+* A `NamedDomainObjectContainer`-backed container property (e.g. `trackers { }`) is only ever
+  included when a whole new block is generated from scratch - never added to or otherwise touched
+  inside an existing block, since there's no single "default" entry to guess.
+* Everything outside the named block is untouched. A freshly generated block is always appended at
+  the end of the file, so it never disturbs the file's existing structure.
+
+== Adding the Dependency
+
+The library is published to https://central.sonatype.com/artifact/com.arc-e-tect/dsl-updater-core[Maven Central].
+No repository declaration or authentication is required.
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    implementation("com.arc-e-tect:dsl-updater-core:1.0.0")
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    implementation 'com.arc-e-tect:dsl-updater-core:1.0.0'
+}
+----
+
+.Maven
+[source,xml]
+----
+<dependency>
+    <groupId>com.arc-e-tect</groupId>
+    <artifactId>dsl-updater-core</artifactId>
+    <version>1.0.0</version>
+</dependency>
+----
+
+== Who Consumes This
+
+This library is not a Gradle plugin and has no use on its own - it exists to be shared by any
+plugin in the
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle[SoftwareEngineeringDoneRight-Gradle]
+repository that wants its own `updateDSL` task, starting with `tracker-lens`.
+
+== Contributing
+
+See link:CONTRIB.adoc[CONTRIB.adoc] for this project's release and CI workflow details.
+// end::root[]
+
+== License
+
+This project is part of the _Software Engineering Done Right_ repository.
+See link:../LICENSE[LICENSE] for details.

@@ -1,3 +1,15 @@
+## [1.6.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.6.0...api-detector-core-v1.6.1) (2026-08-30)
+
+
+### 🐛 Bug Fixes
+
+* **api-detector-core:** resolve a field constant initialized by a helper-method call ([#81](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/81)) ([017f639](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/017f639d6cd2ec54a1f6d50b754b97a6919a5891)), closes [#81](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/81)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 1.6.0 [skip ci] ([7becbef](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/7becbefbb820b490befcf0740ace6389ddee4d85))
+
 # [1.6.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.5.2...api-detector-core-v1.6.0) (2026-08-30)
 
 
