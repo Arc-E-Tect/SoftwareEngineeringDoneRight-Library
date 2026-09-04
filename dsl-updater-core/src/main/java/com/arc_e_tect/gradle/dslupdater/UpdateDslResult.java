@@ -19,11 +19,16 @@ import java.util.List;
 public record UpdateDslResult(boolean blockFoundBefore, boolean blockGenerated, List<String> addedProperties,
                                boolean cleaned) {
 
+    /** Defensively copies {@code addedProperties} into an immutable list. */
     public UpdateDslResult {
         addedProperties = List.copyOf(addedProperties);
     }
 
-    /** Whether this run produced a source file different from the one it was given. */
+    /**
+     * Whether this run produced a source file different from the one it was given.
+     *
+     * @return {@code true} if the block was generated, a property was added, or comments were cleaned
+     */
     public boolean changed() {
         return blockGenerated || !addedProperties.isEmpty() || cleaned;
     }

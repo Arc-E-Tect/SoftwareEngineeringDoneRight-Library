@@ -19,6 +19,8 @@ public final class DslExtensionSchema {
     private final List<DslPropertySpec> properties;
 
     /**
+     * Creates a schema for one plugin's DSL extension block.
+     *
      * @param blockName  the extension's DSL block name (e.g. {@code "trackerLens"})
      * @param properties every DSL property {@code updateDSL} should know about, in declaration order
      */
@@ -27,10 +29,20 @@ public final class DslExtensionSchema {
         this.properties = List.copyOf(Objects.requireNonNull(properties, "properties"));
     }
 
+    /**
+     * The extension's DSL block name.
+     *
+     * @return the DSL block name
+     */
     public String blockName() {
         return blockName;
     }
 
+    /**
+     * Every DSL property {@code updateDSL} should know about, in declaration order.
+     *
+     * @return the property list
+     */
     public List<DslPropertySpec> properties() {
         return properties;
     }
