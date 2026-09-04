@@ -1,3 +1,17 @@
+## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/dsl-updater-core-v1.0.0...dsl-updater-core-v1.0.1) (2026-09-04)
+
+
+### 🐛 Bug Fixes
+
+* **dsl-updater-core:** fix all 16 missing-javadoc warnings ([#84](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/84)) ([38a1b25](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/38a1b25c4efc70be8180e3f843d084683f69d015)), closes [#84](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/84)
+* Fix literal path resolver for helper method field constants ([#83](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/83)) ([17b4000](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/17b4000bac9f3f378ffd572dc100b7ddf3879360))
+
+
+### 📝 Documentation
+
+* **dsl-updater-core:** update README version to 1.0.0 [skip ci] ([3ba506e](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/3ba506e6a4af0818b70c15c2d4470eea1302a31b))
+* **api-detector-core:** update README version to 1.7.0 [skip ci] ([24acc69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/24acc69eb7b936f3e98a060d08b41ed8315d7b36))
+
 # 1.0.0 (2026-09-02)
 
 
