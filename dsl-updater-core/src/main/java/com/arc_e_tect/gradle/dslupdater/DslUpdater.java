@@ -27,11 +27,19 @@ public final class DslUpdater {
     private DslUpdater() {
     }
 
-    /** The outcome of one {@link #update(String, DslExtensionSchema, UpdateDslOptions)} call. */
+    /**
+     * The outcome of one {@link #update(String, DslExtensionSchema, UpdateDslOptions)} call.
+     *
+     * @param source the (possibly unchanged) new source text
+     * @param result a summary of what was done
+     */
     public record Outcome(String source, UpdateDslResult result) {
     }
 
     /**
+     * Adds any of {@code schema}'s properties missing from {@code originalSource}, set to their
+     * default values.
+     *
      * @param originalSource the build file's current text
      * @param schema         the plugin's DSL property schema
      * @param options        which of {@code --generateDSL}/{@code --cleanupDSL} are set

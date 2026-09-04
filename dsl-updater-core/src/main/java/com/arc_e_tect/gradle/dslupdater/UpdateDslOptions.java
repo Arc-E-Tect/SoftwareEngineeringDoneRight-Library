@@ -14,6 +14,11 @@ public record UpdateDslOptions(boolean generateDsl, boolean cleanupDsl) {
 
     private static final UpdateDslOptions DEFAULTS = new UpdateDslOptions(false, false);
 
+    /**
+     * Both flags off - a missing block is left alone, and no comments are stripped.
+     *
+     * @return the default options
+     */
     public static UpdateDslOptions defaults() {
         return DEFAULTS;
     }

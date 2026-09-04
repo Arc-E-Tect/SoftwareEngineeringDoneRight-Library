@@ -36,6 +36,7 @@ public final class DslPropertySpec {
      *                       {@code "\"light-lens\""}, {@code "file('x.css')"})
      * @param doc            one-line doc comment to place above a generated assignment, or
      *                       {@code null} for none
+     * @return a scalar property spec
      */
     public static DslPropertySpec scalar(String name, String defaultLiteral, String doc) {
         Objects.requireNonNull(defaultLiteral, "defaultLiteral");
@@ -51,27 +52,54 @@ public final class DslPropertySpec {
      * @param containerStub example content placed inside the block when a whole new extension
      *                      block is generated (typically a commented-out {@code register(...)}
      *                      call), or {@code null} for an empty block
+     * @return a container property spec
      */
     public static DslPropertySpec container(String name, String doc, String containerStub) {
         return new DslPropertySpec(name, DslPropertyKind.CONTAINER, null, doc, containerStub);
     }
 
+    /**
+     * The property name, exactly as it appears in the DSL.
+     *
+     * @return the property name
+     */
     public String name() {
         return name;
     }
 
+    /**
+     * Whether this is a plain scalar assignment or a nested container block.
+     *
+     * @return the property kind
+     */
     public DslPropertyKind kind() {
         return kind;
     }
 
+    /**
+     * The default value, as literal Groovy source. {@code null} for a {@link DslPropertyKind#CONTAINER}.
+     *
+     * @return the default literal, or {@code null}
+     */
     public String defaultLiteral() {
         return defaultLiteral;
     }
 
+    /**
+     * One-line doc comment to place above a generated assignment or block.
+     *
+     * @return the doc comment, or {@code null} for none
+     */
     public String doc() {
         return doc;
     }
 
+    /**
+     * Example content placed inside a freshly generated container block. {@code null} for a
+     * {@link DslPropertyKind#SCALAR}.
+     *
+     * @return the container stub text, or {@code null}
+     */
     public String containerStub() {
         return containerStub;
     }
