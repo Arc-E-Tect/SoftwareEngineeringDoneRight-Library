@@ -1,0 +1,83 @@
+= api-only-transcriberj-restdocs
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every class the TranscriberJ generates from an API contract, a companion holding its REST Docs field descriptors and snippets.
+
+Not released yet.
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |unreleased
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`api-only-transcriberj-restdocs`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|API-Only TranscriberJ |the version this emitter was built against, `0.0.0` until both are released
+|Spring REST Docs |4.x, in the project's test source sets
+|===
+
+== Using it
+
+Add it to the TranscriberJ's emitter configuration:
+
+[source,groovy]
+----
+dependencies {
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:<version>'
+}
+----
+
+The TranscriberJ loads it in a class loader of its own and adds `org.springframework.restdocs:spring-restdocs-core` to the source sets it generates into, at 4.0.1, unless the project declares a version itself.
+A version from 5 on is reported as not tested with this emitter.
+
+== What it generates
+
+For every public core class with a body, in `<basePackage>.restdocs`:
+
+[cols="1,3",options="header"]
+|===
+|Member |What it is
+
+|`<Name>Docs.fields()`, `fields(prefix)`
+|A `FieldDescriptor` for every field the core class describes: a subsection where the field stands for everything beneath it, such as a map or where a recursive reference stops, and optional where the contract does not require the field or an object it is inside.
+
+|`<Name>Docs.requestFields()`, `responseFields()`
+|The request and response field snippets.
+Relaxed when the contract allows members it does not list, with `additionalProperties` or `patternProperties`, so that such members do not fail the test.
+|===
+
+And once, `RestDocsFields`, which turns a core class's `ContractField` list into descriptors.
+
+[source,java]
+----
+mockMvc.perform(get("/v1/users/{username}", "alice"))
+        .andDo(document("get-user", UserV1Docs.responseFields()));
+----
+
+A core method the TranscriberJ could not generate throws `UnsupportedOperationException` with its reason, and so does the companion method that uses it.
+
+== Development
+
+[source,console]
+----
+cd api-only-transcriberj-restdocs
+./gradlew check
+./gradlew publishToMavenLocal
+----
+
+The tests run the TranscriberJ over a copy of the reference implementation's user-account contract with this emitter, compile what comes out against Spring REST Docs, and call it.
+`check` gates on 90% instruction coverage and on Javadoc without warnings.
+// end::root[]

@@ -28,6 +28,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`api-detector-core/`
 |Published shared domain model and scanning logic for the SEDR API detector Gradle plugins (Shadow, Mirage, Doppelganger API Detector).
 
+|`api-only-transcriberj-restdocs/`
+|Published Spring REST Docs emitter for the API-Only TranscriberJ Gradle plugin: REST Docs companions for the classes it generates from an API contract.
+
 |`nvd-cache-primer/`
 |Internal utility project that primes and validates the shared OWASP Dependency-Check NVD cache used by this repository's security-scan workflows. Not published.
 
@@ -49,6 +52,9 @@ include::geo-tracker-lens-pack/README.adoc[tag=root,leveloffset=+1]
 
 == api-detector-core
 include::api-detector-core/README.adoc[tag=root,leveloffset=+1]
+
+== api-only-transcriberj-restdocs
+include::api-only-transcriberj-restdocs/README.adoc[tag=root,leveloffset=+1]
 
 == nvd-cache-primer
 include::nvd-cache-primer/README.adoc[tag=root,leveloffset=+1]
