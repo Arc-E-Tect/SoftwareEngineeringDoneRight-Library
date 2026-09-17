@@ -1,4 +1,12 @@
+[plugins]
+
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
+owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspDependencycheck" }
+
 [versions]
+
+jreleaser = "1.25.0"
+owaspDependencycheck = "13.0.0"
 
 junit-jupiter = "6.1.3"
 junit-platform = "6.1.3"

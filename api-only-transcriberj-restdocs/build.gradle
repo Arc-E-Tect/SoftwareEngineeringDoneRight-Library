@@ -8,6 +8,8 @@ plugins {
     id 'jacoco'
     id 'java-library'
     id 'maven-publish'
+    alias(libs.plugins.jreleaser)
+    alias(libs.plugins.owaspDependencycheck)
 }
 
 java {
@@ -20,7 +22,7 @@ java {
 }
 
 repositories {
-    // The TranscriberJ is not released yet; see gradle/libs.versions.toml.
+    // The TranscriberJ is not released yet; see gradle/libs.versions.toml and CONTRIB.adoc.
     mavenLocal {
         content {
             includeGroup 'com.arc-e-tect'
@@ -70,6 +72,44 @@ publishing {
                     connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
                     developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
                     url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'StagingDeploy'
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
+}
+
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = (System.getenv('FAIL_ON_FATAL') == 'true') ? 9 : 11
+    analyzers {
+        nodeAuditEnabled = false
+        nodeEnabled = false
+    }
+    format = 'HTML'
+}
+
+jreleaser {
+    gitRootSearch = true
+    signing {
+        active = 'ALWAYS'
+        armored = true
+        mode = 'MEMORY'
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'RELEASE'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepositories = ['build/staging-deploy']
                 }
             }
         }
