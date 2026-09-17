@@ -22,14 +22,8 @@ java {
 }
 
 repositories {
-    // The TranscriberJ is not released yet; see gradle/libs.versions.toml and CONTRIB.adoc.
-    mavenLocal {
-        content {
-            includeGroup 'com.arc-e-tect'
-        }
-    }
     mavenCentral()
-    // The API-Only TranscriberJ once released, and the API-Only Subscriber it depends on.
+    // The API-Only TranscriberJ, and the API-Only Subscriber it depends on.
     gradlePluginPortal()
 }
 

@@ -28,6 +28,5 @@ tests run the TranscriberJ itself. The plugin is published to the Gradle Plugin 
 Arc-E-Tect/SoftwareEngineeringDoneRight-API, at the version `api-only-transcriberj` names in
 `gradle/libs.versions.toml`.
 
-While that version is unreleased, it is read from `mavenLocal`, and the CI workflows cannot resolve it.
-Release the TranscriberJ first, then set the released version in the catalog and remove `mavenLocal`
-from `build.gradle`.
+To build against a TranscriberJ change that is not released yet, release the TranscriberJ first and
+then set its version in the catalog; the CI workflows resolve only released versions.

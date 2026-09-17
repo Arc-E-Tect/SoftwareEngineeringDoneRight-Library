@@ -71,8 +71,6 @@ A core method the TranscriberJ could not generate throws `UnsupportedOperationEx
 
 == Development
 
-The TranscriberJ is not released yet, so it is read from `mavenLocal`: run `./gradlew publishToMavenLocal` in `SoftwareEngineeringDoneRight-API/api-only-transcriberj` first.
-
 [source,console]
 ----
 cd api-only-transcriberj-restdocs
