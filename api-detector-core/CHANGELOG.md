@@ -1,3 +1,21 @@
+# [1.8.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.7.0...api-detector-core-v1.8.0) (2026-09-17)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** resolve another class's constant through the property map ([#85](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/85)) ([316347b](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/316347b4b1bef931e7230186bf3870ad234e1c27)), closes [#85](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/85)
+
+
+### 🐛 Bug Fixes
+
+* **dsl-updater-core:** fix all 16 missing-javadoc warnings ([#84](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/84)) ([38a1b25](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/38a1b25c4efc70be8180e3f843d084683f69d015)), closes [#84](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/84)
+
+
+### 📝 Documentation
+
+* **dsl-updater-core:** update README version to 1.0.1 [skip ci] ([0e899ed](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0e899ed1481112641ea72206597f08c1ac86c7ee))
+* **api-detector-core:** update README version to 1.7.0 [skip ci] ([24acc69](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/24acc69eb7b936f3e98a060d08b41ed8315d7b36))
+
 # [1.7.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.6.1...api-detector-core-v1.7.0) (2026-09-02)
 
 
