@@ -6,6 +6,8 @@ public interface LiteralPathResolverFixture {
 
     String COMPLETION_PATH = ApiEndpoints.get("users.registrations.completion");
 
+    String ROOT_PATH = GetRootOperation.PATH;
+
     Object client();
 
     default void literalArgument() {
@@ -35,6 +37,26 @@ public interface LiteralPathResolverFixture {
 
     default void helperMethodFieldConstantArgument() {
         client().get(COMPLETION_PATH);
+    }
+
+    default void qualifiedConstantArgument() {
+        client().get(GetUserOperation.PATH);
+    }
+
+    default void fullyQualifiedConstantArgument() {
+        client().get(com.example.contract.GetUserOperation.PATH);
+    }
+
+    default void qualifiedConstantUnknownArgument() {
+        client().get(GetUserOperation.UNKNOWN);
+    }
+
+    default void computedScopeConstantArgument() {
+        client().get(operation().PATH);
+    }
+
+    default void qualifiedConstantFieldArgument() {
+        client().get(ROOT_PATH);
     }
 
     default void valueAnnotationArgument() {

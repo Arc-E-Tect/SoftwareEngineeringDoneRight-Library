@@ -99,6 +99,53 @@ class LiteralPathResolverTest {
     }
 
     @Test
+    @DisplayName("without a PropertyResolutionContext, does not resolve another class's constant")
+    void doesNotResolveQualifiedConstantWithoutContext() {
+        assertThat(resolve("qualifiedConstantArgument", "get")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves another class's constant against the merged property map, keyed ClassName.FIELD")
+    void resolvesQualifiedConstant() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("GetUserOperation.PATH", "/v1/users/{username}"), Set.of());
+        assertThat(resolve("qualifiedConstantArgument", "get", context)).contains("/v1/users/{username}");
+    }
+
+    @Test
+    @DisplayName("resolves a fully qualified class's constant by the class's simple name")
+    void resolvesFullyQualifiedConstant() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("GetUserOperation.PATH", "/v1/users/{username}"), Set.of());
+        assertThat(resolve("fullyQualifiedConstantArgument", "get", context)).contains("/v1/users/{username}");
+    }
+
+    @Test
+    @DisplayName("does not resolve another class's constant whose key is absent from the property map")
+    void doesNotResolveUnknownQualifiedConstant() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("GetUserOperation.PATH", "/v1/users/{username}"), Set.of());
+        assertThat(resolve("qualifiedConstantUnknownArgument", "get", context)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("does not resolve a constant reached through a computed value")
+    void doesNotResolveConstantOfComputedScope() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("operation.PATH", "/v1", "operation().PATH", "/v1"), Set.of());
+        assertThat(resolve("computedScopeConstantArgument", "get", context)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves a field constant initialized with another class's constant")
+    void resolvesFieldInitializedWithQualifiedConstant() {
+        PropertyResolutionContext context = PropertyResolutionContext.of(
+                Map.of("GetRootOperation.PATH", "/v1"), Set.of());
+        assertThat(resolve("qualifiedConstantFieldArgument", "get", context)).contains("/v1");
+        assertThat(resolve("qualifiedConstantFieldArgument", "get")).isEmpty();
+    }
+
+    @Test
     @DisplayName("without a PropertyResolutionContext, does not resolve a @Value-annotated field")
     void doesNotResolveValueAnnotationWithoutContext() {
         assertThat(resolve("valueAnnotationArgument", "get")).isEmpty();

@@ -5,6 +5,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
@@ -28,12 +29,14 @@ import java.util.regex.Pattern;
  * least as common a practice as writing the literal inline every time, and previously caused every
  * one of its usages to be silently treated the same as a genuinely dynamic path.</p>
  *
- * <p>Two further shapes - a constant computed at runtime by a method call (e.g. a shared
+ * <p>Three further shapes - a constant declared in another class, a constant computed at runtime by a method call (e.g. a shared
  * {@code ApiEndpoints.get("users.by-username")} helper backed by a properties file), and a field
  * annotated {@code @Value("${users.by-username}")} injected by Spring from an
  * {@code application.properties}/{@code .yml} file - genuinely can't be resolved from source alone
  * without either a classpath or being told, out of band, which method/property key maps to which
- * value. The {@link #resolve(Expression, PropertyResolutionContext)} overload accepts that
+ * value. Another class's constant, such as {@code GetUserOperation.PATH} in a class generated from
+ * the API contract, is looked up under the key {@code "GetUserOperation.PATH"}: the class's simple
+ * name, even when the reference is fully qualified, a dot, and the field's name. The {@link #resolve(Expression, PropertyResolutionContext)} overload accepts that
  * out-of-band knowledge as a {@link PropertyResolutionContext}; the no-context
  * {@link #resolve(Expression)} overload behaves exactly as before (equivalent to passing
  * {@link PropertyResolutionContext#empty()}) and remains fully backward compatible.</p>
@@ -77,7 +80,23 @@ public final class LiteralPathResolver {
         if (expr.isMethodCallExpr()) {
             return resolveHelperMethodCall(expr.asMethodCallExpr(), context);
         }
+        if (expr.isFieldAccessExpr()) {
+            return resolveQualifiedConstant(expr.asFieldAccessExpr(), context);
+        }
         return Optional.empty();
+    }
+
+    private static Optional<String> resolveQualifiedConstant(FieldAccessExpr access, PropertyResolutionContext context) {
+        Expression scope = access.getScope();
+        String className;
+        if (scope.isNameExpr()) {
+            className = scope.asNameExpr().getNameAsString();
+        } else if (scope.isFieldAccessExpr()) {
+            className = scope.asFieldAccessExpr().getNameAsString();
+        } else {
+            return Optional.empty();
+        }
+        return context.lookup(className + "." + access.getNameAsString());
     }
 
     private static Optional<String> resolveHelperMethodCall(MethodCallExpr call, PropertyResolutionContext context) {
@@ -131,6 +150,13 @@ public final class LiteralPathResolver {
                 .flatMap(init -> resolveHelperMethodCall(init.asMethodCallExpr(), context));
         if (viaHelperMethod.isPresent()) {
             return viaHelperMethod;
+        }
+
+        Optional<String> viaQualifiedConstant = initializer
+                .filter(Expression::isFieldAccessExpr)
+                .flatMap(init -> resolveQualifiedConstant(init.asFieldAccessExpr(), context));
+        if (viaQualifiedConstant.isPresent()) {
+            return viaQualifiedConstant;
         }
 
         return field.flatMap(v -> v.findAncestor(FieldDeclaration.class))
