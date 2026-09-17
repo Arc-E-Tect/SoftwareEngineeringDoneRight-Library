@@ -46,7 +46,8 @@ class RestDocsEmitterTest {
     private ClassLoader generate(Path contract, String version) throws Exception {
         Path sources = directory.resolve("sources");
         report = Generation.run(contract, version, "x",
-                new Settings("test", PACKAGE, false, "PLACEHOLDER", 2), sources, List.of(new RestDocsEmitter()));
+                new Settings("test", PACKAGE, false, "PLACEHOLDER", 2), sources, List.of(new RestDocsEmitter()),
+                null);
         Path classes = Files.createDirectories(directory.resolve("classes"));
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();

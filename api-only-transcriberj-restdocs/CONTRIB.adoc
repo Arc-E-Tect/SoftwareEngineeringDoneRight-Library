@@ -23,9 +23,10 @@ Security scanning does not run from this module's own workflows - it's wired int
 
 == The API-Only TranscriberJ it is built against
 
-The emitter compiles against the TranscriberJ's SPI, and its tests run the TranscriberJ itself.
-Both are published from Arc-E-Tect/SoftwareEngineeringDoneRight-API, at one version, named by
-`api-only-transcriberj` in `gradle/libs.versions.toml`.
+The emitter compiles against the TranscriberJ plugin, which carries the emitter interface, and its
+tests run the TranscriberJ itself. The plugin is published to the Gradle Plugin Portal from
+Arc-E-Tect/SoftwareEngineeringDoneRight-API, at the version `api-only-transcriberj` names in
+`gradle/libs.versions.toml`.
 
 While that version is unreleased, it is read from `mavenLocal`, and the CI workflows cannot resolve it.
 Release the TranscriberJ first, then set the released version in the catalog and remove `mavenLocal`

@@ -29,15 +29,15 @@ repositories {
         }
     }
     mavenCentral()
-    // The API-Only Subscriber, which the TranscriberJ plugin depends on.
+    // The API-Only TranscriberJ once released, and the API-Only Subscriber it depends on.
     gradlePluginPortal()
 }
 
 dependencies {
-    // Provided by the plugin, which loads emitters with its own SPI on the class path.
-    compileOnly libs.api.only.transcriberj.spi
+    // The emitter interface is part of the plugin, which provides it when it loads
+    // the emitter; so it is compiled against, and never shipped with the emitter.
+    compileOnly libs.api.only.transcriberj
 
-    testImplementation libs.api.only.transcriberj.spi
     testImplementation libs.api.only.transcriberj
     testImplementation libs.spring.restdocs.core
     testImplementation libs.junit.jupiter
