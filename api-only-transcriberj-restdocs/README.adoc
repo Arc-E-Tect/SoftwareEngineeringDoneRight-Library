@@ -6,8 +6,6 @@
 
 The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every class the TranscriberJ generates from an API contract, a companion holding its REST Docs field descriptors and snippets.
 
-Not released yet.
-
 // tag::root[]
 == Artifact Coordinates
 
@@ -25,7 +23,8 @@ Not released yet.
 |Requirement |Version
 |Java |21+
 |Gradle |9.x
-|API-Only TranscriberJ |the version this emitter was built against, `0.0.0` until both are released
+|API-Only TranscriberJ |`0.3.0` or newer: it is built against `0.3.0`, and the examples use it with `0.3.3`.
+Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
 |Spring REST Docs |4.x, in the project's test source sets
 |===
 
@@ -36,7 +35,7 @@ Add it to the TranscriberJ's emitter configuration:
 [source,groovy]
 ----
 dependencies {
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:<version>'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.1.1'
 }
 ----
 
