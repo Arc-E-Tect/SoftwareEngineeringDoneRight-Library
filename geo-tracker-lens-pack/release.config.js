@@ -6,7 +6,7 @@ module.exports = {
     branches: ["main"],
     tagFormat: "geo-tracker-lens-pack-v${version}",
     plugins: [
-        ["@semantic-release/commit-analyzer", {
+        ["../release/component-commit-analyzer", {
             preset: 'angular',
             releaseRules: [
                 { type: 'feat', release: 'minor' },

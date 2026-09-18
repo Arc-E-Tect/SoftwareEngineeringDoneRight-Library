@@ -28,7 +28,7 @@ module.exports = {
                 breakingHeaderPattern: /^(\w*)(?:\((.*)\))?!: (.*)$/
             }
         }],
-        ["@semantic-release/release-notes-generator", {
+        ["../release/component-release-notes", {
             preset: 'angular',
             parserOpts: {
                 noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],
