@@ -1,0 +1,13 @@
+openapi: 3.1.1
+info:
+  title: Orders API
+  version: 0.0.0
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://api.orders.test
+security: []
+paths:
+  /orders/{orderId}:
+    $ref: ../paths/Order.yaml

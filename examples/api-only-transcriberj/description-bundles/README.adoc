@@ -1,0 +1,84 @@
+= Example: descriptions from a ResourceBundle, in English and Dutch
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+A small, complete project that documents one contract in two languages from one generated class tree.
+
+The API-Only TranscriberJ generates the contract's classes; this project supplies the descriptions its documentation shows, in a `ResourceBundle`, and leaves the rest to the contract.
+The guide that walks through it step by step is https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/docs/guides/description-bundles/tutorial.adoc[the description bundles tutorial ↗]; the full reference is https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/api-only-transcriberj/README.adoc#description-bundles[the TranscriberJ's README ↗].
+
+== What is in it
+
+[cols="2,3", options="header"]
+|===
+|File |What it is
+
+|`src/main/api/openapi/`
+|The `orders` contract: `OrderV1`, with a nested `customer.address` and an array of `lines`, and `ProblemV1`, an error with an array of `errors`.
+Every field is described in the contract's own words.
+
+|`src/test/resources/docs/Descriptions.properties`
+|The project's own English text -- for *some* fields only, so the rest visibly fall back to the contract.
+
+|`src/test/resources/docs/Descriptions_nl.properties`
+|The Dutch text, also deliberately incomplete, so a missing translation visibly falls back too.
+
+|`build.gradle`
+|The Publisher builds the contract into `build/`, the Subscriber fetches it, and the TranscriberJ generates from it, with `descriptionBundle = 'docs.Descriptions'`.
+
+|`src/test/java/com/example/orders/DescriptionsTest.java`
+|Renders the documentation in both languages and checks the text, the fallbacks, and the keys the bundles miss or no longer need.
+|===
+
+== Run it
+
+You need Java 21 and Node.js (`^22.14.0`, `^24.10.0` or `>=26.0.0`).
+
+[source,console]
+----
+./gradlew test
+----
+
+The build installs the Publisher, builds and publishes the contract, generates the classes, and runs the tests.
+
+The tests run in English unless the build asks for another language, which `build.gradle` passes to the test JVM:
+
+[source,console]
+----
+./gradlew test -PdocsLocale=nl
+----
+
+== What to look at
+
+`build/generated/sources/transcriberj/orders/com/example/contract/ContractDescriptions.java`::
+Every key a bundle for this contract may carry, in `KEYS`.
+`OrderV1.customer.address.street` is a nested field; `OrderV1.lines[].sku` and `ProblemV1.errors[].message` are fields of an array's items.
+
+`build/generated/sources/transcriberj/orders/com/example/contract/OrderV1.java`::
+Every description is a call to `ContractDescriptions.of(key, text)`, where the text is what the contract says -- the fallback.
+
+`build/reports/tests/test/index.html`::
+The tests, one per behaviour: the bundle winning where it has a key, the contract where it has none, the same tree in Dutch, the language a run asks for, REST Docs rendering each language, and the keys the bundles miss or no longer need.
+
+`build/reports/transcriberj/orders.txt`::
+The generation report, which names the bundle and how many keys it may carry.
+
+== Try it
+
+* Add `OrderV1.customer.address.city=De plaats.` to `Descriptions_nl.properties` and run the tests again.
+Two fail, and both for the right reason: `theSameTreeDocumentsTheContractInDutch` expected the city to fall back to the contract's English, and `whatTheBundlesDoNotCoverCanBeListed` expected it to be untranslated.
+* Rename `OrderV1.yaml` to `PurchaseOrderV1.yaml`, update the `$ref` in `paths/Order.yaml`, and raise `version` and `apiContractVersion` to `2.0.0`.
+The test no longer compiles: `OrderV1` does not exist any more, which is the first thing you see.
+Remove every test that names it, as a class or in a key, and `everyKeyInTheBundlesNamesSomethingTheContractDescribes` lists the `OrderV1` keys the bundles still carry, which nothing uses now:
++
+[source,text]
+----
+[keys the contract no longer describes, per file]
+Expecting empty but was: {"docs/Descriptions.properties"=["OrderV1", "OrderV1.customer.address.street", "OrderV1.lines[].sku"], "docs/Descriptions_nl.properties"=["OrderV1",
+    "OrderV1.customer.address.street",
+    "OrderV1.customer.name",
+    "OrderV1.id",
+    "OrderV1.lines[].quantity"]}
+----

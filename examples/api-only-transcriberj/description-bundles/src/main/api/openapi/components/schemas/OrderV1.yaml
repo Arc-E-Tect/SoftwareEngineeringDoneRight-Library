@@ -1,0 +1,44 @@
+type: object
+description: An order a customer placed.
+required:
+  - id
+  - customer
+  - lines
+properties:
+  id:
+    type: string
+    description: The order's identifier.
+  customer:
+    type: object
+    description: Who placed the order.
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: The customer's name.
+      address:
+        type: object
+        description: Where the order is delivered.
+        properties:
+          street:
+            type: string
+            description: The street and house number.
+          city:
+            type: string
+            description: The city.
+  lines:
+    type: array
+    description: What was ordered, one line per product.
+    items:
+      type: object
+      required:
+        - sku
+        - quantity
+      properties:
+        sku:
+          type: string
+          description: The product's stock-keeping unit.
+        quantity:
+          type: integer
+          description: How many were ordered.
