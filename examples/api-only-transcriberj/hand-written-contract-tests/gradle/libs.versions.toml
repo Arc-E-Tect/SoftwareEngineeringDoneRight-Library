@@ -1,5 +1,5 @@
 [versions]
-api-only-transcriberj = "0.3.2"
+api-only-transcriberj = "0.3.3"
 api-only-transcriberj-restdocs = "0.1.1"
 spring-boot = "4.1.1"
 
