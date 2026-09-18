@@ -16,7 +16,7 @@ jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
     with:
-      fail_on_empty_version: true
+      fail_on_empty_version: false
       project_dir: hexagonal-spring-rules
       DEBUG: true
     secrets:
@@ -74,7 +74,7 @@ jobs:
   Release-Spring-Rules:
     name: Release Architecture Validator Spring Rules
     needs: [Calculate-Version, Build]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
       project_dir: hexagonal-spring-rules
@@ -84,7 +84,7 @@ jobs:
   Publish:
     name: Publish Architecture Validator Spring Rules
     needs: [Calculate-Version, Release-Spring-Rules]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,7 +140,7 @@ jobs:
   Update-README:
     name: Update README version
     needs: [Calculate-Version, Publish]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -176,7 +176,7 @@ jobs:
 
   Determine-Release-Type:
     needs: [Calculate-Version]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/determine-release-type.yml
 
   Workflow-Summary:

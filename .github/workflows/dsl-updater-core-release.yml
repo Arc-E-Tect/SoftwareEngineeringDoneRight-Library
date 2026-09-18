@@ -38,7 +38,7 @@ jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
     with:
-      fail_on_empty_version: true
+      fail_on_empty_version: false
       project_dir: dsl-updater-core
       DEBUG: true
     secrets:
@@ -101,7 +101,7 @@ jobs:
   Release-dsl-updater-core:
     name: Release DSL Updater Core
     needs: [Calculate-Version, Build]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
       project_dir: dsl-updater-core
@@ -111,7 +111,7 @@ jobs:
   Publish:
     name: Publish DSL Updater Core
     needs: [Calculate-Version, Release-dsl-updater-core]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: read
 
@@ -163,7 +163,7 @@ jobs:
   Update-README:
     name: Update README version
     needs: [Calculate-Version, Publish]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: write
 
@@ -202,6 +202,7 @@ jobs:
 
   Determine-Release-Type:
     needs: [Calculate-Version]
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/determine-release-type.yml
 
   Workflow-Summary:

@@ -38,7 +38,7 @@ jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
     with:
-      fail_on_empty_version: true
+      fail_on_empty_version: false
       project_dir: api-only-transcriberj-restdocs
       DEBUG: true
     secrets:
@@ -101,7 +101,7 @@ jobs:
   Release-api-only-transcriberj-restdocs:
     name: Release API-Only TranscriberJ REST Docs Emitter
     needs: [Calculate-Version, Build]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
       project_dir: api-only-transcriberj-restdocs
@@ -111,7 +111,7 @@ jobs:
   Publish:
     name: Publish API-Only TranscriberJ REST Docs Emitter
     needs: [Calculate-Version, Release-api-only-transcriberj-restdocs]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: read
 
@@ -163,7 +163,7 @@ jobs:
   Update-README:
     name: Update README version
     needs: [Calculate-Version, Publish]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: write
 
@@ -202,6 +202,7 @@ jobs:
 
   Determine-Release-Type:
     needs: [Calculate-Version]
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/determine-release-type.yml
 
   Workflow-Summary:
