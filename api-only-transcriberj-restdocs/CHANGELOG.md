@@ -1,3 +1,15 @@
+## [0.1.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.1.0...api-only-transcriberj-restdocs-v0.1.1) (2026-09-18)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-restdocs:** update README version to 0.1.0 [skip ci] ([4e4eeef](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4e4eeef111e840b16c81365fa3c3c847b4b53a76))
+
+
+### 🔧 Misc
+
+* update dependency versions for jreleaser and owaspDependencycheck ([#88](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/88)) ([ec27fa8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/ec27fa8d04355a194bd0bc445f96df616542fd40)), closes [#88](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/88)
+
 # [0.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.0.1...api-only-transcriberj-restdocs-v0.1.0) (2026-09-18)
 
 
