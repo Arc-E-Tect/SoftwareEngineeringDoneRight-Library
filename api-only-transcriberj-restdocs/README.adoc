@@ -13,7 +13,7 @@ Not released yet.
 
 [cols="1,1"]
 |===
-|Latest version |`0.0.1`
+|Latest version |`0.1.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`api-only-transcriberj-restdocs`
 |===
