@@ -1,0 +1,24 @@
+type: object
+description: What went wrong with a request.
+required:
+  - title
+  - status
+properties:
+  title:
+    type: string
+    description: A short summary of the problem.
+  status:
+    type: integer
+    description: The HTTP status code.
+  errors:
+    type: array
+    description: The individual problems, one per field.
+    items:
+      type: object
+      properties:
+        field:
+          type: string
+          description: The field that was wrong.
+        message:
+          type: string
+          description: What was wrong with it.

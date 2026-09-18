@@ -1,0 +1,87 @@
+plugins {
+    id 'java'
+    alias(libs.plugins.api.only.transcriberj)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    transcriberjEmitters libs.api.only.transcriberj.restdocs
+
+    testImplementation platform(libs.junit.bom)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.assertj.core
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // The language this run documents in, English unless asked: ./gradlew test -PdocsLocale=nl
+    systemProperty 'apionly.descriptions.locale', providers.gradleProperty('docsLocale').getOrElse('en')
+}
+
+// ---------------------------------------------------------------------------
+// The contract. The Publisher builds it into build/, and the Subscriber, which
+// the TranscriberJ applies, fetches it from there.
+// ---------------------------------------------------------------------------
+
+def npm = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
+def installApiOnlyPublisher = tasks.register('installApiOnlyPublisher', Exec) {
+    group = 'api-only'
+    description = 'Installs the API-Only Publisher at the version package-lock.json pins.'
+    inputs.files('package.json', 'package-lock.json').withPropertyName('manifests')
+    outputs.file('node_modules/.package-lock.json').withPropertyName('installation')
+    commandLine npm, 'ci', '--no-audit', '--no-fund'
+}
+
+def buildApiContract = tasks.register('buildApiContract', Exec) {
+    group = 'api-only'
+    description = 'Bundles, stamps and lints the orders contract.'
+    dependsOn installApiOnlyPublisher
+    inputs.dir('src/main/api').withPropertyName('specification')
+    inputs.files('apionly.yaml', 'package-lock.json').withPropertyName('configuration')
+    outputs.dir('build/api-only/dist/orders').withPropertyName('bundle')
+    commandLine npm, 'run', '--silent', 'apionly', '--', 'build', '--target', 'orders'
+}
+
+def publishApiContract = tasks.register('publishApiContract', Exec) {
+    group = 'api-only'
+    description = 'Publishes the orders contract to the file channel in build/api-only/publish.'
+    dependsOn buildApiContract
+    inputs.dir('build/api-only/dist/orders').withPropertyName('bundle')
+    outputs.dir('build/api-only/publish/orders').withPropertyName('archive')
+    commandLine npm, 'run', '--silent', 'apionly', '--', 'publish', '--target', 'orders', '--channel', 'file'
+}
+
+apiOnlySubscriber {
+    channel {
+        type = 'file'
+        directory = file('build/api-only/publish').path
+    }
+    subscribe('orders')
+}
+
+tasks.named('fetchApiSpecOrders') { dependsOn publishApiContract }
+
+// ---------------------------------------------------------------------------
+// The generated classes, with descriptions this project owns.
+// ---------------------------------------------------------------------------
+
+apiOnlyTranscriberJ {
+    subscription('orders') {
+        basePackage = 'com.example.contract'
+        // The contract's own descriptions are the fallback for any key the bundle lacks.
+        generateDocs = true
+        // src/test/resources/docs/Descriptions.properties, and one file per language.
+        descriptionBundle = 'docs.Descriptions'
+    }
+}
