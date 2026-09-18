@@ -1,0 +1,13 @@
+openapi: 3.1.1
+info:
+  title: Refunds API
+  version: 0.0.0
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://api.refunds.test
+security: []
+paths:
+  /orders/{orderId}/refunds:
+    $ref: ../paths/Refunds.yaml

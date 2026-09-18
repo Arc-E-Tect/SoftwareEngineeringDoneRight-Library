@@ -1,0 +1,45 @@
+post:
+  operationId: createRefund
+  summary: Refund part or all of an order.
+  description: >-
+    A refund goes back the way the order was paid, and never exceeds what is
+    left of the order to refund. Neither rule can be written in the schema; a
+    request that breaks one is answered with 422.
+  parameters:
+    - name: orderId
+      in: path
+      required: true
+      description: The order's identifier.
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/RefundRequestV1.yaml
+  responses:
+    '201':
+      description: The refund was accepted.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/RefundV1.yaml
+    '400':
+      description: The request does not match the contract.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/ProblemV1.yaml
+    '404':
+      description: No order has that identifier.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/ProblemV1.yaml
+    '422':
+      description: The request matches the contract, but breaks a business rule.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/ProblemV1.yaml

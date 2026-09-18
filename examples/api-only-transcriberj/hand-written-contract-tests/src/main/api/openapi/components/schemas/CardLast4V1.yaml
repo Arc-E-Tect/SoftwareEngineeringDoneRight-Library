@@ -1,0 +1,3 @@
+type: string
+description: The last four digits of a card number.
+pattern: '^[0-9]{4}$'

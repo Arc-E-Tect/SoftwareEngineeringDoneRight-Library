@@ -1,0 +1,113 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.api.only.transcriberj)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // The service: hand-written, and it never imports the generated classes.
+    implementation platform(SpringBootPlugin.BOM_COORDINATES)
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+    // The tests: the generated classes, their REST Docs companions, and MockMvc.
+    transcriberjEmitters libs.api.only.transcriberj.restdocs
+    testImplementation platform(SpringBootPlugin.BOM_COORDINATES)
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-restdocs'
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// The service's own code is measured; the generated tree is excluded by its annotation.
+tasks.named('jacocoTestCoverageVerification') {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+tasks.named('check') { dependsOn 'jacocoTestCoverageVerification' }
+
+// ---------------------------------------------------------------------------
+// The contract. The Publisher builds it into build/, and the Subscriber, which
+// the TranscriberJ applies, fetches it from there.
+// ---------------------------------------------------------------------------
+
+def npm = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
+def installApiOnlyPublisher = tasks.register('installApiOnlyPublisher', Exec) {
+    group = 'api-only'
+    description = 'Installs the API-Only Publisher at the version package-lock.json pins.'
+    inputs.files('package.json', 'package-lock.json').withPropertyName('manifests')
+    outputs.file('node_modules/.package-lock.json').withPropertyName('installation')
+    commandLine npm, 'ci', '--no-audit', '--no-fund'
+}
+
+def buildApiContract = tasks.register('buildApiContract', Exec) {
+    group = 'api-only'
+    description = 'Bundles, stamps and lints the refunds contract.'
+    dependsOn installApiOnlyPublisher
+    inputs.dir('src/main/api').withPropertyName('specification')
+    inputs.files('apionly.yaml', 'package-lock.json').withPropertyName('configuration')
+    outputs.dir('build/api-only/dist/refunds').withPropertyName('bundle')
+    commandLine npm, 'run', '--silent', 'apionly', '--', 'build', '--target', 'refunds'
+}
+
+def publishApiContract = tasks.register('publishApiContract', Exec) {
+    group = 'api-only'
+    description = 'Publishes the refunds contract to the file channel in build/api-only/publish.'
+    dependsOn buildApiContract
+    inputs.dir('build/api-only/dist/refunds').withPropertyName('bundle')
+    outputs.dir('build/api-only/publish/refunds').withPropertyName('archive')
+    commandLine npm, 'run', '--silent', 'apionly', '--', 'publish', '--target', 'refunds', '--channel', 'file'
+}
+
+apiOnlySubscriber {
+    channel {
+        type = 'file'
+        directory = file('build/api-only/publish').path
+    }
+    subscribe('refunds')
+}
+
+tasks.named('fetchApiSpecRefunds') { dependsOn publishApiContract }
+
+// ---------------------------------------------------------------------------
+// The generated classes, for the tests only.
+// ---------------------------------------------------------------------------
+
+apiOnlyTranscriberJ {
+    subscription('refunds') {
+        basePackage = 'com.example.contract'
+        // The REST Docs field tables show the contract's descriptions.
+        generateDocs = true
+    }
+}
