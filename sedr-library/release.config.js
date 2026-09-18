@@ -13,7 +13,7 @@ module.exports = {
     // old shared scheme, so numbering continues from there instead of restarting.
     tagFormat: "sedr-library-v${version}",
     plugins: [
-        ["@semantic-release/commit-analyzer", {
+        ["../release/component-commit-analyzer", {
             preset: 'angular',
             releaseRules: [
                 { type: 'feat', release: 'minor' },
@@ -29,7 +29,7 @@ module.exports = {
                 breakingHeaderPattern: /^(\w*)(?:\((.*)\))?!: (.*)$/
             }
         }],
-        ["@semantic-release/release-notes-generator", {
+        ["../release/component-release-notes", {
             preset: 'angular',
             parserOpts: {
                 noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],

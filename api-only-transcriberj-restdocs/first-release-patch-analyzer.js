@@ -1,4 +1,6 @@
 const commitAnalyzer = require(require.resolve('@semantic-release/commit-analyzer', { paths: [process.cwd()] }));
+// Only the commits that change this module count for its version: see ../release/component-commits.js.
+const { forComponent } = require('../release/component-commits');
 
 // This module is seeded with a baseline tag (api-only-transcriberj-restdocs-v0.0.0) specifically so
 // semantic-release finds a lastRelease and increments from it instead of falling back to its
@@ -15,6 +17,6 @@ module.exports = {
     if (!context.lastRelease || !context.lastRelease.version || context.lastRelease.version === SEED_VERSION) {
       return 'patch';
     }
-    return commitAnalyzer.analyzeCommits(pluginConfig, context);
+    return commitAnalyzer.analyzeCommits(pluginConfig, forComponent(context));
   }
 };
