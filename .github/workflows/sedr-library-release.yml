@@ -39,7 +39,7 @@ jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
     with:
-      fail_on_empty_version: true
+      fail_on_empty_version: false
       project_dir: sedr-library
       DEBUG: true
     secrets:
@@ -102,7 +102,7 @@ jobs:
   Release-sedr-library:
     name: Release SEDR Library
     needs: [Calculate-Version, Build]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/semantic-version-apply.yml
     with:
       project_dir: sedr-library
@@ -112,7 +112,7 @@ jobs:
   Publish:
     name: Publish SEDR Library
     needs: [Calculate-Version, Release-sedr-library]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: read
 
@@ -164,7 +164,7 @@ jobs:
   Update-README:
     name: Update README version
     needs: [Calculate-Version, Publish]
-    if: ${{ needs.Calculate-Version.outputs.next_version != '' }}
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
       contents: write
 
@@ -203,6 +203,7 @@ jobs:
 
   Determine-Release-Type:
     needs: [Calculate-Version]
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     uses: ./.github/workflows/determine-release-type.yml
 
   Workflow-Summary:

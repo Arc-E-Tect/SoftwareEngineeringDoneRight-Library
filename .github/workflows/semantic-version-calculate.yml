@@ -25,8 +25,11 @@ on:
         default: false
     outputs:
       next_version:
-        description: 'The next semantic version'
+        description: 'The next semantic version, or - when none was calculated - the current version as a display fallback. Callers that must distinguish an actual new version from that fallback (rather than just needing something non-empty to build with) should check next_version_empty instead of comparing this to empty string.'
         value: ${{ jobs.calculate_version.outputs.next_version }}
+      next_version_empty:
+        description: 'Whether no new version was actually calculated - "true" even though next_version itself is never empty (it falls back to the current version for callers that just need a displayable/buildable value).'
+        value: ${{ jobs.calculate_version.outputs.next_version_empty }}
 
 jobs:
   calculate_version:
@@ -36,6 +39,7 @@ jobs:
 
     outputs:
       next_version: ${{ steps.calculate_semantic_version.outputs.next_version }}
+      next_version_empty: ${{ steps.calculate_semantic_version.outputs.next_version_empty }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -167,7 +171,9 @@ jobs:
           fi
 
       - name: Fail on existing tag
-        if: ${{ inputs.fail_on_existing_tag && steps.check_tag.outputs.tag_exists == 'true' }}
+        # Only for a version actually calculated: with nothing to release, next_version falls
+        # back to the current version, whose tag exists by definition.
+        if: ${{ inputs.fail_on_existing_tag && steps.calculate_semantic_version.outputs.next_version_empty != 'true' && steps.check_tag.outputs.tag_exists == 'true' }}
         run: |
           VERSION="${{ steps.calculate_semantic_version.outputs.next_version }}"
           EXISTING_TAG="${{ steps.check_tag.outputs.existing_tag }}"
