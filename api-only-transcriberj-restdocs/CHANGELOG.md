@@ -1,3 +1,15 @@
+# [0.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.0.1...api-only-transcriberj-restdocs-v0.1.0) (2026-09-18)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-restdocs:** mark generated companions as excluded from coverage ([#87](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/87)) ([dcace04](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/dcace04f19a9bdc66b7f1a5907f601d92ce32fc2)), closes [#87](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/87)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-restdocs:** update README version to 0.0.1 [skip ci] ([928d165](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/928d16554510fd2e6f893bcd81cf8546b6287105))
+
 ## [0.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.0.0...api-only-transcriberj-restdocs-v0.0.1) (2026-09-17)
 
 
