@@ -1,0 +1,19 @@
+type: object
+description: A refund the shop accepted.
+required:
+  - id
+  - orderId
+  - amount
+  - destination
+properties:
+  id:
+    type: string
+    description: The refund's identifier.
+  orderId:
+    type: string
+    description: The order the refund is for.
+  amount:
+    $ref: AmountV1.yaml
+  destination:
+    type: string
+    description: Where the money goes, `card` or `bank-account`.

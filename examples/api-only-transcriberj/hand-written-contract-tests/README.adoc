@@ -1,0 +1,77 @@
+= Example: contract tests the generator cannot write, on top of the classes it does
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+A small Spring Boot service, and the contract tests of its one endpoint, built on the classes the API-Only TranscriberJ generates from its contract -- including where the generator stops.
+
+The request body is a `oneOf` whose branches are written inline, so the generator cannot write it: `RefundRequestV1.body(...)` throws.
+A refund must also go back the way the order was paid, a rule the schema cannot express, so a request can be valid against the schema and still be refused with a 422.
+The tests write the request by hand, from the generated pieces that are still there, and check every response against the generated REST Docs descriptors.
+
+The guide that walks through it is https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/docs/guides/hand-written-contract-tests/tutorial.adoc[the hand-written contract tests tutorial ↗]; the reference is https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/api-only-transcriberj/README.adoc#unrepresentable[the TranscriberJ's README ↗].
+
+== What is in it
+
+[cols="2,3", options="header"]
+|===
+|File |What it is
+
+|`src/main/api/openapi/`
+|The `refunds` contract: `POST /orders/{orderId}/refunds`, answered with 201, 400, 404 or 422.
+`RefundRequestV1` is the `oneOf` the generator cannot write.
+
+|`src/main/java/com/example/refunds/`
+|The service, written by hand.
+It never imports a generated class.
+
+|`src/test/java/com/example/contract/RefundRequests.java`
+|The request body, written by hand, in the generated package, from the generated constants.
+
+|`src/test/java/com/example/contract/RefundRequestsTest.java`
+|What keeps `RefundRequests` honest as the contract moves.
+
+|`src/test/java/com/example/refunds/CreateRefundContractTest.java`
+|The contract tests: one per response the contract lists, each checking the response's shape.
+
+|`src/test/java/com/example/refunds/RefundsTest.java`
+|The behaviour: every way a request can be invalid, and every business rule, as scenarios.
+|===
+
+== Run it
+
+You need Java 21 and Node.js (`^22.14.0`, `^24.10.0` or `>=26.0.0`).
+
+[source,console]
+----
+./gradlew check
+----
+
+The build installs the Publisher, builds and publishes the contract, generates the classes, runs the tests, and checks the service's coverage.
+
+== What to look at
+
+`build/reports/transcriberj/refunds.txt`::
+The two methods the generator could not write, why, and the remedy.
+
+`build/generated/sources/transcriberj/refunds/com/example/contract/RefundRequestV1.java`::
+What is still there when `body(...)` throws: the provenance, and the fragment's hash.
+
+`build/generated-snippets/`::
+The REST Docs snippets of the four responses, from the generated descriptors.
+
+`build/reports/jacoco/test/html/index.html`::
+The service's coverage; the generated classes are excluded by their annotation.
+
+== Try it
+
+* Remove `maximum` from `AmountV1.yaml` and raise the contract's version in `refunds.bundle.properties` and `gradle.properties`.
+The tests no longer compile: `RefundRequests` and `RefundRequestsTest` use `AmountV1.MAXIMUM`, which is gone.
+* Put the `maximum` back, rename `cardLast4` to `lastFourDigits` in `RefundRequestV1.yaml`, and raise the version again.
+Everything compiles, and every contract test still passes, since the service is unchanged; only `theHandWrittenBodyWasWrittenAgainstTheRequestSchemaAsItIsNow` fails, and says what to do:
++
+[source,text]
+----
+[openapi/components/schemas/RefundRequestV1.yaml changed; check RefundRequests against it, then update WRITTEN_AGAINST]
+----

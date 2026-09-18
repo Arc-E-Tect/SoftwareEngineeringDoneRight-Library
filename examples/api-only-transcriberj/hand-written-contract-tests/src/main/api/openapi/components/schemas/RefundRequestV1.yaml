@@ -1,0 +1,29 @@
+type: object
+description: Where a refund goes, and how much of the order it returns.
+oneOf:
+  - type: object
+    description: A refund to the card the order was paid with.
+    required:
+      - destination
+      - amount
+      - cardLast4
+    properties:
+      destination:
+        const: card
+      amount:
+        $ref: AmountV1.yaml
+      cardLast4:
+        $ref: CardLast4V1.yaml
+  - type: object
+    description: A refund to a bank account, for an order paid by bank transfer.
+    required:
+      - destination
+      - amount
+      - iban
+    properties:
+      destination:
+        const: bank-account
+      amount:
+        $ref: AmountV1.yaml
+      iban:
+        $ref: IbanV1.yaml
