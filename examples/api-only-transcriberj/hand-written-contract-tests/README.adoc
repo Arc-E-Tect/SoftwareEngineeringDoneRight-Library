@@ -39,6 +39,18 @@ It never imports a generated class.
 |The behaviour: every way a request can be invalid, and every business rule, as scenarios.
 |===
 
+[IMPORTANT]
+.Hand-written test code lives in the generated package, and owns what it types
+====
+`RefundRequests` is in `com.example.contract`, the generated package, in the test source set.
+That is the TranscriberJ's design: `ContractJson` and the scalar components it draws on, such as `AmountV1`, are package-private.
+They are regenerated on every build and are not a published API, so an upgrade may change them.
+
+`RefundRequests` also types what no generated class holds: the member names of the inline branches, and the `destination` values `card` and `bank-account`.
+Keeping those in line with the contract is this project's responsibility; `RefundRequestsTest` pins the class to the request schema's hash, which is the only thing that notices when one of them changes.
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/api-only-transcriberj/README.adoc#hand-written-code[Hand-written code beside the generated classes ↗] is the reference.
+====
+
 == Run it
 
 You need Java 21 and Node.js (`^22.14.0`, `^24.10.0` or `>=26.0.0`).
