@@ -1,0 +1,128 @@
+= api-only-transcriberj-microcks
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+The Microcks emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every `send` operation of an API contract's AsyncAPI document, a generated JUnit 5 test that checks what an application actually publishes against a Microcks-imported copy of the contract.
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |`0.0.1`
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`api-only-transcriberj-microcks`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|API-Only TranscriberJ |`0.5.0` or newer: it is built against `0.5.0`, the first version carrying `ContractModel.asyncTitle`.
+Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
+|microcks-testcontainers |`0.5.0`, in the project's test source sets. Built against Testcontainers 2.x -- see <<testcontainers-2x>>.
+|===
+
+== Using it
+
+Add it to the TranscriberJ's emitter configuration:
+
+[source,groovy]
+----
+dependencies {
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-microcks:0.0.1'
+}
+----
+
+The TranscriberJ loads it in a class loader of its own and adds `io.github.microcks:microcks-testcontainers` and `org.testcontainers:testcontainers` to the source sets it generates into, at 0.5.0 and 2.0.5, unless the project declares versions itself.
+A microcks-testcontainers version from 0.6.0 on, or a Testcontainers version from 2.1.0 on, is reported as not tested with this emitter.
+
+Only `send` operations are represented: verifying that an application correctly reacts to a message it *received* needs a different harness shape, and is left for a later emitter.
+An AsyncAPI document without a `send` operation generates nothing.
+
+== What it generates
+
+One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, carrying:
+
+[cols="1,3",options="header"]
+|===
+|Member |What it is
+
+|`@Test default void <operationId>_conformsToContract()`, one per `send` operation
+|Generates an isolation-suffixed channel address, calls the operation's hook (below) to publish on it, and asks the Microcks ensemble whether that message conforms to the contract.
+
+|`void <operationId>(String suffixedChannel)`, one per `send` operation, abstract
+|What a generator cannot know: how the application publishes that operation's message, on the suffixed channel it is given, exactly as production code would. The project implements one of these per operation.
+
+|`void wireBroker(MicrocksContainersEnsemble ensemble)`, abstract
+|Start the application's message broker on `ensemble.getNetwork()`, and connect the ensemble to it, before the ensemble starts. Which broker, and so which Testcontainers module wires it, is the project's own choice.
+
+|`Path contractFile()`, abstract
+|Where the build put the fetched AsyncAPI document, for Microcks to import. The emitter cannot know this: it depends on the project's own build layout.
+
+|`String endpoint(String suffixedChannel)`, abstract
+|Turn a suffixed channel address into the endpoint Microcks tests against, in the broker's own address form -- `"kafka://kafka:9092/" + suffixedChannel`, for instance.
+
+|`SERVICE_NAME`, `MICROCKS_IMAGE`
+|The AsyncAPI document's own `info.title` and the Microcks image this emitter was tested with, read at runtime from a generated properties resource (`META-INF/apionly/microcks/<contract>.properties`) rather than compiled in, so either can be overridden there without regenerating the interface.
+|===
+
+The interface runs with `@TestInstance(Lifecycle.PER_CLASS)`: one Microcks ensemble for every test it declares, not one per test, so `wireBroker` and `contractFile` run once, before any operation's test, and stop once after the last.
+
+[source,java]
+----
+class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
+
+    static KafkaContainer kafka;
+
+    @Override
+    public void wireBroker(MicrocksContainersEnsemble ensemble) {
+        kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.9.0"))
+                .withNetwork(ensemble.getNetwork()).withNetworkAliases("kafka");
+        kafka.start();
+        ensemble.withKafkaConnection(new KafkaConnection(kafka.getBootstrapServers()));
+    }
+
+    @Override
+    public Path contractFile() {
+        return Path.of("build/api-spec/user-account/asyncapi.yaml");
+    }
+
+    @Override
+    public String endpoint(String suffixedChannel) {
+        return "kafka://kafka:9092/" + suffixedChannel;
+    }
+
+    @Override
+    public void publishRegistrationInitiated(String suffixedChannel) {
+        auditEventPublisher.publish(suffixedChannel, someRegistrationInitiatedEvent());
+    }
+
+    // one such method per send operation ...
+}
+----
+
+[#testcontainers-2x]
+== Testcontainers 2.x
+
+`microcks-testcontainers` 0.5.0 is built against the Testcontainers 2.x line, not the 1.x line a project may already depend on for other containers.
+The broker-specific Testcontainers module `wireBroker(...)` uses -- for Kafka, for instance -- must itself be on the 2.x line; mixing it with a 1.x module fails at runtime, not at compile time, with no message pointing here.
+
+== Development
+
+[source,console]
+----
+cd api-only-transcriberj-microcks
+./gradlew check
+./gradlew publishToMavenLocal
+----
+
+The tests run the TranscriberJ over a copy of the reference implementation's user-account contract with this emitter, and compile what comes out against `microcks-testcontainers`.
+They do not start a real Microcks ensemble or a real broker: that is exercised where a project actually implements the harness's hooks.
+`check` gates on 90% instruction coverage and on Javadoc without warnings.
+// end::root[]

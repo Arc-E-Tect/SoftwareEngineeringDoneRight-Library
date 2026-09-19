@@ -1,0 +1,155 @@
+/*
+ * The Microcks emitter of the Arc-E-Tect API-Only TranscriberJ: for every AsyncAPI
+ * operation a contract's application sends, a generated JUnit 5 harness that checks
+ * what the application actually publishes against a Microcks-imported copy of the
+ * contract.
+ * Publish: ./gradlew publishToMavenLocal
+ */
+plugins {
+    id 'jacoco'
+    id 'java-library'
+    id 'maven-publish'
+    alias(libs.plugins.jreleaser)
+    alias(libs.plugins.owaspDependencycheck)
+}
+
+java {
+    toolchain {
+        // 21, as the TranscriberJ: an emitter runs inside the consumer's Gradle JVM.
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+    // The API-Only TranscriberJ, and the API-Only Subscriber it depends on.
+    gradlePluginPortal()
+}
+
+dependencies {
+    // The emitter interface is part of the plugin, which provides it when it loads
+    // the emitter; so it is compiled against, and never shipped with the emitter.
+    compileOnly libs.api.only.transcriberj
+
+    testImplementation libs.api.only.transcriberj
+    testImplementation libs.testcontainers.core
+    testImplementation libs.microcks.testcontainers
+    // The tests compile generated code, which carries the coverage marker annotation
+    // and JUnit Jupiter annotations, which apiguardian-api annotates in turn.
+    testImplementation libs.sedr.library
+    testImplementation libs.apiguardian.api
+    testImplementation libs.junit.jupiter
+    testImplementation libs.assertj.core
+    testRuntimeOnly    libs.junit.platform.launcher
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = 'API-Only TranscriberJ Microcks Emitter'
+                description = 'A generated JUnit 5 harness that checks what a service publishes against a Microcks-imported copy of its AsyncAPI contract, for the classes the Arc-E-Tect API-Only TranscriberJ generates from an API contract.'
+                url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
+                inceptionYear = '2026'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'ieising'
+                        name = 'Iwan Eising'
+                        email = 'iwan@arc-e-tect.com'
+                        organizationUrl = 'https://github.com/Arc-E-Tect'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'StagingDeploy'
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
+}
+
+dependencyCheck {
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR') ?: System.getenv('NVD_APIKEY')
+    }
+    failBuildOnCVSS = (System.getenv('FAIL_ON_FATAL') == 'true') ? 9 : 11
+    analyzers {
+        nodeAuditEnabled = false
+        nodeEnabled = false
+    }
+    format = 'HTML'
+}
+
+jreleaser {
+    gitRootSearch = true
+    signing {
+        active = 'ALWAYS'
+        armored = true
+        mode = 'MEMORY'
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'RELEASE'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepositories = ['build/staging-deploy']
+                }
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+    finalizedBy jacocoTestReport
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    // No exclusions, as for the TranscriberJ itself.
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.9
+            }
+        }
+    }
+}
+
+tasks.named('javadoc') {
+    options {
+        encoding = 'UTF-8'
+        addBooleanOption('Xdoclint:all', true)
+        addBooleanOption('Xwerror', true)
+    }
+}
+
+tasks.named('check') {
+    dependsOn jacocoTestCoverageVerification, javadoc
+}
