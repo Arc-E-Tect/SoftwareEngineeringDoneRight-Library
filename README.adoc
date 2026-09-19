@@ -31,6 +31,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`api-only-transcriberj-restdocs/`
 |Published Spring REST Docs emitter for the API-Only TranscriberJ Gradle plugin: REST Docs companions for the classes it generates from an API contract.
 
+|`api-only-transcriberj-microcks/`
+|Published Microcks emitter for the API-Only TranscriberJ Gradle plugin: a JUnit 5 conformance test per `send` operation of an API contract's AsyncAPI document, checking what an application publishes against a Microcks-imported copy of the contract.
+
 |`nvd-cache-primer/`
 |Internal utility project that primes and validates the shared OWASP Dependency-Check NVD cache used by this repository's security-scan workflows. Not published.
 
@@ -55,6 +58,9 @@ include::api-detector-core/README.adoc[tag=root,leveloffset=+1]
 
 == api-only-transcriberj-restdocs
 include::api-only-transcriberj-restdocs/README.adoc[tag=root,leveloffset=+1]
+
+== api-only-transcriberj-microcks
+include::api-only-transcriberj-microcks/README.adoc[tag=root,leveloffset=+1]
 
 == nvd-cache-primer
 include::nvd-cache-primer/README.adoc[tag=root,leveloffset=+1]
