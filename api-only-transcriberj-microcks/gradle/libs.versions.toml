@@ -20,11 +20,10 @@ api-only-transcriberj = "0.5.0"
 # Testcontainers and the Microcks Testcontainers module the generated harness is tested
 # with; also the versions the plugin adds to a project that declares none
 # (MicrocksEmitter.dependencies()). microcks-testcontainers 0.5.0 is built against
-# Testcontainers 2.x, not the 1.x line a project may already have from elsewhere; see
-# the emitter's Javadoc. No broker-specific Testcontainers module (kafka, and so on) is
-# pinned here: which broker a project publishes over, and so which Testcontainers
-# module wires it, is the harness user's choice, made in the wireBroker(...) hook --
-# and it must be a module built against the same Testcontainers 2.x line.
+# Testcontainers 2.x; see the emitter's Javadoc. No broker-specific Testcontainers
+# module (kafka, and so on) is pinned here: which broker a project publishes over, and
+# so which Testcontainers module wires it, is the harness user's choice, made in the
+# wireBroker(...) hook.
 testcontainers = "2.0.5"
 microcks-testcontainers = "0.5.0"
 # The marker annotation the generated code carries, so a coverage rule does not measure
