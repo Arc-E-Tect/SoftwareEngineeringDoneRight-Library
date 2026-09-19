@@ -54,10 +54,10 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 |Member |What it is
 
 |`@Test default void <operationId>_conformsToContract()`, one per `send` operation
-|Generates an isolation-suffixed channel address, calls the operation's hook (below) to publish on it, and asks the Microcks ensemble whether that message conforms to the contract.
+|Generates an isolation-suffixed channel address, asks Microcks to listen on it, waits `subscriptionDelay()` for it to subscribe, calls the operation's hook (below) to publish on it, and asks Microcks whether what it received conforms to the contract.
 
 |`void <operationId>(String suffixedChannel)`, one per `send` operation, abstract
-|What a generator cannot know: how the application publishes that operation's message, on the suffixed channel it is given, exactly as production code would. The project implements one of these per operation.
+|What a generator cannot know: how the application publishes that operation's message, on the suffixed channel it is given, exactly as production code would. It must not return before the message has been sent -- flush a buffering producer. The project implements one of these per operation.
 
 |`void wireBroker(MicrocksContainersEnsemble ensemble)`, abstract
 |Start the application's message broker on `ensemble.getNetwork()`, and connect the ensemble to it, before the ensemble starts. Which broker, and so which Testcontainers module wires it, is the project's own choice.
@@ -67,6 +67,9 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 
 |`String endpoint(String suffixedChannel)`, abstract
 |Turn a suffixed channel address into the endpoint Microcks tests against, in the broker's own address form -- `"kafka://kafka:9092/" + suffixedChannel`, for instance.
+
+|`Duration subscriptionDelay()`
+|How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed: a message sent earlier is missed. One second by default; override it for a slower broker.
 
 |`SERVICE_NAME`, `MICROCKS_IMAGE`
 |The AsyncAPI document's own `info.title` and the Microcks image this emitter was tested with, read at runtime from a generated properties resource (`META-INF/apionly/microcks/<contract>.properties`) rather than compiled in, so either can be overridden there without regenerating the interface.

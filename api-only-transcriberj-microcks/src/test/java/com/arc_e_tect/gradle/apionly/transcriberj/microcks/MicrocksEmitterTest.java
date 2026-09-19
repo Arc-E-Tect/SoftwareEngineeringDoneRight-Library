@@ -124,6 +124,23 @@ class MicrocksEmitterTest {
     }
 
     @Test
+    void aTestAsksMicrocksToListenAndWaitsBeforeItPublishes() throws Exception {
+        ClassLoader loader = userAccount();
+        String source = Files.readString(sources.resolve(PACKAGE.replace('.', '/') + "/microcks/AsyncConformanceHarness.java"));
+        String test = source.substring(source.indexOf("default void publishRegistrationInitiated_conformsToContract"));
+        test = test.substring(0, test.indexOf("\n    }\n"));
+
+        assertThat(test.indexOf("testEndpointAsync"))
+                .isPositive().isLessThan(test.indexOf("subscriptionDelay()"));
+        assertThat(test.indexOf("subscriptionDelay()"))
+                .isLessThan(test.indexOf("publishRegistrationInitiated(suffixedChannel)"));
+
+        Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
+        assertThat(harness.getMethod("subscriptionDelay").getReturnType()).isEqualTo(java.time.Duration.class);
+        assertThat(java.lang.reflect.Modifier.isAbstract(harness.getMethod("subscriptionDelay").getModifiers())).isFalse();
+    }
+
+    @Test
     void theContractPropertiesResourceCarriesTheServiceNameAndAPinnedMicrocksImage() throws Exception {
         userAccount();
 

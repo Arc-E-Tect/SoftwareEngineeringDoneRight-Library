@@ -100,6 +100,7 @@ final class Sources {
                 import java.util.List;
                 import java.util.Properties;
                 import java.util.UUID;
+                import java.util.concurrent.CompletableFuture;
                 import java.util.concurrent.TimeUnit;
                 import java.util.concurrent.atomic.AtomicReference;
 
@@ -220,6 +221,17 @@ final class Sources {
                      */
                     String endpoint(String suffixedChannel);
 
+                    /**
+                     * How long a test waits, after asking Microcks to listen on a channel and before
+                     * publishing to it, for Microcks to have subscribed: a message sent earlier is
+                     * missed. One second by default; override it for a slower broker.
+                     *
+                     * @return the delay
+                     */
+                    default Duration subscriptionDelay() {
+                        return Duration.ofSeconds(1);
+                    }
+
                 %5$s\
                     /** The service id {@link #startMicrocksEnsemble()} resolved. */
                     private static String serviceId() {
@@ -286,7 +298,9 @@ final class Sources {
         return """
                     /**
                      * Publishes a message for operation {@code %1$s} on {@code suffixedChannel},
-                     * through the application, exactly as production code would.
+                     * through the application, exactly as production code would, and does not
+                     * return before it has been sent -- flush a buffering producer. Microcks is
+                     * already listening when this is called.
                      *
                      * @param suffixedChannel the channel address to publish on, with its
                      *                        isolation suffix
@@ -300,13 +314,13 @@ final class Sources {
     private static String test(SendOperation operation) {
         return """
                     /**
-                     * Publishes a message through {@link #%1$s(String)}, and checks it against
-                     * operation {@code %1$s} of {@link %2$s}.
+                     * Asks Microcks to listen on a suffixed channel, waits {@link #subscriptionDelay()}
+                     * for it to subscribe, publishes a message through {@link #%1$s(String)}, and
+                     * checks what Microcks received against operation {@code %1$s} of {@link %2$s}.
                      */
                     @Test
                     default void %1$s_conformsToContract() throws Exception {
                         String suffixedChannel = %2$s.CHANNEL_ADDRESS + "-" + UUID.randomUUID();
-                        %1$s(suffixedChannel);
                         TestRequest request = new TestRequest.Builder()
                                 .serviceId(serviceId())
                                 .filteredOperations(List.of("SEND " + %2$s.OPERATION_ID))
@@ -314,8 +328,11 @@ final class Sources {
                                 .testEndpoint(endpoint(suffixedChannel))
                                 .timeout(Duration.ofSeconds(10))
                                 .build();
-                        TestResult result = ensemble().getMicrocksContainer().testEndpointAsync(request)
-                                .get(15, TimeUnit.SECONDS);
+                        CompletableFuture<TestResult> future =
+                                ensemble().getMicrocksContainer().testEndpointAsync(request);
+                        Thread.sleep(subscriptionDelay().toMillis());
+                        %1$s(suffixedChannel);
+                        TestResult result = future.get(15, TimeUnit.SECONDS);
                         Assertions.assertTrue(result.isSuccess(), () -> diagnostics(result));
                     }
 
