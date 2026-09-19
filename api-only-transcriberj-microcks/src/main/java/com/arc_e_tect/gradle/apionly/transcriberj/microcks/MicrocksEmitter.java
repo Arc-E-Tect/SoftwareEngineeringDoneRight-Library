@@ -30,10 +30,11 @@ import java.util.regex.Pattern;
  * left for a later emitter.
  *
  * <p><b>Testcontainers 2.x:</b> {@code microcks-testcontainers} 0.5.0 is built against
- * the Testcontainers 2.x line, not the 1.x line a project may already depend on for
- * other containers. The broker-specific Testcontainers module {@code wireBroker(...)}
- * uses -- for Kafka, for instance -- must itself be on the 2.x line; mixing it with a
- * 1.x module fails at runtime, not at compile time, with no message pointing here.
+ * the Testcontainers 2.x line. Gradle resolves Testcontainers core to the highest version
+ * anything asks for, so a project that pins 1.x for core still gets 2.x. In the reference
+ * implementation that was core 2.0.5 beside the 1.21.4 Kafka module, and the generated
+ * tests passed; other combinations are untested. A project that pins Testcontainers
+ * should check what its build resolves.
  */
 public final class MicrocksEmitter implements Emitter {
 
@@ -58,11 +59,10 @@ public final class MicrocksEmitter implements Emitter {
 
     @Override
     public List<ManagedDependency> dependencies() {
-        // microcks-testcontainers 0.5.0 is built against the Testcontainers 2.x line, not
-        // the 1.x line most projects still pull for other containers (Kafka, and so on);
-        // see the class Javadoc. No broker-specific Testcontainers module is declared
-        // here: which broker a project publishes over is the harness's own choice, made
-        // in wireBroker(...), and that module must itself be on the 2.x line.
+        // microcks-testcontainers 0.5.0 is built against the Testcontainers 2.x line; see
+        // the class Javadoc. No broker-specific Testcontainers module is declared here:
+        // which broker a project publishes over is the harness's own choice, made in
+        // wireBroker(...).
         return List.of(
                 new ManagedDependency("io.github.microcks", "microcks-testcontainers", "0.5.0", "0.6.0"),
                 new ManagedDependency("org.testcontainers", "testcontainers", "2.0.5", "2.1.0"));

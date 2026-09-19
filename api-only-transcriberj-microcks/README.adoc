@@ -25,7 +25,7 @@ The Microcks emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 |Gradle |9.x
 |API-Only TranscriberJ |`0.5.0` or newer: it is built against `0.5.0`, the first version carrying `ContractModel.asyncTitle`.
 Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
-|microcks-testcontainers |`0.5.0`, in the project's test source sets. Built against Testcontainers 2.x -- see <<testcontainers-2x>>.
+|microcks-testcontainers |`0.5.0`, in the project's test source sets. Built against Testcontainers 2.x -- see <<testcontainers-2x,Testcontainers 2.x §>>.
 |===
 
 == Using it
@@ -72,7 +72,7 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 |How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed: a message sent earlier is missed. One second by default; override it for a slower broker.
 
 |`SERVICE_NAME`, `MICROCKS_IMAGE`
-|The AsyncAPI document's own `info.title` and the Microcks image this emitter was tested with, read at runtime from a generated properties resource (`META-INF/apionly/microcks/<contract>.properties`) rather than compiled in, so either can be overridden there without regenerating the interface.
+|The AsyncAPI document's own `info.title` and the Microcks image this emitter was tested with, read at runtime from a properties resource this emitter generates (`META-INF/apionly/microcks/<contract>.properties`). It is regenerated on every build, so it is not a place to configure anything: the service name follows the contract's title, and the image is the one this emitter was tested with.
 |===
 
 The interface runs with `@TestInstance(Lifecycle.PER_CLASS)`: one Microcks ensemble for every test it declares, not one per test, so `wireBroker` and `contractFile` run once, before any operation's test, and stop once after the last.
@@ -113,8 +113,10 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
 [#testcontainers-2x]
 == Testcontainers 2.x
 
-`microcks-testcontainers` 0.5.0 is built against the Testcontainers 2.x line, not the 1.x line a project may already depend on for other containers.
-The broker-specific Testcontainers module `wireBroker(...)` uses -- for Kafka, for instance -- must itself be on the 2.x line; mixing it with a 1.x module fails at runtime, not at compile time, with no message pointing here.
+`microcks-testcontainers` 0.5.0 is built against the Testcontainers 2.x line.
+Gradle resolves Testcontainers core to the highest version anything asks for, so a project that pins 1.x for core still gets 2.x.
+In the reference implementation that resolved to core 2.0.5 beside the 1.21.4 `org.testcontainers:kafka` module, and the generated tests passed; other combinations are untested here.
+A project that pins Testcontainers deliberately should check what its build resolves, with `dependencyInsight`.
 
 == Development
 

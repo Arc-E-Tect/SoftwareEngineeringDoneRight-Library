@@ -110,8 +110,8 @@ final class Sources {
                  *
                  * <p><b>What is generated:</b> one {@code @Test} per operation, below, and the
                  * Microcks ensemble's lifecycle. {@link #SERVICE_NAME} and {@link #MICROCKS_IMAGE}
-                 * are read from a properties file this emitter also generates, so either can
-                 * change without regenerating this interface.
+                 * are read from a properties resource this emitter generates with it. It is
+                 * regenerated on every build, so it is not a place to configure anything.
                  *
                  * <p><b>What the implementing class must supply:</b>
                  * <ul>
@@ -147,9 +147,9 @@ final class Sources {
                     String SERVICE_NAME = CONTRACT.getProperty("asyncapi.service.name");
 
                     /**
-                     * The Microcks image this emitter was tested with. Read from the properties
-                     * file, not compiled in, so a project can pin another one there without
-                     * regenerating this interface.
+                     * The Microcks image this emitter was tested with, read from the generated
+                     * properties resource. That resource is regenerated on every build, so a change
+                     * made to it does not last.
                      */
                     String MICROCKS_IMAGE = CONTRACT.getProperty("microcks.image");
 
