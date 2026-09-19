@@ -1,3 +1,15 @@
+## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.0.0...api-only-transcriberj-microcks-v1.0.1) (2026-09-19)
+
+
+### 🐛 Bug Fixes
+
+* **api-only-transcriberj-microcks:** listen first, then publish ([#96](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/96)) ([a86b806](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a86b806922720aeb3305b33d59aaa5b09bc0e96a)), closes [#96](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/96)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-microcks:** update README version to 1.0.0 [skip ci] ([b48eae3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b48eae36cc125e17c2599c6b1f170af2312e6748))
+
 # 1.0.0 (2026-09-19)
 
 
