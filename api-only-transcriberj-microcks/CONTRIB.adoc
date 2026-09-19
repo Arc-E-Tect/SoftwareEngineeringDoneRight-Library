@@ -1,0 +1,32 @@
+= Contributing to api-only-transcriberj-microcks
+:toc: left
+:icons: font
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/api-only-transcriberj-microcks-build.yml`
+* `.github/workflows/api-only-transcriberj-microcks-release.yml`
+* `release.config.js`
+* `first-release-patch-analyzer.js`
+* `package.json`
+
+Release tags use this module's own scoped namespace (`api-only-transcriberj-microcks-v*`), independent of the
+shared `v*` tag stream used by `sedr-library`. `first-release-patch-analyzer.js` forces the first
+real release after the seeded `api-only-transcriberj-microcks-v0.0.0` baseline tag to compute as `0.0.1`
+regardless of the triggering commit's type.
+
+Security scanning does not run from this module's own workflows - it's wired into the shared
+`.github/workflows/nvd-cache-refresh.yml` schedule via a `Read-Version-Api-Only-TranscriberJ-Microcks` /
+`Security-Scan-Api-Only-TranscriberJ-Microcks` job pair, matching the pattern used for `dsl-updater-core`.
+
+== The API-Only TranscriberJ it is built against
+
+The emitter compiles against the TranscriberJ plugin, which carries the emitter interface, and its
+tests run the TranscriberJ itself. The plugin is published to the Gradle Plugin Portal from
+Arc-E-Tect/SoftwareEngineeringDoneRight-API, at the version `api-only-transcriberj` names in
+`gradle/libs.versions.toml`.
+
+To build against a TranscriberJ change that is not released yet, release the TranscriberJ first and
+then set its version in the catalog; the CI workflows resolve only released versions.
