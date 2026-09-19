@@ -1,5 +1,5 @@
 [versions]
-api-only-transcriberj = "0.3.2"
+api-only-transcriberj = "0.3.6"
 api-only-transcriberj-restdocs = "0.1.1"
 junit = "6.1.3"
 assertj = "3.27.7"
