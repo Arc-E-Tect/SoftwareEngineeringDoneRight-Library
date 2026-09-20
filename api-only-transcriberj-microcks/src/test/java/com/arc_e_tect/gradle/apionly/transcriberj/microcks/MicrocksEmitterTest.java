@@ -141,6 +141,48 @@ class MicrocksEmitterTest {
     }
 
     @Test
+    void theMicrocksImageIsTheTestedOneUnlessAProjectOverridesIt() throws Exception {
+        ClassLoader loader = userAccount();
+        Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
+        Object defaults = java.lang.reflect.Proxy.newProxyInstance(loader, new Class<?>[]{harness},
+                (proxy, method, args) -> java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
+
+        assertThat(harness.getMethod("microcksImage").invoke(defaults))
+                .isEqualTo("quay.io/microcks/microcks-uber:1.13.2")
+                .isEqualTo(harness.getField("MICROCKS_IMAGE").get(null));
+    }
+
+    @Test
+    void anOverriddenImageIsWarnedAboutAndTheTestedOneIsNot() throws Exception {
+        ClassLoader loader = userAccount();
+        Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
+        Method warn = harness.getDeclaredMethod("warnIfNotTheTestedImage", String.class);
+        warn.setAccessible(true);
+        java.util.logging.Logger logger = java.util.logging.Logger.getLogger(harness.getName());
+        List<String> messages = new java.util.ArrayList<>();
+        java.util.logging.Handler handler = new java.util.logging.Handler() {
+            @Override public void publish(java.util.logging.LogRecord r) {
+                messages.add(r.getLevel() + ": " + r.getMessage());
+            }
+            @Override public void flush() { }
+            @Override public void close() { }
+        };
+        logger.addHandler(handler);
+        try {
+            warn.invoke(null, "quay.io/microcks/microcks-uber:1.13.2");
+            assertThat(messages).isEmpty();
+
+            warn.invoke(null, "registry.example.com/microcks:9");
+            assertThat(messages).singleElement().satisfies(message -> assertThat(message)
+                    .startsWith("WARNING:")
+                    .contains("registry.example.com/microcks:9", "quay.io/microcks/microcks-uber:1.13.2",
+                            "may not work", "run it with the default image first"));
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    @Test
     void theContractPropertiesResourceCarriesTheServiceNameAndAPinnedMicrocksImage() throws Exception {
         userAccount();
 
