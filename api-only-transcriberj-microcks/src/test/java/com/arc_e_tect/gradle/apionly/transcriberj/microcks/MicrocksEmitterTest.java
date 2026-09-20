@@ -148,7 +148,7 @@ class MicrocksEmitterTest {
                 (proxy, method, args) -> java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
 
         assertThat(harness.getMethod("microcksImage").invoke(defaults))
-                .isEqualTo("quay.io/microcks/microcks-uber:1.13.2")
+                .isEqualTo("quay.io/microcks/microcks-uber:1.15.0")
                 .isEqualTo(harness.getField("MICROCKS_IMAGE").get(null));
     }
 
@@ -169,13 +169,13 @@ class MicrocksEmitterTest {
         };
         logger.addHandler(handler);
         try {
-            warn.invoke(null, "quay.io/microcks/microcks-uber:1.13.2");
+            warn.invoke(null, "quay.io/microcks/microcks-uber:1.15.0");
             assertThat(messages).isEmpty();
 
             warn.invoke(null, "registry.example.com/microcks:9");
             assertThat(messages).singleElement().satisfies(message -> assertThat(message)
                     .startsWith("WARNING:")
-                    .contains("registry.example.com/microcks:9", "quay.io/microcks/microcks-uber:1.13.2",
+                    .contains("registry.example.com/microcks:9", "quay.io/microcks/microcks-uber:1.15.0",
                             "may not work", "run it with the default image first"));
         } finally {
             logger.removeHandler(handler);
@@ -193,7 +193,7 @@ class MicrocksEmitterTest {
             properties.load(in);
         }
         assertThat(properties.getProperty("asyncapi.service.name")).isEqualTo("IFF Async API");
-        assertThat(properties.getProperty("microcks.image")).isEqualTo("quay.io/microcks/microcks-uber:1.13.2");
+        assertThat(properties.getProperty("microcks.image")).isEqualTo("quay.io/microcks/microcks-uber:1.15.0");
     }
 
     @Test
