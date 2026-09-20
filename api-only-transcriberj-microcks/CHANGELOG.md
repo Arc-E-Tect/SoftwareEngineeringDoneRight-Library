@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.0.1...api-only-transcriberj-microcks-v1.1.0) (2026-09-20)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-microcks:** let a project choose the Microcks image ([#98](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/98)) ([d8afa90](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d8afa90cf56675afcdbde2bb1e988d75ab68af34)), closes [#98](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/98)
+
+
+### 📝 Documentation
+
+* correct what the Microcks emitter's documentation claims, and list it in the root README ([#97](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/97)) ([4a22930](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4a229300bceae9a3dd43c726422064bf96387010)), closes [#97](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/97)
+* **api-only-transcriberj-microcks:** update README version to 1.0.1 [skip ci] ([3288a36](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/3288a3610b7c24ed8c6cc2bcf2fa268e1e95f10d))
+
 ## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.0.0...api-only-transcriberj-microcks-v1.0.1) (2026-09-19)
 
 
