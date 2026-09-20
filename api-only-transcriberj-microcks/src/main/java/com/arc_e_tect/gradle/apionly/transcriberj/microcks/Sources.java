@@ -124,6 +124,8 @@ final class Sources {
                  * <li>{@link #endpoint(String)}: turn a generated, isolation-suffixed channel
                  * address into the endpoint Microcks tests against, in the broker's own address
                  * form.
+                 * <li>optionally, {@link #microcksImage()}, to run a Microcks image other than the
+                 * tested default; a warning says so when the ensemble starts.
                  * <li>one hook per operation, named after its {@code operationId}, that publishes
                  * a message on the suffixed channel through the application, exactly as
                  * production code would.
@@ -169,8 +171,10 @@ final class Sources {
                      */
                     @BeforeAll
                     default void startMicrocksEnsemble() throws IOException {
+                        String image = microcksImage();
+                        warnIfNotTheTestedImage(image);
                         MicrocksContainersEnsemble ensemble =
-                                new MicrocksContainersEnsemble(Network.newNetwork(), MICROCKS_IMAGE)
+                                new MicrocksContainersEnsemble(Network.newNetwork(), image)
                                         .withAsyncFeature();
                         wireBroker(ensemble);
                         ensemble.start();
@@ -232,7 +236,33 @@ final class Sources {
                         return Duration.ofSeconds(1);
                     }
 
+                    /**
+                     * The Microcks image the ensemble runs: {@link #MICROCKS_IMAGE}, the one this
+                     * emitter was tested with, unless overridden.
+                     *
+                     * <p>Override it to run another image, such as one from a private registry or a
+                     * newer Microcks. The generated tests are then run against something they were
+                     * not tested with, and a warning says so when the ensemble starts. If a test
+                     * behaves unexpectedly with another image, run it with the default before
+                     * looking anywhere else.
+                     *
+                     * @return the image name, with its tag
+                     */
+                    default String microcksImage() {
+                        return MICROCKS_IMAGE;
+                    }
+
                 %5$s\
+                    /** Warns, once per start, that an image this harness was not tested with is in use. */
+                    private static void warnIfNotTheTestedImage(String image) {
+                        if (MICROCKS_IMAGE.equals(image)) return;
+                        System.getLogger(AsyncConformanceHarness.class.getName()).log(System.Logger.Level.WARNING,
+                                "Microcks image '" + image + "' is used instead of '" + MICROCKS_IMAGE
+                                        + "', the one the generated tests were tested with, so they may not work"
+                                        + " with it. If a test behaves unexpectedly, run it with the default image"
+                                        + " first: stop overriding microcksImage().");
+                    }
+
                     /** The service id {@link #startMicrocksEnsemble()} resolved. */
                     private static String serviceId() {
                         String id = SERVICE_ID.get();

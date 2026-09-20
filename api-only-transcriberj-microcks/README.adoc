@@ -71,6 +71,9 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 |`Duration subscriptionDelay()`
 |How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed: a message sent earlier is missed. One second by default; override it for a slower broker.
 
+|`String microcksImage()`
+|The Microcks image the ensemble runs: `MICROCKS_IMAGE`, the one this emitter was tested with, unless the project overrides it. See <<other-image,Using another Microcks image §>>.
+
 |`SERVICE_NAME`, `MICROCKS_IMAGE`
 |The AsyncAPI document's own `info.title` and the Microcks image this emitter was tested with, read at runtime from a properties resource this emitter generates (`META-INF/apionly/microcks/<contract>.properties`). It is regenerated on every build, so it is not a place to configure anything: the service name follows the contract's title, and the image is the one this emitter was tested with.
 |===
@@ -109,6 +112,36 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
     // one such method per send operation ...
 }
 ----
+
+[#other-image]
+== Using another Microcks image
+
+The generated tests run against the Microcks image this emitter was tested with, `quay.io/microcks/microcks-uber:<tag>`, named by `MICROCKS_IMAGE` in the generated interface.
+A project that wants another -- one mirrored in a private registry, or a newer Microcks -- overrides `microcksImage()`:
+
+[source,java]
+----
+@Override
+public String microcksImage() {
+    return "registry.example.com/mirror/microcks-uber:1.14.0";
+}
+----
+
+Nothing else changes, and the emitter does not check the image.
+When the ensemble starts with an image other than the tested one, the harness logs a warning (a `System.Logger` at `WARNING`, on the logger named after `AsyncConformanceHarness`):
+
+[source,text]
+----
+Microcks image '<image>' is used instead of '<tested image>', the one the generated tests were tested with, so they may not work with it. If a test behaves unexpectedly, run it with the default image first: stop overriding microcksImage().
+----
+
+The image is a choice of the project, and so is the risk: a different Microcks can change how it validates a message, or what its test API returns, and the generated tests were written against one version.
+*If a test fails, hangs or reports something you did not expect with another image, run it with the default first.*
+If it passes there, the difference is the image, not your application or the contract; if it fails there too, it is not the image.
+Report a problem with the default, not with an override.
+
+The default is the image of the emitter version you use, and moves with the emitter.
+There is no property or system property for it: the properties resource the harness reads is regenerated on every build, so it is not a place to configure anything.
 
 [#testcontainers-2x]
 == Testcontainers 2.x
