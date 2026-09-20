@@ -11,7 +11,7 @@ The Microcks emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 
 [cols="1,1"]
 |===
-|Latest version |`1.0.1`
+|Latest version |`1.1.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`api-only-transcriberj-microcks`
 |===
@@ -35,7 +35,7 @@ Add it to the TranscriberJ's emitter configuration:
 [source,groovy]
 ----
 dependencies {
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-microcks:1.0.1'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-microcks:1.1.0'
 }
 ----
 
