@@ -11,7 +11,7 @@ import java.util.Properties;
 final class Sources {
 
     /** The Microcks image this emitter was tested with; the properties file's default. */
-    private static final String DEFAULT_MICROCKS_IMAGE = "quay.io/microcks/microcks-uber:1.13.2";
+    private static final String DEFAULT_MICROCKS_IMAGE = "quay.io/microcks/microcks-uber:1.15.0";
 
     private Sources() {
     }
