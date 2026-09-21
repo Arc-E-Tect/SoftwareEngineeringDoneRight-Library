@@ -64,7 +64,10 @@ The plugin discovers these tests on the classpath and includes them in the gener
 
 == What This Rule Pack Checks
 
-The default rules target Spring-specific architectural boundaries, including dependency direction and domain isolation.
+The default rules target Spring-*specific* architectural boundaries only. Framework-agnostic checks
+(dependency direction, port contracts, port-freedom, domain/domain-service isolation, bidirectional
+in-port and domain-service naming) now live in the Architecture Validator plugin's built-in Hexagonal
+ruleset itself, so this rule pack no longer duplicates them.
 
 [cols="1,3"]
 |===
@@ -74,13 +77,7 @@ The default rules target Spring-specific architectural boundaries, including dep
 |Controllers only call in-ports, services do not access repositories directly (must go through an out-port), repositories are only reached through out-ports, and Spring components live in the expected Hexagonal layer.
 
 |`DomainIsolationTest`
-|The domain model depends only on Java core and other domain classes, the application core carries no Spring, persistence, or validation framework dependencies, and application services stay free of Spring stereotypes.
-
-|`DependencyDirectionTest`
-|Dependencies flow inward only, the core never depends on adapters or adapter implementations, adapters depend only on ports (not concrete services), and only the configuration layer wires concrete services directly.
-
-|`PortContractTest`
-|In-ports and out-ports are interfaces, and port signatures reference only Java core and domain model types with no framework leakage into port contracts.
+|The application core (domain model and domain services) carries no Spring, persistence, or validation framework dependencies, and domain services stay free of Spring stereotypes.
 
 |`RulePackConfigurationTest`
 |Fails fast when required Architecture Validator properties are missing so the rule pack cannot pass with empty class imports.
@@ -92,10 +89,10 @@ The default rules target Spring-specific architectural boundaries, including dep
 |Adapter and domain-model package trees must be free of circular package dependencies.
 
 |`DependencyInjectionStyleTest`
-|Classes in adapters, application services, and domain model must not use field injection via `@Autowired`.
+|Classes in adapters, domain services, and domain model must not use field injection via `@Autowired`.
 
 |`NamingConventionTest`
-|Optional naming checks enforce consistent suffixes for in-ports, out-ports, repositories, and web controllers.
+|Optional naming check enforcing a consistent suffix for Spring adapters (`@Repository` and controller stereotypes). In-port and domain-service naming conventions are checked by the built-in plugin ruleset instead.
 |===
 
 == Architecture Validator Properties
@@ -121,12 +118,15 @@ The rules read package boundaries from system properties set by the Architecture
 |`architectureValidator.adapters`
 |Comma-separated adapter packages.
 
-|`architectureValidator.applicationServices`
-|Comma-separated application service packages.
+|`architectureValidator.domainServices`
+|Comma-separated domain service packages.
+
+|`architectureValidator.configurationPackages`
+|Comma-separated configuration packages (the only layer allowed to wire concrete domain-service implementations directly).
 
 |`architectureValidator.rules.disabled`
 |Comma-separated rule identifiers to skip in the format `ClassSimpleName.methodName`.
-Example: `DomainIsolationTest.applicationServicesShouldNotCarrySpringStereotypes`.
+Example: `DomainIsolationTest.domainServicesShouldNotCarrySpringStereotypes`.
 
 |`architectureValidator.namingConventions.enabled`
 |Boolean flag for optional naming convention rules; defaults to `false` and must be explicitly set to `true`.

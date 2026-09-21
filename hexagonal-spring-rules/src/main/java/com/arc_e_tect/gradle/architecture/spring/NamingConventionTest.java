@@ -11,15 +11,21 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 /**
  * Optional naming convention validation rules for Spring Hexagonal architecture.
  *
- * <p>This rule class enforces naming suffix conventions for ports and adapters to keep
- * architectural roles obvious in code review and IDE navigation.
+ * <p>This rule class enforces naming suffix conventions that are genuinely tied to Spring
+ * stereotypes, keeping architectural roles obvious in code review and IDE navigation.
  *
  * <p>Rules validate:
  * <ul>
- *   <li>In-ports end with {@code UseCase} or {@code Port}</li>
- *   <li>Out-ports end with {@code Port}</li>
- *   <li>Repository and web adapter stereotypes use consistent suffixes</li>
+ *   <li>{@code @Repository}/{@code @RestController}/{@code @Controller} adapters use
+ *       role-aligned suffixes</li>
  * </ul>
+ *
+ * <p>Framework-agnostic port/domain-service naming conventions (bidirectional suffix
+ * checks) live in the Architecture Validator plugin's built-in Hexagonal rule pack, since
+ * they apply equally to non-Spring projects and don't reference the Spring API. There is
+ * deliberately no built-in or Spring-pack rule enforcing a single outbound-port suffix:
+ * real outbound ports are named for their technical role (Repository, Gateway, Publisher,
+ * Generator, ...), and no single suffix fits all of them.
  *
  * <p>This class is discovered and included in the rule-pack suite by the Architecture Validator
  * plugin. Each test method defines a separate validation rule.
@@ -34,41 +40,6 @@ class NamingConventionTest {
     private final JavaClasses classes = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages(RulePackConfiguration.basePackage());
-
-    /**
-     * Validates that in-port types use a consistent role suffix.
-     *
-     * <p>Using {@code UseCase} or {@code Port} suffixes makes inbound application
-     * contracts instantly recognizable and reinforces Hexagonal boundaries.
-     */
-    @Test
-    void inputPortsShouldHaveConsistentSuffix() {
-        Assumptions.assumeTrue(RulePackConfiguration.namingConventionsEnabled(), OPT_IN_MESSAGE);
-        classes()
-                .that().resideInAnyPackage(RulePackConfiguration.inPorts())
-                .should().haveNameMatching(".*UseCase$")
-                .orShould().haveNameMatching(".*Port$")
-                .because("Consistent in-port naming makes application entry-point contracts explicit")
-                .allowEmptyShould(true)
-                .check(classes);
-    }
-
-    /**
-     * Validates that out-port types end with {@code Port}.
-     *
-     * <p>A stable suffix for outbound contracts clarifies that adapter implementations
-     * are behind an abstraction owned by the application core.
-     */
-    @Test
-    void outputPortsShouldHaveConsistentSuffix() {
-        Assumptions.assumeTrue(RulePackConfiguration.namingConventionsEnabled(), OPT_IN_MESSAGE);
-        classes()
-                .that().resideInAnyPackage(RulePackConfiguration.outPorts())
-                .should().haveSimpleNameEndingWith("Port")
-                .because("Consistent out-port naming keeps infrastructure boundaries self-documenting")
-                .allowEmptyShould(true)
-                .check(classes);
-    }
 
     /**
      * Validates that adapter stereotypes use role-aligned suffixes.

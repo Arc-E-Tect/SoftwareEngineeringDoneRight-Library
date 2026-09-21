@@ -15,7 +15,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * <p>This rule class enforces architectural constraints for Spring applications that follow
  * the Hexagonal (ports and adapters) pattern. It validates that Spring-specific components
  * (controllers, services, repositories) respect the boundaries between application layers
- * (in-ports, out-ports, domain model, adapters, application services).
+ * (in-ports, out-ports, domain model, adapters, domain services).
  * 
  * <p>Rules validate:
  * <ul>
@@ -131,7 +131,7 @@ class SpringHexagonalArchitectureTest {
     /**
      * Validates that Spring components reside in appropriate Hexagonal layers.
      * 
-     * <p>Components must be located in application services, domain model,
+     * <p>Components must be located in domain services, domain model,
      * or adapter packages. Components outside these layers indicate misplaced
      * business logic or infrastructure concerns.
      */
@@ -146,7 +146,7 @@ class SpringHexagonalArchitectureTest {
                 .or().areAnnotatedWith("org.springframework.stereotype.Service")
                 .or().areAnnotatedWith("org.springframework.stereotype.Repository")
                 .should().resideInAnyPackage(mergeAll(
-                        RulePackConfiguration.applicationServices(),
+                        RulePackConfiguration.domainServices(),
                         RulePackConfiguration.domainModel(),
                         RulePackConfiguration.adapters()))
                 .because("Spring components should follow Hexagonal layers")
