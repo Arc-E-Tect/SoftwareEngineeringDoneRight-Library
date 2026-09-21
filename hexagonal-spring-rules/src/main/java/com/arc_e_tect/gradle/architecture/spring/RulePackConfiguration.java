@@ -23,7 +23,9 @@ import java.util.stream.Stream;
  *   <li>{@code architectureValidator.adapters} - Comma-separated adapter packages (legacy aggregate)</li>
  *   <li>{@code architectureValidator.inboundAdapters} - Comma-separated inbound adapter packages, merged with {@code adapters}</li>
  *   <li>{@code architectureValidator.outboundAdapters} - Comma-separated outbound adapter packages, merged with {@code adapters}</li>
- *   <li>{@code architectureValidator.applicationServices} - Comma-separated application service packages</li>
+ *   <li>{@code architectureValidator.domainServices} - Comma-separated domain service packages</li>
+ *   <li>{@code architectureValidator.configurationPackages} - Comma-separated configuration/wiring packages</li>
+ *   <li>{@code architectureValidator.frameworkDenylistPackages} - Comma-separated denylisted framework packages</li>
  *   <li>{@code architectureValidator.rules.disabled} - Comma-separated rule identifiers to skip</li>
  *   <li>{@code architectureValidator.namingConventions.enabled} - Enables optional naming convention rules</li>
  * </ul>
@@ -66,8 +68,12 @@ final class RulePackConfiguration {
                 .toArray(String[]::new);
     }
 
-    static String[] applicationServices() {
-        return packages("architectureValidator.applicationServices");
+    static String[] domainServices() {
+        return packages("architectureValidator.domainServices");
+    }
+
+    static String[] configurationPackages() {
+        return packages("architectureValidator.configurationPackages");
     }
 
     static boolean isRuleDisabled(String ruleId) {

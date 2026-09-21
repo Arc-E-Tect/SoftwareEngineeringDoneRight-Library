@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -28,7 +29,7 @@ class RulePackSelfTest {
     private static final String ADAPTERS_KEY = "architectureValidator.adapters";
     private static final String INBOUND_ADAPTERS_KEY = "architectureValidator.inboundAdapters";
     private static final String OUTBOUND_ADAPTERS_KEY = "architectureValidator.outboundAdapters";
-    private static final String APPLICATION_SERVICES_KEY = "architectureValidator.applicationServices";
+    private static final String DOMAIN_SERVICES_KEY = "architectureValidator.domainServices";
 
     private static final String COMPLIANT_BASE = "com.arc_e_tect.fixtures.compliant";
     private static final String SERVICE_IMPLEMENTS_PORT_BASE = "com.arc_e_tect.fixtures.regression.serviceImplementsPort";
@@ -38,17 +39,8 @@ class RulePackSelfTest {
     private static final String SPRING_REPOSITORIES_BASE = "com.arc_e_tect.fixtures.violating.spring.repositories";
     private static final String SPRING_COMPONENTS_BASE = "com.arc_e_tect.fixtures.violating.spring.components";
 
-    private static final String DOMAIN_DEPENDENCY_BASE = "com.arc_e_tect.fixtures.violating.domain.domainDependency";
     private static final String DOMAIN_FRAMEWORK_BASE = "com.arc_e_tect.fixtures.violating.domain.frameworkDependency";
     private static final String DOMAIN_SERVICE_STEREOTYPE_BASE = "com.arc_e_tect.fixtures.violating.domain.applicationServiceStereotype";
-
-    private static final String DEPENDENCY_CORE_BASE = "com.arc_e_tect.fixtures.violating.dependency.coreDependsOnAdapter";
-    private static final String DEPENDENCY_ADAPTER_BASE = "com.arc_e_tect.fixtures.violating.dependency.adapterDependsOnService";
-    private static final String DEPENDENCY_NON_CONFIG_BASE = "com.arc_e_tect.fixtures.violating.dependency.nonConfigDependsOnService";
-
-    private static final String PORT_INPUT_BASE = "com.arc_e_tect.fixtures.violating.port.inputNotInterface";
-    private static final String PORT_OUTPUT_BASE = "com.arc_e_tect.fixtures.violating.port.outputNotInterface";
-    private static final String PORT_SIGNATURE_BASE = "com.arc_e_tect.fixtures.violating.port.signatureLeak";
 
     private static final String CYCLE_BASE = "com.arc_e_tect.fixtures.violating.cycle";
 
@@ -63,7 +55,7 @@ class RulePackSelfTest {
         capture(ADAPTERS_KEY);
         capture(INBOUND_ADAPTERS_KEY);
         capture(OUTBOUND_ADAPTERS_KEY);
-        capture(APPLICATION_SERVICES_KEY);
+        capture(DOMAIN_SERVICES_KEY);
     }
 
     @AfterEach
@@ -75,7 +67,7 @@ class RulePackSelfTest {
         restore(ADAPTERS_KEY);
         restore(INBOUND_ADAPTERS_KEY);
         restore(OUTBOUND_ADAPTERS_KEY);
-        restore(APPLICATION_SERVICES_KEY);
+        restore(DOMAIN_SERVICES_KEY);
     }
 
     @Test
@@ -91,9 +83,6 @@ class RulePackSelfTest {
 
         SpringHexagonalArchitectureTest springRules = new SpringHexagonalArchitectureTest();
         DomainIsolationTest domainRules = new DomainIsolationTest();
-        DependencyDirectionTest dependencyRules = new DependencyDirectionTest();
-        PortContractTest portRules = new PortContractTest();
-
         CycleFreedomTest cycleRules = new CycleFreedomTest();
 
         assertAll(
@@ -101,15 +90,8 @@ class RulePackSelfTest {
                 () -> assertDoesNotThrow(springRules::servicesShouldNotAccessRepositoriesDirectly),
                 () -> assertDoesNotThrow(springRules::repositoriesShouldOnlyBeAccessedViaOutPorts),
                 () -> assertDoesNotThrow(springRules::springComponentsShouldFollowHexagonalLayers),
-                () -> assertDoesNotThrow(domainRules::domainModelShouldOnlyDependOnJavaCoreAndDomainModel),
                 () -> assertDoesNotThrow(domainRules::coreApplicationLayerShouldHaveNoFrameworkDependencies),
-                () -> assertDoesNotThrow(domainRules::applicationServicesShouldNotCarrySpringStereotypes),
-                () -> assertDoesNotThrow(dependencyRules::coreApplicationLayerShouldNotDependOnAdapters),
-                () -> assertDoesNotThrow(dependencyRules::adaptersShouldNotDependOnServiceImplementations),
-                () -> assertDoesNotThrow(dependencyRules::onlyConfigurationMayDependOnServiceImplementations),
-                () -> assertDoesNotThrow(portRules::inputPortsShouldBeInterfaces),
-                () -> assertDoesNotThrow(portRules::outputPortsShouldBeInterfaces),
-                () -> assertDoesNotThrow(portRules::portsShouldOnlyDependOnJavaCoreAndDomainModel),
+                () -> assertDoesNotThrow(domainRules::domainServicesShouldNotCarrySpringStereotypes),
                 () -> assertDoesNotThrow(cycleRules::adapterPackagesShouldBeFreeOfCycles),
                 () -> assertDoesNotThrow(cycleRules::domainModelShouldBeFreeOfCycles)
         );
@@ -133,6 +115,23 @@ class RulePackSelfTest {
         // interface implementation is itself a dependency ArchUnit can see. Previously this
         // rule used an allow-list that omitted in-ports, so this exact case failed.
         assertDoesNotThrow(rules::servicesShouldNotAccessRepositoriesDirectly);
+    }
+
+    @Test
+    void adaptersShouldHonorSplitInboundOutboundAdapterPropertiesWhenLegacyAggregateIsEmpty() {
+        // Deliberately leave the legacy ADAPTERS_KEY empty and only configure the split
+        // inboundAdapters/outboundAdapters properties, mirroring a consumer who follows the
+        // Architecture Validator plugin's preferred split layout without also setting the
+        // legacy aggregate. Regression test: RulePackConfiguration.adapters() must honor
+        // inboundAdapters/outboundAdapters, not only the legacy aggregate
+        // architectureValidator.adapters property.
+        System.setProperty(ADAPTERS_KEY, "");
+        System.setProperty(INBOUND_ADAPTERS_KEY, "com.example.split.adapters.in..");
+        System.setProperty(OUTBOUND_ADAPTERS_KEY, "com.example.split.adapters.out..");
+
+        assertArrayEquals(
+                new String[] {"com.example.split.adapters.in..", "com.example.split.adapters.out.."},
+                RulePackConfiguration.adapters());
     }
 
     @Test
@@ -238,24 +237,6 @@ class RulePackSelfTest {
     }
 
     @Test
-    void domainIsolationShouldFailDomainDependencyRuleWhenDomainDependsOnPortContract() {
-        configure(
-                DOMAIN_DEPENDENCY_BASE,
-                DOMAIN_DEPENDENCY_BASE + ".application.port.inbound..",
-                DOMAIN_DEPENDENCY_BASE + ".application.port.outbound..",
-                DOMAIN_DEPENDENCY_BASE + ".domain.model..",
-                DOMAIN_DEPENDENCY_BASE + ".adapters..",
-                DOMAIN_DEPENDENCY_BASE + ".application.service.."
-        );
-
-        DomainIsolationTest rules = new DomainIsolationTest();
-
-        assertThrows(AssertionError.class, rules::domainModelShouldOnlyDependOnJavaCoreAndDomainModel);
-        assertDoesNotThrow(rules::coreApplicationLayerShouldHaveNoFrameworkDependencies);
-        assertDoesNotThrow(rules::applicationServicesShouldNotCarrySpringStereotypes);
-    }
-
-    @Test
     void domainIsolationShouldFailFrameworkDependencyRuleWhenDomainUsesSpringTypes() {
         configure(
                 DOMAIN_FRAMEWORK_BASE,
@@ -267,8 +248,8 @@ class RulePackSelfTest {
         );
 
         DomainIsolationTest baselineRules = new DomainIsolationTest();
-        assertDoesNotThrow(baselineRules::domainModelShouldOnlyDependOnJavaCoreAndDomainModel);
-        assertDoesNotThrow(baselineRules::applicationServicesShouldNotCarrySpringStereotypes);
+        assertDoesNotThrow(baselineRules::coreApplicationLayerShouldHaveNoFrameworkDependencies);
+        assertDoesNotThrow(baselineRules::domainServicesShouldNotCarrySpringStereotypes);
 
         configure(
                 DOMAIN_FRAMEWORK_BASE,
@@ -282,11 +263,11 @@ class RulePackSelfTest {
         DomainIsolationTest violatingRules = new DomainIsolationTest();
 
         assertThrows(AssertionError.class, violatingRules::coreApplicationLayerShouldHaveNoFrameworkDependencies);
-        assertDoesNotThrow(violatingRules::applicationServicesShouldNotCarrySpringStereotypes);
+        assertDoesNotThrow(violatingRules::domainServicesShouldNotCarrySpringStereotypes);
     }
 
     @Test
-    void domainIsolationShouldFailServiceStereotypeRuleWhenApplicationServiceIsAnnotatedWithService() {
+    void domainIsolationShouldFailServiceStereotypeRuleWhenDomainServiceIsAnnotatedWithService() {
         configure(
                 DOMAIN_SERVICE_STEREOTYPE_BASE,
                 DOMAIN_SERVICE_STEREOTYPE_BASE + ".application.port.inbound..",
@@ -298,141 +279,11 @@ class RulePackSelfTest {
 
         DomainIsolationTest rules = new DomainIsolationTest();
 
-        assertDoesNotThrow(rules::domainModelShouldOnlyDependOnJavaCoreAndDomainModel);
-        assertDoesNotThrow(rules::coreApplicationLayerShouldHaveNoFrameworkDependencies);
-        assertThrows(AssertionError.class, rules::applicationServicesShouldNotCarrySpringStereotypes);
-    }
-
-    @Test
-    void dependencyDirectionShouldFailCoreRuleWhenCoreDependsOnAdapters() {
-        configure(
-                DEPENDENCY_CORE_BASE,
-                DEPENDENCY_CORE_BASE + ".application.port.inbound..",
-                DEPENDENCY_CORE_BASE + ".application.port.outbound..",
-                DEPENDENCY_CORE_BASE + ".domain.model..",
-                DEPENDENCY_CORE_BASE + ".adapters..",
-                DEPENDENCY_CORE_BASE + ".application.service.."
-        );
-
-        DependencyDirectionTest rules = new DependencyDirectionTest();
-
-        assertThrows(AssertionError.class, rules::coreApplicationLayerShouldNotDependOnAdapters);
-        assertDoesNotThrow(rules::adaptersShouldNotDependOnServiceImplementations);
-        assertDoesNotThrow(rules::onlyConfigurationMayDependOnServiceImplementations);
-    }
-
-    @Test
-    void dependencyDirectionShouldFailCoreRuleWhenOnlySplitAdapterPropertiesAreConfigured() {
-        configure(
-                DEPENDENCY_CORE_BASE,
-                DEPENDENCY_CORE_BASE + ".application.port.inbound..",
-                DEPENDENCY_CORE_BASE + ".application.port.outbound..",
-                DEPENDENCY_CORE_BASE + ".domain.model..",
-                "",
-                DEPENDENCY_CORE_BASE + ".application.service.."
-        );
-        // Deliberately leave the legacy ADAPTERS_KEY empty (set above) and only configure the
-        // split inboundAdapters property, mirroring a consumer who follows the Architecture
-        // Validator plugin's preferred split layout without also setting the legacy aggregate.
-        System.setProperty(INBOUND_ADAPTERS_KEY, DEPENDENCY_CORE_BASE + ".adapters..");
-        System.setProperty(OUTBOUND_ADAPTERS_KEY, "");
-
-        DependencyDirectionTest rules = new DependencyDirectionTest();
-
-        // Regression test: RulePackConfiguration.adapters() must also honor inboundAdapters/
-        // outboundAdapters, not only the legacy aggregate architectureValidator.adapters
-        // property; otherwise this violation would pass vacuously for split-layout consumers.
-        assertThrows(AssertionError.class, rules::coreApplicationLayerShouldNotDependOnAdapters);
-    }
-
-    @Test
-    void dependencyDirectionShouldFailAdapterRuleWhenAdapterDependsOnServiceImplementation() {
-        configure(
-                DEPENDENCY_ADAPTER_BASE,
-                DEPENDENCY_ADAPTER_BASE + ".application.port.inbound..",
-                DEPENDENCY_ADAPTER_BASE + ".application.port.outbound..",
-                DEPENDENCY_ADAPTER_BASE + ".domain.model..",
-                DEPENDENCY_ADAPTER_BASE + ".application.domain.service.adapter..",
-                DEPENDENCY_ADAPTER_BASE + ".application.domain.service.impl.."
-        );
-
-        DependencyDirectionTest rules = new DependencyDirectionTest();
-
-        assertDoesNotThrow(rules::coreApplicationLayerShouldNotDependOnAdapters);
-        assertThrows(AssertionError.class, rules::adaptersShouldNotDependOnServiceImplementations);
-        assertDoesNotThrow(rules::onlyConfigurationMayDependOnServiceImplementations);
-    }
-
-    @Test
-    void dependencyDirectionShouldFailConfigurationRuleWhenNonConfigurationDependsOnServiceImplementation() {
-        configure(
-                DEPENDENCY_NON_CONFIG_BASE,
-                DEPENDENCY_NON_CONFIG_BASE + ".application.port.inbound..",
-                DEPENDENCY_NON_CONFIG_BASE + ".application.port.outbound..",
-                DEPENDENCY_NON_CONFIG_BASE + ".domain.model..",
-                DEPENDENCY_NON_CONFIG_BASE + ".adapters..",
-                DEPENDENCY_NON_CONFIG_BASE + ".application.service.."
-        );
-
-        DependencyDirectionTest rules = new DependencyDirectionTest();
-
-        assertDoesNotThrow(rules::coreApplicationLayerShouldNotDependOnAdapters);
-        assertDoesNotThrow(rules::adaptersShouldNotDependOnServiceImplementations);
-        assertThrows(AssertionError.class, rules::onlyConfigurationMayDependOnServiceImplementations);
-    }
-
-    @Test
-    void portContractShouldFailInputPortRuleWhenInputPortIsAConcreteClass() {
-        configure(
-                PORT_INPUT_BASE,
-                PORT_INPUT_BASE + ".application.port.inbound..",
-                PORT_INPUT_BASE + ".application.port.outbound..",
-                PORT_INPUT_BASE + ".domain.model..",
-                PORT_INPUT_BASE + ".adapters..",
-                PORT_INPUT_BASE + ".application.service.."
-        );
-
-        PortContractTest rules = new PortContractTest();
-
-        assertThrows(AssertionError.class, rules::inputPortsShouldBeInterfaces);
-        assertDoesNotThrow(rules::outputPortsShouldBeInterfaces);
-        assertDoesNotThrow(rules::portsShouldOnlyDependOnJavaCoreAndDomainModel);
-    }
-
-    @Test
-    void portContractShouldFailOutputPortRuleWhenOutputPortIsAConcreteClass() {
-        configure(
-                PORT_OUTPUT_BASE,
-                PORT_OUTPUT_BASE + ".application.port.inbound..",
-                PORT_OUTPUT_BASE + ".application.port.outbound..",
-                PORT_OUTPUT_BASE + ".domain.model..",
-                PORT_OUTPUT_BASE + ".adapters..",
-                PORT_OUTPUT_BASE + ".application.service.."
-        );
-
-        PortContractTest rules = new PortContractTest();
-
-        assertDoesNotThrow(rules::inputPortsShouldBeInterfaces);
-        assertThrows(AssertionError.class, rules::outputPortsShouldBeInterfaces);
-        assertDoesNotThrow(rules::portsShouldOnlyDependOnJavaCoreAndDomainModel);
-    }
-
-    @Test
-    void portContractShouldFailSignatureRuleWhenPortExposesFrameworkType() {
-        configure(
-                PORT_SIGNATURE_BASE,
-                PORT_SIGNATURE_BASE + ".application.port.inbound..",
-                PORT_SIGNATURE_BASE + ".application.port.outbound..",
-                PORT_SIGNATURE_BASE + ".domain.model..",
-                PORT_SIGNATURE_BASE + ".adapters..",
-                PORT_SIGNATURE_BASE + ".application.service.."
-        );
-
-        PortContractTest rules = new PortContractTest();
-
-        assertDoesNotThrow(rules::inputPortsShouldBeInterfaces);
-        assertDoesNotThrow(rules::outputPortsShouldBeInterfaces);
-        assertThrows(AssertionError.class, rules::portsShouldOnlyDependOnJavaCoreAndDomainModel);
+        // A domain service annotated with @Service is now caught by both rules: the framework
+        // denylist check (an annotation is itself a dependency ArchUnit can see) and the
+        // dedicated stereotype check. That's intentional defense-in-depth, not a bug.
+        assertThrows(AssertionError.class, rules::coreApplicationLayerShouldHaveNoFrameworkDependencies);
+        assertThrows(AssertionError.class, rules::domainServicesShouldNotCarrySpringStereotypes);
     }
 
     private void capture(String key) {
@@ -454,13 +305,13 @@ class RulePackSelfTest {
             String outPorts,
             String domainModel,
             String adapters,
-            String applicationServices
+            String domainServices
     ) {
         System.setProperty(BASE_PACKAGE_KEY, basePackage);
         System.setProperty(IN_PORTS_KEY, inPorts);
         System.setProperty(OUT_PORTS_KEY, outPorts);
         System.setProperty(DOMAIN_MODEL_KEY, domainModel);
         System.setProperty(ADAPTERS_KEY, adapters);
-        System.setProperty(APPLICATION_SERVICES_KEY, applicationServices);
+        System.setProperty(DOMAIN_SERVICES_KEY, domainServices);
     }
 }

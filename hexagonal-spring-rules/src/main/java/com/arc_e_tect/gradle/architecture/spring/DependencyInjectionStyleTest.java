@@ -15,7 +15,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
  *
  * <p>Rules validate:
  * <ul>
- *   <li>Fields in adapters, application services, and domain model are not annotated with {@code @Autowired}</li>
+ *   <li>Fields in adapters, domain services, and domain model are not annotated with {@code @Autowired}</li>
  * </ul>
  *
  * <p>This class is discovered and included in the rule-pack suite by the Architecture Validator
@@ -35,7 +35,7 @@ class DependencyInjectionStyleTest {
                 RulePackConfiguration.domainModel(),
                 RulePackConfiguration.merge(
                         RulePackConfiguration.adapters(),
-                        RulePackConfiguration.applicationServices())
+                        RulePackConfiguration.domainServices())
         );
     }
 
