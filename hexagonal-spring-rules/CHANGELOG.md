@@ -1,3 +1,15 @@
+## [1.0.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.1...hexagonal-spring-rules-v1.0.2) (2026-09-21)
+
+
+### 🐛 Bug Fixes
+
+* **hexagonal-spring-rules:** align rule pack with domainServices and built-in rules ([8834c26](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/8834c26c3897518098e042c249ee821531f8cb2c))
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 1.0.1 [skip ci] ([0c115a7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0c115a740e22ca7151034c2e31e58e98511e4702))
+
 ## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.0...hexagonal-spring-rules-v1.0.1) (2026-08-21)
 
 
