@@ -74,7 +74,7 @@ ruleset itself, so this rule pack no longer duplicates them.
 |Class |Checks
 
 |`SpringHexagonalArchitectureTest`
-|Controllers only call in-ports, services do not access repositories directly (must go through an out-port), repositories are only reached through out-ports, and Spring components live in the expected Hexagonal layer.
+|Services do not access repositories directly (must go through an out-port), repositories are only reached through out-ports, and Spring components live in the expected Hexagonal layer. The framework-agnostic inbound-adapter boundary rule is provided by the Architecture Validator built-in Hexagonal rule pack.
 
 |`DomainIsolationTest`
 |The application core (domain model and domain services) carries no Spring, persistence, or validation framework dependencies, and domain services stay free of Spring stereotypes.
