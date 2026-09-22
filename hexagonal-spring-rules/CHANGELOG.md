@@ -1,3 +1,15 @@
+## [1.0.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.2...hexagonal-spring-rules-v1.0.3) (2026-09-22)
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 1.0.2 [skip ci] ([d9a70f9](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d9a70f952bbbbf94d20a7bff32413d906264fced))
+
+
+### 🔧 Misc
+
+* **hexagonal-spring-rules:** remove duplicate controller rule ([026cee7](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/026cee76ba8f95cf861c5d94cd6c322edf5c66fe))
+
 ## [1.0.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.1...hexagonal-spring-rules-v1.0.2) (2026-09-21)
 
 
