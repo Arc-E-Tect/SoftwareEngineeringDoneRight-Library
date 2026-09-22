@@ -34,7 +34,6 @@ class RulePackSelfTest {
     private static final String COMPLIANT_BASE = "com.arc_e_tect.fixtures.compliant";
     private static final String SERVICE_IMPLEMENTS_PORT_BASE = "com.arc_e_tect.fixtures.regression.serviceImplementsPort";
 
-    private static final String SPRING_CONTROLLERS_BASE = "com.arc_e_tect.fixtures.violating.spring.controllers";
     private static final String SPRING_SERVICES_BASE = "com.arc_e_tect.fixtures.violating.spring.services";
     private static final String SPRING_REPOSITORIES_BASE = "com.arc_e_tect.fixtures.violating.spring.repositories";
     private static final String SPRING_COMPONENTS_BASE = "com.arc_e_tect.fixtures.violating.spring.components";
@@ -86,7 +85,6 @@ class RulePackSelfTest {
         CycleFreedomTest cycleRules = new CycleFreedomTest();
 
         assertAll(
-                () -> assertDoesNotThrow(springRules::controllersShouldOnlyCallInPorts),
                 () -> assertDoesNotThrow(springRules::servicesShouldNotAccessRepositoriesDirectly),
                 () -> assertDoesNotThrow(springRules::repositoriesShouldOnlyBeAccessedViaOutPorts),
                 () -> assertDoesNotThrow(springRules::springComponentsShouldFollowHexagonalLayers),
@@ -161,25 +159,6 @@ class RulePackSelfTest {
     }
 
     @Test
-    void springHexagonalArchitectureShouldFailControllersRuleWhenControllerDependsOnService() {
-        configure(
-                SPRING_CONTROLLERS_BASE,
-                SPRING_CONTROLLERS_BASE + ".application.port.inbound..",
-                SPRING_CONTROLLERS_BASE + ".application.port.outbound..",
-                SPRING_CONTROLLERS_BASE + ".domain.model..",
-                SPRING_CONTROLLERS_BASE + ".adapters..",
-                SPRING_CONTROLLERS_BASE + ".application.service.."
-        );
-
-        SpringHexagonalArchitectureTest rules = new SpringHexagonalArchitectureTest();
-
-        assertThrows(AssertionError.class, rules::controllersShouldOnlyCallInPorts);
-        assertDoesNotThrow(rules::servicesShouldNotAccessRepositoriesDirectly);
-        assertDoesNotThrow(rules::repositoriesShouldOnlyBeAccessedViaOutPorts);
-        assertDoesNotThrow(rules::springComponentsShouldFollowHexagonalLayers);
-    }
-
-    @Test
     void springHexagonalArchitectureShouldFailServicesRuleWhenServiceDependsOnRepository() {
         configure(
                 SPRING_SERVICES_BASE,
@@ -192,7 +171,6 @@ class RulePackSelfTest {
 
         SpringHexagonalArchitectureTest rules = new SpringHexagonalArchitectureTest();
 
-        assertDoesNotThrow(rules::controllersShouldOnlyCallInPorts);
         assertThrows(AssertionError.class, rules::servicesShouldNotAccessRepositoriesDirectly);
         assertDoesNotThrow(rules::repositoriesShouldOnlyBeAccessedViaOutPorts);
         assertDoesNotThrow(rules::springComponentsShouldFollowHexagonalLayers);
@@ -211,7 +189,6 @@ class RulePackSelfTest {
 
         SpringHexagonalArchitectureTest rules = new SpringHexagonalArchitectureTest();
 
-        assertDoesNotThrow(rules::controllersShouldOnlyCallInPorts);
         assertDoesNotThrow(rules::servicesShouldNotAccessRepositoriesDirectly);
         assertThrows(AssertionError.class, rules::repositoriesShouldOnlyBeAccessedViaOutPorts);
         assertDoesNotThrow(rules::springComponentsShouldFollowHexagonalLayers);
@@ -230,7 +207,6 @@ class RulePackSelfTest {
 
         SpringHexagonalArchitectureTest rules = new SpringHexagonalArchitectureTest();
 
-        assertDoesNotThrow(rules::controllersShouldOnlyCallInPorts);
         assertDoesNotThrow(rules::servicesShouldNotAccessRepositoriesDirectly);
         assertDoesNotThrow(rules::repositoriesShouldOnlyBeAccessedViaOutPorts);
         assertThrows(AssertionError.class, rules::springComponentsShouldFollowHexagonalLayers);

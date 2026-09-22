@@ -19,7 +19,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * 
  * <p>Rules validate:
  * <ul>
- *   <li>Controllers only call in-ports (not direct service or adapter access)</li>
  *   <li>Services do not directly access repositories (must use out-ports)</li>
  *   <li>Repositories are only accessed through out-ports</li>
  *   <li>Spring components reside in appropriate Hexagonal layers</li>
@@ -46,33 +45,6 @@ class SpringHexagonalArchitectureTest {
     private String[] mergeAll(String[] first, String[] second, String... fixed) {
         String[] merged = RulePackConfiguration.merge(first, fixed);
         return RulePackConfiguration.merge(second, merged);
-    }
-
-    /**
-     * Validates that Spring controllers only depend on in-ports (and core Java/Spring classes).
-     * 
-     * <p>Controllers must communicate with the application through defined in-ports,
-     * never directly accessing services, adapters, or repositories. This maintains
-     * the Hexagonal boundary and allows the business logic to remain independent
-     * of the presentation layer.
-     */
-    @Test
-    void controllersShouldOnlyCallInPorts() {
-        Assumptions.assumeFalse(
-                RulePackConfiguration.isRuleDisabled("SpringHexagonalArchitectureTest.controllersShouldOnlyCallInPorts"),
-                "Rule disabled via architectureValidator.rules.disabled"
-        );
-        classes()
-                .that().areAnnotatedWith("org.springframework.stereotype.Controller")
-                .or().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
-                .should().onlyDependOnClassesThat()
-                .resideInAnyPackage(RulePackConfiguration.merge(
-                        RulePackConfiguration.inPorts(),
-                        "java..",
-                        "org.springframework.."))
-                .because("Spring controllers should only call in-ports to maintain Hexagonal Architecture")
-                .allowEmptyShould(true)
-                .check(classes);
     }
 
     /**
