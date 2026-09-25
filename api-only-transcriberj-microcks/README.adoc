@@ -71,6 +71,12 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 |`Duration subscriptionDelay()`
 |How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed: a message sent earlier is missed. One second by default; override it for a slower broker.
 
+|`Duration testTimeout()`
+|How long Microcks listens on the channel for the published message. Ten seconds by default; override it for an application or broker that takes longer to deliver.
+
+|`Duration resultTimeout()`
+|How long a test waits, after publishing, for Microcks to report its result. `testTimeout()` plus five seconds by default, so overriding `testTimeout()` alone is enough.
+
 |`String microcksImage()`
 |The Microcks image the ensemble runs: `MICROCKS_IMAGE`, the one this emitter was tested with, unless the project overrides it. See <<other-image,Using another Microcks image §>>.
 
