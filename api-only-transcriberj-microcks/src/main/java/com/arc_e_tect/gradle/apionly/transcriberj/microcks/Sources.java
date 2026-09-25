@@ -237,6 +237,28 @@ final class Sources {
                     }
 
                     /**
+                     * How long Microcks listens on a channel for the message a test publishes. Ten
+                     * seconds by default; override it for an application or broker that takes
+                     * longer to deliver.
+                     *
+                     * @return the listening time
+                     */
+                    default Duration testTimeout() {
+                        return Duration.ofSeconds(10);
+                    }
+
+                    /**
+                     * How long a test waits for Microcks to report its result, counted from
+                     * publishing: {@link #testTimeout()} plus five seconds by default, so a longer
+                     * listening time is waited for without overriding this as well.
+                     *
+                     * @return the waiting time
+                     */
+                    default Duration resultTimeout() {
+                        return testTimeout().plusSeconds(5);
+                    }
+
+                    /**
                      * The Microcks image the ensemble runs: {@link #MICROCKS_IMAGE}, the one this
                      * emitter was tested with, unless overridden.
                      *
@@ -356,13 +378,13 @@ final class Sources {
                                 .filteredOperations(List.of("SEND " + %2$s.OPERATION_ID))
                                 .runnerType(TestRunnerType.ASYNC_API_SCHEMA)
                                 .testEndpoint(endpoint(suffixedChannel))
-                                .timeout(Duration.ofSeconds(10))
+                                .timeout(testTimeout())
                                 .build();
                         CompletableFuture<TestResult> future =
                                 ensemble().getMicrocksContainer().testEndpointAsync(request);
                         Thread.sleep(subscriptionDelay().toMillis());
                         %1$s(suffixedChannel);
-                        TestResult result = future.get(15, TimeUnit.SECONDS);
+                        TestResult result = future.get(resultTimeout().toMillis(), TimeUnit.MILLISECONDS);
                         Assertions.assertTrue(result.isSuccess(), () -> diagnostics(result));
                     }
 

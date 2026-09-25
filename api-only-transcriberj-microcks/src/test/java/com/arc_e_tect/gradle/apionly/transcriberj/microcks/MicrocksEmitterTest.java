@@ -141,6 +141,30 @@ class MicrocksEmitterTest {
     }
 
     @Test
+    void howLongMicrocksListensAndHowLongATestWaitsForItAreHooks() throws Exception {
+        ClassLoader loader = userAccount();
+        String source = Files.readString(sources.resolve(PACKAGE.replace('.', '/') + "/microcks/AsyncConformanceHarness.java"));
+        String test = source.substring(source.indexOf("default void publishRegistrationInitiated_conformsToContract"));
+        test = test.substring(0, test.indexOf("\n    }\n"));
+        assertThat(test).contains(".timeout(testTimeout())")
+                .contains("future.get(resultTimeout().toMillis(), TimeUnit.MILLISECONDS)")
+                .doesNotContain("ofSeconds(10)").doesNotContain("15, TimeUnit");
+
+        Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
+        Object defaults = java.lang.reflect.Proxy.newProxyInstance(loader, new Class<?>[]{harness},
+                (proxy, method, args) -> java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
+        assertThat(harness.getMethod("testTimeout").invoke(defaults)).isEqualTo(java.time.Duration.ofSeconds(10));
+        assertThat(harness.getMethod("resultTimeout").invoke(defaults)).isEqualTo(java.time.Duration.ofSeconds(15));
+
+        // A project that only lets Microcks listen longer still waits long enough for the result.
+        Object slower = java.lang.reflect.Proxy.newProxyInstance(loader, new Class<?>[]{harness},
+                (proxy, method, args) -> method.getName().equals("testTimeout")
+                        ? java.time.Duration.ofSeconds(60)
+                        : java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
+        assertThat(harness.getMethod("resultTimeout").invoke(slower)).isEqualTo(java.time.Duration.ofSeconds(65));
+    }
+
+    @Test
     void theMicrocksImageIsTheTestedOneUnlessAProjectOverridesIt() throws Exception {
         ClassLoader loader = userAccount();
         Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
