@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.2.0...api-only-transcriberj-microcks-v1.3.0) (2026-09-25)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-microcks:** let a project set how long Microcks listens and a test waits ([#102](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/102)) ([2f44df5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2f44df5c5bb0522cdb8652153e996b9056acf117)), closes [#102](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/102)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-microcks:** update README version to 1.2.0 [skip ci] ([72c8beb](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/72c8beb30611b3ab246fd76f1d682f8f16b53e5b))
+
 # [1.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.1.0...api-only-transcriberj-microcks-v1.2.0) (2026-09-20)
 
 
