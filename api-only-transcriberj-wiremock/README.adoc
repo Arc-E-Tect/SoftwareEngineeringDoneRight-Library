@@ -1,0 +1,200 @@
+= api-only-transcriberj-wiremock
+:toc: left
+:toc-title: Contents
+:icons: font
+:source-highlighter: rouge
+
+The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every invalid-request case the TranscriberJ derives from an API contract, an exact WireMock stub that answers the case as the contract declares, so that the same generated contract tests run unchanged against the real implementation and against a WireMock double.
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |unreleased
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`api-only-transcriberj-wiremock`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.x
+|API-Only TranscriberJ |`0.10.0` or newer: the first version whose invalid-request cases carry their operation's `operationId` and declared query parameters and headers.
+Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
+|WireMock |`org.wiremock:wiremock-jetty12` `3.13.2`, in the project's test source sets. See <<dependency,The dependency, and Jetty §>>.
+|===
+
+== Why it exists
+
+A generated invalid-request contract test -- the API-Only TranscriberJ REST Docs emitter renders one per case -- sends a request the contract declares invalid, and expects the response the contract declares for it.
+Against the real implementation it needs no fixture: the inbound adapter rejects the request before any state is consulted.
+A double has no adapter, so for the same test to pass against it, the double needs a stub for every case, and writing those by hand for dozens of cases per operation is work nobody does.
+This emitter generates them.
+
+The stubs are *exact*.
+A stub that matched more than its own request would make other tests pass for the wrong reason, and a stub that matched a *valid* request would answer the hand-written happy-path tests sharing the same server.
+
+== Using it
+
+Add it to the TranscriberJ's emitter configuration, beside the REST Docs emitter whose rendered tests it serves:
+
+[source,groovy]
+----
+dependencies {
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.2.0'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-wiremock:0.0.1'
+}
+
+apiOnlyTranscriberJ {
+    subscription('user-account') {
+        basePackage = 'com.example.useraccount.contract'
+        sourceSets = ['testContract', 'testContractWireMock']
+        emitterOptions = [restdocs: [tests: 'true']]
+    }
+}
+----
+
+Then implement the generated tests' fixture hook in the class that runs them against WireMock, registering the case's stub:
+
+[source,java]
+----
+// An in-process server, as wiremock-spring-boot gives one:
+@Override
+public void arrangeInvalidRequest(InvalidRequestCase invalid) {
+    wireMockServer.stubFor(InvalidRequestStubs.mappingFor(invalid));
+}
+----
+
+[source,java]
+----
+// The static client, configured for the server with WireMock.configureFor(...):
+@Override
+public void arrangeInvalidRequest(InvalidRequestCase invalid) {
+    WireMock.stubFor(InvalidRequestStubs.mappingFor(invalid));
+}
+----
+
+A `WireMock` client instance -- one pointing at a container, say -- takes the same mapping through `register`: `wireMock.register(InvalidRequestStubs.mappingFor(invalid))`.
+The class that runs the tests against the real implementation keeps the hook's default, which does nothing.
+
+A contract none of whose operations has a case generates nothing.
+
+== What it generates
+
+One class per contract, `<basePackage>.wiremock.InvalidRequestStubs`:
+
+[cols="1,3",options="header"]
+|===
+|Member |What it is
+
+|`static MappingBuilder mappingFor(InvalidRequestCase invalid)`
+|A mapping that matches exactly the case's request and answers as the contract declares for it.
+It returns the mapping rather than registering it, so the generated code does not depend on how the double is reached.
+It is named `<operationId>/<caseId>` -- `<METHOD> <path>/<caseId>` for an operation without an `operationId` -- so that WireMock's near-miss reports and request journal say which case a stub belongs to.
+
+|`static final int PRIORITY`
+|The priority of every mapping. See <<priority,The priority §>>.
+|===
+
+The method is generic: a case carries everything its stub needs -- the request's method, path template and values, query, headers, content type and body, the operation's `operationId` and declared parameters, and the expected status, content types and response class -- and every value is taken from the case at run time.
+The source holds no request value and no JSON; the only contract-specific code chooses a response body class's `requiredBody()` by the class's name.
+
+=== What a mapping matches
+
+Every element of the case's request, and nothing looser:
+
+[cols="1,3",options="header"]
+|===
+|Element |Matched with
+
+|Method |The case's method, exactly.
+|Path |`urlPathEqualTo` the template filled with the case's path values, each percent-encoded as UTF-8 except the characters RFC 3986 leaves unreserved -- as the REST Docs emitter's rendered tests send them. WireMock compares the path as it travels, encoded.
+|Query parameters the case sends |`havingExactly` its values: a repeated name matches only with all of those values and no other. WireMock does not compare the values' order.
+|Query parameters the operation declares and the case leaves out |`absent()`: what tells a missing `required` parameter from the valid request.
+|Headers the case sends |`equalTo` the value.
+|Headers the operation declares and the case leaves out |`absent()`.
+|Content type, when the case has a body |The media type, in any case, with nothing after it but an optional `charset` parameter.
+|Body |`equalToJson(body, false, false)`: whitespace aside, array order matters and no member or element may be added or left out. WireMock takes `5` and `5.0` for the same number; no case of the fixture contracts differs from another request only so.
+|No body |`absent()`: the request has no body at all.
+|===
+
+Headers the operation does *not* declare -- `Accept`, `User-Agent`, `Authorization`, and whatever defaults a project's client adds, such as the reference implementation's `Person-Agent` and `X-Forwarded-For` -- are not matched.
+A project's default client headers must never stop a stub from matching, and a case never violates a header the operation does not declare.
+
+=== What a mapping answers
+
+* The case's expected status.
+* When the declared response has content: a `Content-Type` of the declared media type -- the first in declaration order, when several are declared -- and the body the response class's generated `requiredBody()` gives, which the rendered test's `document()` validates.
+* When the declared response has no content: the status alone, without a body or a `Content-Type`.
+
+When the TranscriberJ cannot build a response class's valid body -- it degrades `requiredBody()` because of a construct it cannot represent -- `mappingFor` throws the TranscriberJ's own exception, naming the class and the construct, as calling any degraded method does.
+The TranscriberJ does not tell an emitter which bodies it degrades, so the case still has its mapping; it fails when the mapping is made, with the reason.
+
+[#priority]
+=== The priority
+
+Every mapping has priority `1`, WireMock's highest, unless the `priority` option sets another.
+A project's own stubs usually have WireMock's default priority, `5`, and a hand-written happy-path stub for the same method and path -- `post(urlEqualTo(PATH)).willReturn(aResponse().withStatus(202))` -- would otherwise answer an invalid request in the generated stub's place when it was registered later.
+With a higher priority, the exact stub always wins for its own request, and never answers any other.
+
+[source,groovy]
+----
+emitterOptions = [restdocs: [tests: 'true'], wiremock: [priority: '2']]
+----
+
+`priority` is the emitter's only option: a whole number of 1 or more.
+Another option name, or another value, fails generation, so that a mistake is not silently ignored.
+
+== Where the generated code lives
+
+The TranscriberJ compiles everything its emitters generate into the source sets the subscription names -- `test` unless it names others -- and never anywhere else.
+The stubs depend on WireMock, so they must only be compiled where WireMock is on the classpath: test source sets, never `main`.
+*Do not name `main` in a subscription with this emitter*: WireMock would become a production dependency.
+
+The TranscriberJ has no way to place one emitter's output in fewer source sets than another's, so the stubs are compiled into every source set the subscription names, including one whose tests run against the real implementation.
+Each of those source sets gets the managed WireMock dependency, below.
+
+[#dependency]
+== The dependency, and Jetty
+
+The TranscriberJ adds `org.wiremock:wiremock-jetty12` to the source sets it generates into, at 3.13.2, unless the project declares a version itself; a version from 4 on is reported as not tested with this emitter.
+It is the artifact `org.wiremock.integrations:wiremock-spring-boot` 4.x brings, at the version 4.4.1 brings, so a project that uses it resolves nothing new.
+
+`wiremock-jetty12` 3.13.2 imports the Jetty 12.0.30 BOM, while `wiremock-spring-boot` 4.4.1 asks for Jetty 12.1.6, and Spring Boot's own dependency management may ask for yet another.
+Keep WireMock's Jetty stack on one version, in every source set the stubs are compiled into, as the reference implementation does:
+
+[source,groovy]
+----
+testImplementation(enforcedPlatform('org.eclipse.jetty:jetty-bom:12.1.5'))
+testImplementation(enforcedPlatform('org.eclipse.jetty.ee10:jetty-ee10-bom:12.1.5'))
+----
+
+`spring-cloud-contract-wiremock` brings `org.wiremock:wiremock-standalone`, which holds the same classes shaded; a project that has both on a classpath has two copies of WireMock, and should settle on one.
+
+== What it does not do
+
+* It stubs invalid-request cases only. Successful responses, and the `401`, `403`, `409`, `422` and `429` a double answers, stay hand-written.
+* It writes no mapping files for a containerized WireMock: a Java-registered stub serves the contract tests, and a mapping file would be read by the Mirage API Detector as a stubbed endpoint.
+* It keeps no state across requests: no WireMock scenarios.
+
+== Development
+
+[source,console]
+----
+cd api-only-transcriberj-wiremock
+./gradlew check
+./gradlew publishToMavenLocal
+----
+
+The tests generate the fixture contracts -- a copy of the reference implementation's user-account contract, the TranscriberJ's invalid-request keyword corpus and its degraded construct, and two contracts of their own for encoding and responses -- with the REST Docs emitter's rendered tests and this emitter's stubs.
+They compile what comes out with `-Xlint:all`, and run the rendered tests in-process through the JUnit Platform Launcher against a real, in-process WireMock server whose only fixture is the stub each test's hook registers.
+Every server carries a catch-all stub at the lowest priority, answering `200`, so a request no generated stub matches fails its test with the "accepted" message rather than for WireMock's `404`.
+
+Exactness is proven over every case: with every mapping registered at one priority, once in canonical order and once in reverse, each request is answered by its own stub -- WireMock answers with the most recently added of several matching stubs, so a request that matched another stub would be answered by it in one of the two orders.
+Every operation's valid requests reach the catch-all, alone and with a project's extra headers; with any one stub left out, or answering `200`, exactly that case's test fails; and the Doppelganger API Detector's contract-evidence scan counts no stub as a test.
+`check` gates on 90% instruction coverage and on Javadoc without warnings.
+// end::root[]

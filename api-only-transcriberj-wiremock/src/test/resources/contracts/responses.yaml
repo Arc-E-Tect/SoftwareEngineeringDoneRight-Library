@@ -1,0 +1,80 @@
+# What a stub answers (T15.8) and matches (T15.4, T15.5) where the contract makes it hard: a
+# declared response with two media types, answered with the first; one with no content,
+# answered with the status alone; an operation without an operationId; and a required query
+# parameter and header, whose cases leave them out, so that only their absence tells those
+# cases from the valid request.
+openapi: 3.1.0
+info:
+  title: Responses
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        - {name: page, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: size, in: query, schema: {type: integer, maximum: 50}}
+        - {name: X-Mode, in: header, required: true, schema: {type: string, enum: [short, long]}}
+        - {name: X-Trace, in: header, schema: {type: string, maxLength: 8}}
+      responses:
+        '200':
+          description: The things.
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemV1'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemV1'
+    post:
+      operationId: postThing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingV1'
+      responses:
+        '201':
+          description: Created.
+        '400':
+          $ref: '#/components/responses/Invalid'
+  /things/{id}:
+    delete:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, maxLength: 4}}
+      responses:
+        '204':
+          description: Deleted.
+        '400':
+          description: The request is invalid; nothing is said about why.
+components:
+  responses:
+    Invalid:
+      x-fragment-path: responses/Invalid.yaml
+      description: The request is invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemV1'
+  schemas:
+    ThingV1:
+      x-fragment-path: schemas/ThingV1.yaml
+      type: object
+      required: [name, count]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1}
+        count: {type: integer, minimum: 0, multipleOf: 5}
+        ratio: {type: number, maximum: 1}
+        tags: {type: array, items: {type: string}, maxItems: 2}
+    ProblemV1:
+      x-fragment-path: schemas/ProblemV1.yaml
+      type: object
+      required: [title, status]
+      additionalProperties: false
+      properties:
+        title: {type: string}
+        status: {type: integer}
