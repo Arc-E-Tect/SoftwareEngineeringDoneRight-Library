@@ -22,10 +22,6 @@ java {
 }
 
 repositories {
-    // TEMPORARY: the API-Only TranscriberJ whose cases carry their operation's id and declared
-    // parameters is not released yet. Removed, with the catalog set to the release, before the
-    // pull request.
-    mavenLocal()
     mavenCentral()
     // The API-Only TranscriberJ, and the API-Only Subscriber it depends on.
     gradlePluginPortal()

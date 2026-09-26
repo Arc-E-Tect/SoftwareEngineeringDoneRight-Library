@@ -16,7 +16,7 @@ assertj = "3.27.7"
 # The API-Only TranscriberJ this emitter is built against; its emitter interface, and the
 # operation id and declared parameters each invalid-request case carries, are part of the
 # plugin artifact, published to the Gradle Plugin Portal.
-api-only-transcriberj = "0.10.0-SNAPSHOT"
+api-only-transcriberj = "0.10.0"
 # The WireMock the generated stubs are tested with; also the version the plugin adds to a
 # project that declares none (WireMockEmitter.dependencies()): the one wiremock-spring-boot
 # 4.4.1 brings.
