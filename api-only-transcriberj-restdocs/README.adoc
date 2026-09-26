@@ -11,7 +11,7 @@ The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngine
 
 [cols="1,1"]
 |===
-|Latest version |`0.1.1`
+|Latest version |`0.2.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`api-only-transcriberj-restdocs`
 |===
@@ -36,7 +36,7 @@ Add it to the TranscriberJ's emitter configuration:
 [source,groovy]
 ----
 dependencies {
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.1.1'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.2.0'
 }
 ----
 
