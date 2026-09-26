@@ -1,3 +1,17 @@
+# [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.1.1...api-only-transcriberj-restdocs-v0.2.0) (2026-09-26)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-restdocs:** render invalid-request cases as REST Docs contract tests ([#103](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/103)) ([f6652b8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f6652b85afd76e7cf2628ef303804bf6200dbb7a)), closes [#103](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/103) [#32](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/32)
+
+
+### 📝 Documentation
+
+* correct what the Microcks emitter's documentation claims, and list it in the root README ([#97](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/97)) ([4a22930](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/4a229300bceae9a3dd43c726422064bf96387010)), closes [#97](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/97)
+* **api-only-transcriberj-restdocs:** describe the emitter as released ([#91](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/91)) ([d294fc3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/d294fc39d36fd2605cf1007ef379a3cb5b1ece89)), closes [#91](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/91)
+* **api-only-transcriberj-restdocs:** update README version to 0.1.1 [skip ci] ([dd5093f](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/dd5093f222c408f50b4ecc1bb48b9b0dffbf0f20))
+
 ## [0.1.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.1.0...api-only-transcriberj-restdocs-v0.1.1) (2026-09-18)
 
 
