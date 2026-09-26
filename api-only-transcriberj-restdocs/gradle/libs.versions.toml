@@ -15,7 +15,7 @@ junit-platform = "6.1.3"
 assertj = "3.27.7"
 # The API-Only TranscriberJ this emitter is built against; its emitter interface is part
 # of the plugin artifact, published to the Gradle Plugin Portal.
-api-only-transcriberj = "0.9.0-LOCAL"
+api-only-transcriberj = "0.9.0"
 # The Spring REST Docs the generated code is tested with; also the version the plugin
 # adds to a project that declares none (RestDocsEmitter.dependencies()).
 spring-restdocs = "4.0.1"
