@@ -59,6 +59,14 @@ final class ContractServer implements AutoCloseable {
         Answer answer(Received request);
     }
 
+    static {
+        // TCP_NODELAY on the server's sockets. It writes a response's headers and body separately,
+        // and without it Nagle's algorithm holds the body back for the client's delayed ACK: on
+        // Linux, 40 ms a request, which made the tens of thousands of requests the mutant runs
+        // send take half an hour. Read once, when the JDK server's configuration first loads.
+        System.setProperty("sun.net.httpserver.nodelay", "true");
+    }
+
     private final HttpServer server;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
     private final List<Received> received = Collections.synchronizedList(new ArrayList<>());
