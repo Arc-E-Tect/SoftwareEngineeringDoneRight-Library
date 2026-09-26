@@ -46,7 +46,8 @@ class RestDocsEmitterTest {
     private ClassLoader generate(Path contract, String version) throws Exception {
         Path sources = directory.resolve("sources");
         report = Generation.run(contract, version, "x",
-                new Settings("test", PACKAGE, false, "PLACEHOLDER", 2), sources, List.of(new RestDocsEmitter()),
+                new Settings("test", PACKAGE, false, "PLACEHOLDER", 2), sources, directory.resolve("resources"),
+                List.of(new RestDocsEmitter()),
                 null);
         Path classes = Files.createDirectories(directory.resolve("classes"));
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -109,14 +110,14 @@ class RestDocsEmitterTest {
         ClassLoader loader = userAccount();
 
         assertThat(describe(call(loader, "InvalidRequestProblemV1Docs", "fields"))).containsExactly(
-                "type String PLACEHOLDER", "title String PLACEHOLDER", "status Number PLACEHOLDER",
-                "detail String PLACEHOLDER", "instance String optional PLACEHOLDER",
-                "errors Array optional PLACEHOLDER", "errors[].message String optional PLACEHOLDER",
-                "errors[].context String optional PLACEHOLDER");
+                "type String ", "title String ", "status Number ",
+                "detail String ", "instance String optional ",
+                "errors Array optional ", "errors[].message String optional ",
+                "errors[].context String optional ");
         assertThat(describe(call(loader, "UserV1Docs", "fields"))).containsExactly(
-                "username String PLACEHOLDER", "emailAddress String PLACEHOLDER");
+                "username String ", "emailAddress String ");
         assertThat(describe(call(loader, "UserV1Docs", "fields", "user."))).containsExactly(
-                "user.username String PLACEHOLDER", "user.emailAddress String PLACEHOLDER");
+                "user.username String ", "user.emailAddress String ");
 
         assertThat(call(loader, "UserV1Docs", "responseFields")).isInstanceOf(ResponseFieldsSnippet.class);
         assertThat(relaxed(call(loader, "UserV1Docs", "responseFields"))).isFalse();
@@ -129,7 +130,7 @@ class RestDocsEmitterTest {
 
         // The inline root response's map of dependencies is a subsection.
         assertThat(describe(call(loader, "GetRootResponse200Docs", "fields")))
-                .contains("dependencies Object optional subsection PLACEHOLDER");
+                .contains("dependencies Object optional subsection ");
 
         // No companion for what is not a public body.
         assertThat(Files.exists(directory.resolve("sources/com/example/contract/restdocs/ProblemDetailsV1Docs.java")))
@@ -176,10 +177,10 @@ class RestDocsEmitterTest {
         ClassLoader loader = generate(contract, "2.0.0");
 
         List<String> node = describe(call(loader, "NodeDocs", "fields"));
-        assertThat(node).startsWith("flag Boolean PLACEHOLDER", "nothing Null optional PLACEHOLDER",
-                "count Number optional PLACEHOLDER", "tags Array optional PLACEHOLDER",
-                "anything Varies optional PLACEHOLDER", "next Object optional PLACEHOLDER");
-        assertThat(node).contains("next.next.next Object optional subsection PLACEHOLDER");
+        assertThat(node).startsWith("flag Boolean ", "nothing Null optional ",
+                "count Number optional ", "tags Array optional ",
+                "anything Varies optional ", "next Object optional ");
+        assertThat(node).contains("next.next.next Object optional subsection ");
         assertThat(describe(call(loader, "FoundDocs", "fields"))).isEqualTo(node);
         assertThat(relaxed(call(loader, "FoundDocs", "responseFields"))).isFalse();
     }

@@ -38,7 +38,20 @@ dependencies {
     testImplementation libs.sedr.library
     testImplementation libs.junit.jupiter
     testImplementation libs.assertj.core
-    testRuntimeOnly    libs.junit.platform.launcher
+    // The rendered tests are run in-process, against servers whose behaviour the tests
+    // control: through the JUnit Platform Launcher, with REST Docs' WebTestClient
+    // integration, which brings spring-test and spring-webflux.
+    testImplementation libs.junit.platform.launcher
+    testImplementation libs.spring.restdocs.webtestclient
+    // The validating server's oracle, independent of the generator.
+    testImplementation libs.json.schema.validator
+    testImplementation libs.snakeyaml.engine
+    testRuntimeOnly    libs.joni
+    // The published documentation, rendered.
+    testImplementation libs.asciidoctorj
+    // The contract-evidence scan the API-Only Suite runs over test sources.
+    testImplementation libs.doppelganger.api.detector
+    testImplementation libs.api.detector.core
 }
 
 publishing {
@@ -114,6 +127,11 @@ jreleaser {
 
 test {
     useJUnitPlatform()
+    // OffMeansOffTest records its golden files instead of comparing against them:
+    // ./gradlew test --tests '*OffMeansOffTest' -PrecordGolden=$PWD/src/test/resources/golden
+    if (project.hasProperty('recordGolden')) {
+        systemProperty 'golden.record', project.property('recordGolden')
+    }
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
