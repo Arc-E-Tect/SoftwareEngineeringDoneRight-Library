@@ -1,0 +1,50 @@
+# What the rendered tests must send exactly (T14.4) and what document() must reject (T14.5).
+# Every parameter and the body carry a value with a space, '+', '&', '=' and '%', and all but the
+# header a non-ASCII character -- header values are US-ASCII -- as a const, so that every case's
+# request holds them; the invalid-request response is a closed problem with required members.
+openapi: 3.1.0
+info:
+  title: Transmission
+  version: 1.0.0
+paths:
+  /items/{name}:
+    post:
+      operationId: postItem
+      parameters:
+        - {name: name, in: path, required: true, schema: {type: string, const: 'a b+c&d=e%f é'}}
+        - {name: tag, in: query, required: true, schema: {type: string, const: 'x y+z&w=v%u ü'}}
+        - {name: page, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: X-Label, in: header, required: true, schema: {type: string, const: 'h i+j&k=l%m'}}
+        - {name: X-Count, in: header, required: true, schema: {type: integer, maximum: 5}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemV1'
+      responses:
+        '204':
+          description: Stored.
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemV1'
+components:
+  schemas:
+    ItemV1:
+      x-fragment-path: schemas/ItemV1.yaml
+      type: object
+      required: [text, count]
+      properties:
+        text: {type: string, const: 's t+u&v=w%x ñ'}
+        count: {type: integer, minimum: 0}
+    ProblemV1:
+      x-fragment-path: schemas/ProblemV1.yaml
+      type: object
+      required: [title, status]
+      additionalProperties: false
+      properties:
+        title: {type: string}
+        status: {type: integer}
