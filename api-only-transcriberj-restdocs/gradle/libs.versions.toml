@@ -15,7 +15,7 @@ junit-platform = "6.1.3"
 assertj = "3.27.7"
 # The API-Only TranscriberJ this emitter is built against; its emitter interface is part
 # of the plugin artifact, published to the Gradle Plugin Portal.
-api-only-transcriberj = "0.8.0"
+api-only-transcriberj = "0.9.0-LOCAL"
 # The Spring REST Docs the generated code is tested with; also the version the plugin
 # adds to a project that declares none (RestDocsEmitter.dependencies()).
 spring-restdocs = "4.0.1"
@@ -31,6 +31,9 @@ json-schema-validator = "3.0.7"
 joni = "2.2.6"
 snakeyaml-engine = "3.1.1"
 asciidoctorj = "3.0.1"
+# What JUnit's own annotations refer to: on the compile classpath, so that compiling the
+# rendered tests with -Xlint:all reports nothing about JUnit's class files.
+apiguardian = "1.1.2"
 doppelganger-api-detector = "2.10.1"
 api-detector-core = "1.8.0"
 
@@ -49,3 +52,4 @@ snakeyaml-engine = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "s
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 doppelganger-api-detector = { module = "com.arc-e-tect:doppelganger-api-detector", version.ref = "doppelganger-api-detector" }
 api-detector-core = { module = "com.arc-e-tect:api-detector-core", version.ref = "api-detector-core" }
+apiguardian-api = { module = "org.apiguardian:apiguardian-api", version.ref = "apiguardian" }

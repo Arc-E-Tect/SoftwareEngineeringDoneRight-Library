@@ -49,18 +49,20 @@ final class Fixtures {
     static final Contract USER_ACCOUNT = new Contract("user-account", "/contracts/user-account/openapi.yaml", List.of());
     static final Contract KEYWORDS = new Contract("keywords", "/contracts/corpus/keywords.yaml", List.of("date", "uuid"));
     static final Contract DEGRADED = new Contract("degraded", "/contracts/corpus/degraded.yaml", List.of());
+    static final Contract TRANSMISSION = new Contract("transmission", "/contracts/transmission.yaml", List.of());
 
     /** Every contract. */
-    static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED);
+    static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION);
 
     /**
      * One generation: where its sources and resources went, and its report.
      *
      * @param sources   the source root
      * @param resources the resource root
+     * @param index     the endpoint index
      * @param report    the report
      */
-    record Generated(Path sources, Path resources, GenerationReport report) {
+    record Generated(Path sources, Path resources, Path index, GenerationReport report) {
 
         /** Every file generated into a directory, by its path relative to it. */
         static Map<String, String> files(Path root) {
@@ -89,8 +91,9 @@ final class Fixtures {
     static Generated generate(Path document, Settings settings, Path into, List<Emitter> emitters) {
         Path sources = into.resolve("sources");
         Path resources = into.resolve("resources");
+        Path index = into.resolve("contract-endpoints.properties");
         GenerationReport report = Generation.run(document, "1.0.0", "x", settings, sources, resources, emitters,
-                null);
-        return new Generated(sources, resources, report);
+                index);
+        return new Generated(sources, resources, index, report);
     }
 }

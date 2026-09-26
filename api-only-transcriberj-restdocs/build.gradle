@@ -22,6 +22,8 @@ java {
 }
 
 repositories {
+    // TEMPORARY, until TranscriberJ 0.9.0 is released: its emitter SPI, published locally.
+    mavenLocal()
     mavenCentral()
     // The API-Only TranscriberJ, and the API-Only Subscriber it depends on.
     gradlePluginPortal()
@@ -43,6 +45,7 @@ dependencies {
     // integration, which brings spring-test and spring-webflux.
     testImplementation libs.junit.platform.launcher
     testImplementation libs.spring.restdocs.webtestclient
+    testImplementation libs.apiguardian.api
     // The validating server's oracle, independent of the generator.
     testImplementation libs.json.schema.validator
     testImplementation libs.snakeyaml.engine
