@@ -4,7 +4,7 @@
 :icons: font
 :source-highlighter: rouge
 
-The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every class the TranscriberJ generates from an API contract, a companion holding its REST Docs field descriptors and snippets.
+The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every class the TranscriberJ generates from an API contract, a companion holding its REST Docs field descriptors and snippets; and, on request, a contract test for every contract case the TranscriberJ derives.
 
 // tag::root[]
 == Artifact Coordinates
@@ -23,10 +23,10 @@ The Spring REST Docs emitter of the https://github.com/Arc-E-Tect/SoftwareEngine
 |Requirement |Version
 |Java |21+
 |Gradle |9.x
-|API-Only TranscriberJ |`0.9.0` or newer: it reads the emitter options `0.8.0` added and the invalid-request cases `0.9.0` gives emitters, and fails with a `NoSuchMethodError` on an older one.
+|API-Only TranscriberJ |`0.12.0` or newer: it reads the contract cases of every kind `0.12.0` gives emitters, and fails with a `NoSuchMethodError` or `NoClassDefFoundError` on an older one.
 Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
 |Spring REST Docs |4.x, in the project's test source sets
-|Spring REST Docs WebTestClient, JUnit Jupiter |Only for the <<invalid-request-tests,invalid-request contract tests>>; see <<test-dependencies,What the tests depend on>>.
+|Spring REST Docs WebTestClient, JUnit Jupiter |Only for the <<contract-tests,contract tests>>; see <<test-dependencies,What the tests depend on>>.
 |===
 
 == Using it
@@ -69,11 +69,24 @@ mockMvc.perform(get("/v1/users/{username}", "alice"))
 
 A core method the TranscriberJ could not generate throws `UnsupportedOperationException` with its reason, and so does the companion method that uses it.
 
-[#invalid-request-tests]
-== Invalid-request contract tests
+[#contract-tests]
+== Contract tests
 
-For every constraint a contract puts on request input, the TranscriberJ derives an invalid-request case: the smallest valid request, with exactly that one constraint broken, and the response the contract declares for it.
-With the option `tests` on, this emitter renders each case as a Spring REST Docs contract test.
+For every response a contract lets it derive, the TranscriberJ derives a *contract case*: a request, and the response the contract declares for it.
+With the option `tests` on, this emitter renders every case as a Spring REST Docs contract test:
+
+[cols="1,2,1",options="header"]
+|===
+|Kind |The request |Expects
+
+|Success |A valid request -- the required one, the full one, the one without an optional body -- with the case's `Accept` |That `2xx`
+|Not found |The valid request, naming a resource that does not exist by other valid path values |`404`
+|Not acceptable |The valid request, with an `Accept` no response offers |`406`
+|Unsupported media type |The valid body, sent with a `Content-Type` the request body does not accept |`415`
+|Invalid request |The smallest valid request with exactly one constraint broken |`400`, or the configured status
+|===
+
+This is what makes the suite a contract test suite rather than a validation suite: a `GET` whose success case expects `200` runs after the fixture has put the resource in place, and passes when the service answers `200` with a body matching the declared fields, whatever the values.
 
 [source,groovy]
 ----
@@ -81,7 +94,9 @@ apiOnlyTranscriberJ {
     subscription('user-account') {
         basePackage = 'com.example.useraccount.contract'
         sourceSets = ['testContract', 'testContractWireMock']
-        emitterOptions = [restdocs: [tests: 'true']]
+        emitter('restdocs') {
+            options = [tests: 'true']
+        }
     }
 }
 ----
@@ -89,107 +104,227 @@ apiOnlyTranscriberJ {
 `tests` is the emitter's only option: `true`, in any case, switches rendering on, and anything else leaves it off.
 Another option name fails generation, so that a mistyped one is not silently ignored.
 With rendering off, the emitter writes exactly what it wrote before rendering existed.
+Which kinds are derived is the TranscriberJ's `derive` setting; this emitter renders every case it is given.
+It writes Java only, with or without tests: `produces` says so.
 
 === The generated interface
 
-For each operation with cases, `<basePackage>.restdocs.<Operation>InvalidRequestContractTests`, named after the operation's `<Operation>InvalidRequests` class:
+For each operation with cases, `<basePackage>.restdocs.<Operation>ContractTests`, named after the operation's `<Operation>ContractCases` class:
 
 [source,java]
 ----
-public interface InitiateUserRegistrationInvalidRequestContractTests {
+public interface GetOrderContractTests {
 
     WebTestClient client();
 
-    default void arrangeInvalidRequest(InvalidRequestCase invalid) {
+    default void arrangeState(ContractCase contractCase) {           // only where a case requires state
+        throw new FixtureNotImplementedException(contractCase, "GetOrderContractTests", "...");
+    }
+
+    default void arrangeStatelessCase(ContractCase contractCase) {
     }
 
     default String generatedDocumentationPrefix() {
-        return InvalidRequestContractSupport.DEFAULT_PREFIX;   // "generated"
+        return ContractTestSupport.DEFAULT_PREFIX;                   // "generated"
     }
 
     @Test
-    @DisplayName("POST /v1/users/registrations: `username` longer than its maxLength of 12 returns 400")
-    default void bodyUsernameMaxLength_returns400() {
-        InvalidRequestCase invalid = InitiateUserRegistrationInvalidRequests.CASES.get(10);
-        arrangeInvalidRequest(invalid);
-        InvalidRequestContractSupport.clientFor(client(), invalid).post()
-                .uri(InitiateUserRegistrationOperation.PATH, InvalidRequestContractSupport.pathValues(invalid))
-                .contentType(InvalidRequestContractSupport.contentType(invalid))
-                .bodyValue(InvalidRequestContractSupport.body(invalid))
+    @DisplayName("GET /orders/{orderId}: a valid request with the required parameters and body members only returns 200")
+    default void success200Required_returns200() {
+        ContractCase contractCase = GetOrderContractCases.CASES.get(0);
+        arrangeState(contractCase);
+        ContractTestSupport.clientFor(client(), contractCase).get()
+                .uri(GetOrderOperation.PATH, ContractTestSupport.pathValues(contractCase))
+                .headers(headers -> ContractTestSupport.headers(headers, contractCase))
                 .exchange()
                 .expectBody()
-                .consumeWith(result -> InvalidRequestContractSupport.assertStatus(invalid, result.getStatus().value()))
-                .consumeWith(result -> InvalidRequestContractSupport.assertContentType(invalid,
+                .consumeWith(result -> ContractTestSupport.assertStatus(contractCase, result.getStatus().value()))
+                .consumeWith(result -> ContractTestSupport.assertContentType(contractCase,
                         result.getResponseHeaders().get(org.springframework.http.HttpHeaders.CONTENT_TYPE)))
-                .consumeWith(document(InvalidRequestContractSupport.identifier(generatedDocumentationPrefix(),
-                                InitiateUserRegistrationOperation.OPERATION_ID, invalid),
-                        InvalidRequestProblemV1Docs.responseFields()));
+                .consumeWith(document(ContractTestSupport.identifier(generatedDocumentationPrefix(),
+                                GetOrderOperation.OPERATION_ID, contractCase),
+                        OrderV1Docs.responseFields()));
     }
-    // ... one test per case
+    // ... one test per case: notFound_returns404, notAcceptable_returns406, pathOrderIdPattern_returns400, ...
 }
 ----
 
-A project implements it once per target, exactly as it implements its hand-written contract-test interfaces: a class that supplies `client()`, bound to the target and configured with `documentationConfiguration(...)` under `RestDocumentationExtension`.
+A project implements it once per target: a class that supplies `client()`, bound to the target and configured with `documentationConfiguration(...)` under `RestDocumentationExtension`, and the fixture hooks.
 The tests are the same for every target; only the fixture differs.
 
-* *One test per case*, named from the case's id, with the status appended.
-Its display name reads `<METHOD> <path>: <what is wrong> returns <status>`.
+* *One test per case*, named from the case's id, with the status appended: `success201Full_returns201`, `notFound_returns404`, `notAcceptable_returns406`, `unsupportedMediaType_returns415`, `bodyUsernameMaxLength_returns400`.
+Its display name reads `<METHOD> <path>: <description> returns <status>`.
 * *Every value comes from the case*, taken from `CASES` by position: the test states none of its own.
+* *The hook its kind needs runs first*: `arrangeState` for a success or not-found case, `arrangeStatelessCase` for any other.
 * *The path is `<Operation>Operation.PATH`, by name.*
 The API-Only Suite's Doppelganger detector reads test sources without a classpath, and resolves `ClassName.PATH` through the TranscriberJ's endpoint index; a URI built from a runtime value would leave the operation reported as untested.
-So the request is started as `client().post().uri(<Operation>Operation.PATH, ...)`, and query parameters are added by a filter on the client, since `PATH` is the whole template.
+So the request is started as `client().get().uri(<Operation>Operation.PATH, ...)`, and query parameters are added by a filter on the client, since `PATH` is the whole template.
 The detector counts each test for its endpoint.
-It does not see which status a test expects: it recognises only `expectStatus().isEqualTo(<literal>)`, and the status check here must say where to look when it fails.
+It does not see which status a test expects: it recognises only a literal status assertion, and the status check here must say where to look when it fails.
 * *The request is sent exactly as the case holds it.*
-Path values are filled in and encoded by the client; the query is written with every character but RFC 3986's unreserved ones percent-encoded as UTF-8, so a server reads a `+` as a `+`, not a space; headers are added as they are; the body is sent as the case's bytes, with its content type, never re-serialised.
+Path values are filled in and encoded by the client; the query is written with every character but RFC 3986's unreserved ones percent-encoded as UTF-8, so a server reads a `+` as a `+`, not a space; headers, `Accept` among them, are added as they are; the body is sent as the case's bytes, with its content type, never re-serialised -- so an unsupported media type such as `text/plain` goes out as it is, without an encoder rewriting or refusing it.
+* *The response is checked in three steps*: the status, with the message below; the content type, where the case declares one; and `document()`, with the response class's `responseFields()` where the case names one.
 
-==== The fixture hook, and why it is empty
+[#hooks]
+=== The fixture hooks
 
-`arrangeInvalidRequest(invalid)` runs before each request, with that test's case.
-For the real implementation it stays empty, by construction: its inbound adapter rejects a contract violation before the port is called, so no state is consulted, and there is nothing to arrange.
-A double -- a WireMock stub -- overrides it, to answer the request as the contract declares.
-There is one hook, taking the case, rather than one per case: the fixture's work is the same for every case, and dozens of abstract hooks would bury the one decision a project makes.
+[cols="1,2,3",options="header"]
+|===
+|Hook |Called before |Default
+
+|`arrangeState(contractCase)`
+|Every success and not-found case: `requiresState` is true.
+Declared only on an interface whose operation has such a case.
+|Throws `FixtureNotImplementedException`.
+
+|`arrangeStatelessCase(contractCase)`
+|Every not-acceptable, unsupported-media-type and invalid-request case.
+|Does nothing.
+|===
+
+Each runs once per test, with that test's case, before the request is sent.
+There is one hook per kind of need, taking the case, rather than one per case: a project switches on the case, and dozens of abstract hooks would bury the one decision it makes.
+
+==== `arrangeState`, and why it throws until it is implemented
+
+A success case can only pass when the service is in the state that makes its status the right answer, and a not-found case only when its resource is absent.
+What that state is, and how to create it, only the project knows:
+
+[cols="1,3,2",options="header"]
+|===
+|Kind |Real implementation |Double
+
+|Success |Put the service in the state that makes the case's status the right answer: the resource exists for a read, an update or a delete, and does not exist for a create. |Serve the case's response.
+|Not found |Make sure the resource the path names does not exist. |Serve the case's response.
+|===
+
+Until a project overrides it, `arrangeState` throws `FixtureNotImplementedException`, in `<basePackage>.restdocs` -- the approach Cucumber takes to a step without a definition.
+The project compiles and runs straight after generation; every stateless test runs as it will for good; and every stateful test *fails* -- red, not skipped, so that no CI summary or Doppelganger count reads it as passing -- saying what it is waiting for:
+
+----
+Case success-200-required of GET /orders/{orderId} (SUCCESS, expects 200, variant required, path values [a])
+needs the implementation under test in a particular state, but arrangeState is not implemented yet.
+Put the service in the state that makes 200 the right answer: the resource exists for a read, an update or
+a delete, and does not exist for a create.
+Implement arrangeState in the class that implements GetOrderContractTests. It starts as:
+
+@Override
+public void arrangeState(ContractCase contractCase) {
+    switch (contractCase.id()) {
+        case "success-200-required" -> {
+            // make sure the resource at /orders/{orderId} with orderId = "a" exists
+        }
+        case "not-found" -> {
+            // make sure the resource at /orders/{orderId} with orderId = "b" does not exist
+        }
+        default -> throw new IllegalArgumentException("No state to arrange for case " + contractCase.id());
+    }
+}
+----
+
+The suggested implementation, which the interface's Javadoc shows too, is a starting point: paste it into the class, and replace each comment with the code that creates the state it names.
+Pasted as it is, it compiles, and each stateful test then fails on the service's answer, with the fixture messages in <<messages,When the status is wrong>>, until the comments are replaced.
+Switch on the id, as the suggestion does, or on the case's kind, status and variant: an operation that answers `200` or `201` to the same `PUT` has a case for each, with the same request, and only the state tells them apart.
+
+What a real target's implementation looks like, for an order service with a repository the test can reach:
+
+[source,java]
+----
+class GetOrderContractTest implements GetOrderContractTests {
+
+    @Autowired
+    OrderRepository orders;
+
+    @Override
+    public void arrangeState(ContractCase contractCase) {
+        String orderId = contractCase.request().pathParameters().get(0);
+        switch (contractCase.kind()) {
+            case SUCCESS -> orders.save(new Order(orderId, "an item"));     // the order must exist
+            case NOT_FOUND -> orders.deleteById(orderId);                  // the order must not exist
+            default -> throw new IllegalArgumentException(contractCase.id());
+        }
+    }
+    // client(), bound to the service ...
+}
+----
+
+If the service then answers otherwise than the case expects, that is a defect in the service, not in the test.
+A double -- a WireMock stub -- implements the hook by serving the case's response instead.
+
+==== `arrangeStatelessCase`, and why it is empty
+
+For the real implementation it stays empty, by construction: the request is refused before any state is consulted -- its inbound adapter rejects a contract violation, an unacceptable `Accept` or an unsupported `Content-Type` before the port is called -- so there is nothing to arrange.
+A double overrides it, to answer the request as the contract declares.
+
+[#principle]
+==== Independence: stateless and stateful tests
+
+[IMPORTANT]
+====
+*A stateless test is only as independent as the implementation is correct.*
+A correct implementation refuses every not-acceptable, unsupported-media-type and invalid request without storing anything.
+One it _wrongly_ accepts may leave state behind -- an order created from an invalid body -- and the tests after it run against a service that is no longer what they assume.
+The failing test reports that defect; until it is fixed, reset the state between runs.
+
+*A stateful test is independent and repeatable when its hook is correct.*
+The success and not-found tests say what state they need, and a hook that creates exactly that makes each of them pass in any order, any number of times, whatever ran before.
+This emitter's own tests run the suite twice without resetting the service, and three times in a random order, to prove it.
+====
+
+This follows from generating tests from a contract rather than from an implementation: the generator cannot know what an implementation stores, or how.
 
 ==== No `requestFields`
 
-The request is invalid by design.
-A request-fields snippet would fail on the missing member or the unknown one, and the test would fail for the wrong reason.
+An invalid request is invalid by design, so a request-fields snippet would fail on the missing member or the unknown one, and the test would fail for the wrong reason; a valid request needs no documentation from a contract test.
+No test calls `requestFields`.
 The request is still recorded, in the `http-request` snippet every test writes.
-The response is validated: `document()` gets the response class's `responseFields()` wherever the contract declares a body, so a missing required member, an undeclared member of a closed problem, or a wrong type fails the test.
-Where the contract declares the response without content, only the status is checked.
+The response is validated: `document()` gets the response class's `responseFields()` wherever the contract declares a body, so a missing required member, an undeclared member of a closed body, or a wrong type fails the test.
+Where the contract declares the response without content -- a `204`, for one -- only the status is checked.
 
+[#messages]
 ==== When the status is wrong
 
-A test that receives another status fails with a message that names the case and where to look:
+A test that receives another status fails with a message that names the case and where to look.
+It starts `<id> (<kind>: <description>): expected <status>, received <status>.` -- for an invalid request, `<id> (INVALID_REQUEST: <description>, at <location> <keyword>): ...` -- and goes on:
 
-[cols="1,4",options="header"]
+[cols="1,1,4",options="header"]
 |===
-|Received |Message, after `Case <id> (<description>; <keyword> at <location>): expected <status>, received <status>.`
+|Kind |Received |Then
 
-|`2xx` |The implementation accepted a request the contract declares invalid: `<keyword>` at `<location>` is not enforced.
-|`404` |The implementation looked the resource up before validating the request. The inbound adapter should reject contract violations before the port is called.
-|`422`, where `400` is expected |A contract violation was treated as a domain violation. It should be rejected by the adapter, not the domain.
-|`5xx` |The implementation failed instead of rejecting the request.
-|Anything else |Nothing more.
+|Success |`400` |The implementation rejects a request the contract declares valid. Compare its validation with the contract: an anchored or stricter pattern, a stricter length or bound, a member it requires that the contract makes optional, or an optional member of the full request it does not know.
+|Success |`404` |The fixture did not create the resource, or the implementation looks for it somewhere else. Check arrangeState for this case.
+|Success |`409` |State left behind: the fixture did not remove what this request creates. Check arrangeState for this case.
+|Success |another `2xx` |The implementation answers with a status the contract does not declare for this case, or the fixture set up the state for another declared status. Check arrangeState for this case.
+|Success |`5xx` |The implementation failed on a request the contract declares valid.
+|Not found |`2xx` |The fixture did not remove the resource, or the implementation answers for any identifier. Check arrangeState for this case.
+|Not found |`400` |The implementation rejects an identifier the contract declares valid.
+|Not acceptable |`2xx` |Content negotiation is not enforced: the implementation ignores Accept.
+|Unsupported media type |`2xx` |The implementation accepts a Content-Type the contract does not declare for this request.
+|Unsupported media type |`400` |The implementation parsed the body before checking its media type.
+|Invalid request |`2xx` |The implementation accepted a request the contract declares invalid: `<keyword>` at `<location>` is not enforced.
+|Invalid request |`404` |The implementation looked the resource up before validating the request. The inbound adapter should reject contract violations before the port is called.
+|Invalid request |`422`, where `400` is expected |A contract violation was treated as a domain violation. It should be rejected by the adapter, not the domain.
+|Invalid request |`5xx` |The implementation failed instead of rejecting the request.
+|Any |anything else |Nothing more.
 |===
 
-A response whose content type is not compatible with one the contract declares fails naming the case, too.
+A response whose content type is not compatible with one the case declares fails naming the case, too.
 
 [#snippets]
 === Snippets are a by-product, not documentation
 
 The generated tests verify; they do not document.
 
-Every test still calls `document()`, because that is where Spring REST Docs validates the response: `responseFields()` fails the test on a missing required member, an undeclared member of a closed problem, or a wrong type.
+Every test still calls `document()`, because that is where Spring REST Docs validates the response: `responseFields()` fails the test on a missing required member, an undeclared member of a closed body, or a wrong type.
 Calling it writes snippets, under `<prefix>/<operationId>/<caseId>/` in the project's snippets directory.
 The prefix is `generated`; a variant that must not overwrite another's, such as the real implementation beside a double, overrides `generatedDocumentationPrefix()`.
 An operation without an `operationId` is named after its class, without `Operation`.
 
-Those snippets are not for publishing:
+Those snippets are never published:
 
 * *Their values are minimal by design.*
-A case is the smallest valid request with one fault -- `"aaaaa"` for a username, `unexpectedMember` for an unknown member -- and a double answers with the smallest valid problem, whose `detail` is `"a"`.
-They prove a constraint is enforced; they tell a client developer nothing.
+A case's request is built from the smallest valid values -- `"aaaaa"` for a username, `unexpectedMember` for an unknown member -- and a double answers with generated bodies.
+They prove the contract is kept; they tell a client developer nothing.
 * *A double's snippets carry the double.*
 Against WireMock, the response snippet holds WireMock's `Matched-Stub-Id` and `Matched-Stub-Name` headers, which no real response has.
 
@@ -213,18 +348,47 @@ dependencies {
 ----
 
 `spring-restdocs-webtestclient` brings `spring-test` and `spring-webflux`, which hold `WebTestClient`; in a Spring Boot project, Boot's dependency management chooses their versions.
+`junit-jupiter-api` brings `opentest4j`, whose `AssertionFailedError` `FixtureNotImplementedException` extends.
 The generated code needs nothing else: no Hamcrest, no AssertJ.
 
+[#upgrading]
+=== Upgrading from 0.3
+
+0.4 renders every kind of contract case, and replaces the invalid-request interfaces:
+
+[cols="1,1",options="header"]
+|===
+|Until 0.3 |From 0.4
+
+|`<Operation>InvalidRequestContractTests`, for operations with invalid-request cases |`<Operation>ContractTests`, for every operation with a case of any kind
+|`InvalidRequestContractSupport` |`ContractTestSupport`
+|`arrangeInvalidRequest(InvalidRequestCase invalid)` |`arrangeStatelessCase(ContractCase contractCase)`
+|-- |`arrangeState(ContractCase contractCase)`, which throws until it is implemented
+|`Case <id> (<description>; <keyword> at <location>): ...` |`<id> (<kind>: <description>, at <location> <keyword>): ...`
+|===
+
+To upgrade:
+
+. Require API-Only TranscriberJ 0.12.0: this emitter reads `ContractCase`, which replaced `InvalidRequestCase` there.
+. Rename each class that implements an interface to implement `<Operation>ContractTests`, and its `arrangeInvalidRequest` override to `arrangeStatelessCase(ContractCase contractCase)`.
+. Run the tests, and implement `arrangeState` wherever a `FixtureNotImplementedException` asks for it, starting from the suggestion it prints.
+. Adjust anything that parses the failure messages to the new first sentence.
+
+The test methods of the invalid-request cases keep their names, and send the same requests, now with the operation's `Accept`.
+
+[#tested]
 === How the tests are tested
 
 The emitter's tests run the rendered tests, in-process, against JDK `HttpServer` instances whose behaviour they control:
 
-* A server that validates every request against the contract, with a JSON Schema 2020-12 validator independent of the generator -- the one the TranscriberJ's own tests use -- passes every test.
-* For every case of the user-account contract and of the keyword corpus, a server that stops enforcing exactly that case's constraint fails exactly that case's test, with the `2xx` message.
-* What the server receives is exactly the case's request, for values with a space, `+`, `&`, `=`, `%` and non-ASCII characters.
+* A stateful server that implements the contract faithfully -- validating every request with a JSON Schema 2020-12 validator independent of the generator, negotiating `Accept` and `Content-Type`, and creating, reading, updating and deleting in an in-memory store the tests' fixture arranges -- passes every test, as many of each kind as the report has cases.
+* Mutants of that server each fail exactly the tests their fault concerns, with the message for it: one that rejects an optional member fails only that operation's full success test; one that answers `201` for `200`, only that success test; one that answers `200` for a missing resource, only that not-found test; one that ignores `Accept`, every not-acceptable test; one that accepts any `Content-Type`, every unsupported-media-type test; one whose success body lacks a required member, only that test, through `document()`; and, for every constraint of the user-account contract and of the keyword corpus, one that stops enforcing it, only that constraint's test.
+* The stateful tests pass twice in a row without the store being reset, and in three random orders; with the fixture broken, they fail with the fixture messages.
+* Without an `arrangeState`, every stateful test fails with `FixtureNotImplementedException`, and its suggestion, pasted in, compiles with every lint on.
+* What the server receives is exactly the case's request, for values with a space, `+`, `&`, `=`, `%` and non-ASCII characters, and for a body sent as `text/plain`.
 * The Doppelganger detector's own scanner finds every test, against every operation with cases.
 
-The user-account contract's 22 tests are generated, compiled and run in well under the tests' budget of 60 seconds.
+The largest fixture's suite -- the keyword corpus, 191 tests -- is generated, compiled and run in under a second on a laptop (742 ms measured: 410 to generate and compile, 331 to run), against the tests' budget of 60 seconds.
 
 == Development
 
@@ -235,6 +399,6 @@ cd api-only-transcriberj-restdocs
 ./gradlew publishToMavenLocal
 ----
 
-The tests run the TranscriberJ over a copy of the user-account contract its own tests use, two contracts of its invalid-request corpus and one of their own, with this emitter; compile what comes out against Spring REST Docs; call it; and run the rendered tests, as <<invalid-request-tests,How the tests are tested>> describes.
+The tests run the TranscriberJ over a copy of the user-account contract its own tests use, two contracts of its invalid-request corpus and two of their own -- one with a case of every kind -- with this emitter; compile what comes out against Spring REST Docs; call it; and run the rendered tests, as <<tested,How the tests are tested>> describes.
 `check` gates on 90% instruction coverage and on Javadoc without warnings.
 // end::root[]

@@ -15,18 +15,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A server that validates every request against the contract, as a real one would, with the
- * independent validator: parameters converted from the strings they travel as, bodies checked
- * strictly when strictness is on. Any violation is answered with the status and content type the
- * contract declares for an invalid request, and a body from the response class's generated
- * {@code requiredBody()}; a valid request with {@code 200}. Header values are read as ISO 8859-1,
- * as HTTP defines them.
+ * A server that implements the contract faithfully, as a real one would, with the independent
+ * validator and an in-memory {@link Store}. For every request, in this order:
  *
- * <p>It knows nothing of the cases: which case a request is for is never asked. Its variants,
- * for the tests that need a server to misbehave, change one thing: {@link #ignoring} stops
- * enforcing exactly one case's keyword at exactly its location, as an implementation that forgot
- * that one constraint would; {@link #answering} answers one case's violation with something
- * else.
+ * <ol>
+ *   <li>the operation is found by its method and path, or {@code 404};</li>
+ *   <li>a body whose {@code Content-Type} none of the request body's media types matches is
+ *   refused with {@code 415};</li>
+ *   <li>an {@code Accept} no response's media type matches is refused with {@code 406};</li>
+ *   <li>the request is validated against the contract -- parameters converted from the strings
+ *   they travel as, the body checked strictly when strictness is on -- and any violation is
+ *   answered with the invalid-request status;</li>
+ *   <li>the store decides the success: a resource that exists is read, updated or deleted, and
+ *   answered with the operation's first declared {@code 2xx} other than {@code 201}; one that
+ *   does not is created, where the operation declares {@code 201}, or is {@code 404}.</li>
+ * </ol>
+ *
+ * <p>Every answer carries the declared response's first content type and a body from its
+ * response class's generated {@code fullBody()}. Header values are read as ISO 8859-1, as HTTP
+ * defines them. It knows nothing of the cases, but for the variants the mutant tests use, each
+ * changing one thing: see the methods that return a changed copy.
  */
 final class ValidatingServer implements ContractServer.Behaviour {
 
@@ -35,31 +43,90 @@ final class ValidatingServer implements ContractServer.Behaviour {
 
     private final GeneratedSuite suite;
     private final RequestValidation validation;
-    private final JsonNode target;
-    private final Function<ContractServer.Received, ContractServer.Answer> targetAnswer;
+    final Store store;
 
-    private ValidatingServer(GeneratedSuite suite, JsonNode target,
-                             Function<ContractServer.Received, ContractServer.Answer> targetAnswer) {
+    // The mutations: each null or false in the faithful server.
+    private JsonNode target;
+    private Function<ContractServer.Received, ContractServer.Answer> targetAnswer;
+    private boolean ignoringAccept;
+    private boolean anyContentType;
+    private String rejectedLocation;
+    private String rejectedPointer;
+    private String substitutedLocation;
+    private int substitutedFrom;
+    private int substitutedTo;
+    private String foundLocation;
+
+    private ValidatingServer(GeneratedSuite suite, Store store) {
         this.suite = suite;
         this.validation = new RequestValidation(suite.oracle, suite.settings.strictRequests());
-        this.target = target;
-        this.targetAnswer = targetAnswer;
+        this.store = store;
     }
 
-    /** The server that validates every request. */
+    /** The faithful server, with a store of its own. */
     static ValidatingServer of(GeneratedSuite suite) {
-        return new ValidatingServer(suite, null, null);
+        return new ValidatingServer(suite, new Store());
     }
 
-    /** The server that does not enforce one case's keyword at its location, and accepts what only breaks that. */
+    /** The faithful server, over a store. */
+    static ValidatingServer of(GeneratedSuite suite, Store store) {
+        return new ValidatingServer(suite, store);
+    }
+
+    /** The server that does not enforce one invalid-request case's keyword at its location, and accepts what only breaks that. */
     static ValidatingServer ignoring(GeneratedSuite suite, JsonNode c) {
-        return new ValidatingServer(suite, c, r -> accepted());
+        return answering(suite, c, r -> accepted());
     }
 
-    /** The server that answers a request whose only violation is one case's with something else. */
+    /**
+     * The server that answers one case's request with something else: for an invalid request, any
+     * request whose only violation is the case's; for any other kind, the case's request exactly.
+     */
     static ValidatingServer answering(GeneratedSuite suite, JsonNode c,
                                       Function<ContractServer.Received, ContractServer.Answer> answer) {
-        return new ValidatingServer(suite, c, answer);
+        ValidatingServer out = of(suite);
+        out.target = c;
+        out.targetAnswer = answer;
+        return out;
+    }
+
+    /**
+     * This server, ignoring {@code Accept}: a request whose {@code Accept} it should refuse is
+     * served, with the operation's first declared {@code 2xx}, whatever the store holds.
+     */
+    ValidatingServer ignoringAccept() {
+        ignoringAccept = true;
+        return this;
+    }
+
+    /**
+     * This server, accepting any {@code Content-Type}: a body it should refuse is served, with the
+     * operation's first declared {@code 2xx}, whatever the store holds.
+     */
+    ValidatingServer acceptingAnyContentType() {
+        anyContentType = true;
+        return this;
+    }
+
+    /** This server, rejecting a body of one operation that holds the member at a pointer, as if it were invalid. */
+    ValidatingServer rejectingMember(String location, String pointer) {
+        rejectedLocation = location;
+        rejectedPointer = pointer;
+        return this;
+    }
+
+    /** This server, answering one operation's success with another status. */
+    ValidatingServer substituting(String location, int from, int to) {
+        substitutedLocation = location;
+        substitutedFrom = from;
+        substitutedTo = to;
+        return this;
+    }
+
+    /** This server, answering one operation's request for a missing resource as if it existed. */
+    ValidatingServer findingMissing(String location) {
+        foundLocation = location;
+        return this;
     }
 
     /**
@@ -76,17 +143,65 @@ final class ValidatingServer implements ContractServer.Behaviour {
     public ContractServer.Answer answer(ContractServer.Received received) {
         Parsed parsed = parse(received);
         if (parsed == null) return new ContractServer.Answer(404, null, null);
-        List<RequestValidation.Problem> problems;
-        if (parsed.request() == null) {
-            problems = List.of(new RequestValidation.Problem("body", null, "json", "", null));
-        } else {
-            problems = validation.problems(parsed.request());
+        JsonNode operation = parsed.operation();
+        String location = operation.get("location").stringValue();
+        if (target != null && !invalidRequest(target) && sameRequest(target, parsed, received)) {
+            return targetAnswer.apply(received);
         }
-        if (target != null && !problems.isEmpty()) {
-            List<RequestValidation.Problem> rest = without(problems, target, parsed);
-            if (rest.isEmpty()) return targetAnswer.apply(received);
+        if (received.body().length > 0 && parsed.contentType() != null) {
+            boolean supported = requestMediaTypes(location).stream().anyMatch(d -> matches(d, parsed.contentType()));
+            if (!supported) return anyContentType ? respond(operation, firstSuccess(location)) : respond(operation, 415);
         }
-        return problems.isEmpty() ? accepted() : invalid(parsed.operation());
+        if (!acceptable(location, received.header("accept"))) {
+            return ignoringAccept ? respond(operation, firstSuccess(location)) : respond(operation, 406);
+        }
+        List<RequestValidation.Problem> problems = parsed.request() == null
+                ? List.of(new RequestValidation.Problem("body", null, "json", "", null))
+                : validation.problems(parsed.request());
+        if (target != null && invalidRequest(target) && !problems.isEmpty()) {
+            if (without(problems, target, parsed).isEmpty()) return targetAnswer.apply(received);
+        }
+        int invalid = Integer.parseInt(suite.settings.invalidRequestStatus());
+        if (!problems.isEmpty()) return respond(operation, invalid);
+        if (location.equals(rejectedLocation) && !parsed.request().path("body").at(rejectedPointer).isMissingNode()) {
+            return respond(operation, invalid);
+        }
+        int status = state(operation, location, parsed.request());
+        if (location.equals(substitutedLocation) && status == substitutedFrom) status = substitutedTo;
+        return respond(operation, status);
+    }
+
+    /** An operation's first declared {@code 2xx}, or {@code 200}. */
+    private int firstSuccess(String location) {
+        for (String s : suite.oracle.document.at(location + "/responses").propertyNames()) {
+            if (s.matches("2[0-9][0-9]")) return Integer.parseInt(s);
+        }
+        return 200;
+    }
+
+    /** What the store makes of a valid request: its status, having created or deleted what it does. */
+    private int state(JsonNode operation, String location, ObjectNode request) {
+        List<Integer> success = new ArrayList<>();
+        suite.oracle.document.at(location + "/responses").propertyNames().forEach(s -> {
+            if (s.matches("2[0-9][0-9]")) success.add(Integer.parseInt(s));
+        });
+        Integer other = success.stream().filter(s -> s != 201).findFirst().orElse(null);
+        boolean creates = success.contains(201);
+        String template = operation.get("pathTemplate").stringValue();
+        if (!template.contains("{") && !creates) return other == null ? 200 : other;
+        List<String> values = new ArrayList<>();
+        request.get("pathParameters").forEach(v -> values.add(v.stringValue()));
+        String key = Store.key(template, values);
+        if (store.exists(key)) {
+            if (operation.get("method").stringValue().equalsIgnoreCase("DELETE")) store.delete(key);
+            return other == null ? 409 : other;
+        }
+        if (creates) {
+            store.insert(key);
+            return 201;
+        }
+        if (location.equals(foundLocation)) return other == null ? 200 : other;
+        return 404;
     }
 
     /** {@code 200}, with an empty JSON object. */
@@ -94,34 +209,101 @@ final class ValidatingServer implements ContractServer.Behaviour {
         return new ContractServer.Answer(200, "application/json", "{}".getBytes(StandardCharsets.UTF_8));
     }
 
-    /** The response the contract declares for an invalid request to an operation. */
-    ContractServer.Answer invalid(JsonNode operation) {
-        int status = Integer.parseInt(suite.settings.invalidRequestStatus());
-        List<String> contentTypes = declaredContentTypes(operation);
+    /** The response the contract declares for a status of an operation: its first content type, and a full body. */
+    ContractServer.Answer respond(JsonNode operation, int status) {
+        JsonNode response = suite.oracle.resolve(operation.get("location").stringValue() + "/responses/" + status);
+        List<String> contentTypes = new ArrayList<>(response.path("content").propertyNames());
         if (contentTypes.isEmpty()) return new ContractServer.Answer(status, null, null);
-        return new ContractServer.Answer(status, contentTypes.get(0), requiredBody(operation));
+        return new ContractServer.Answer(status, contentTypes.get(0), fullBody(operation, status));
     }
 
-    /** The content types the operation's invalid-request response is declared with. */
-    List<String> declaredContentTypes(JsonNode operation) {
-        JsonNode response = suite.oracle.resolve(operation.get("location").stringValue() + "/responses/"
-                + suite.settings.invalidRequestStatus());
-        List<String> out = new ArrayList<>();
-        response.path("content").properties().forEach(e -> out.add(e.getKey()));
-        return out;
+    /** The content types an operation's response of a status is declared with. */
+    List<String> declaredContentTypes(JsonNode operation, int status) {
+        JsonNode response = suite.oracle.resolve(operation.get("location").stringValue() + "/responses/" + status);
+        return new ArrayList<>(response.path("content").propertyNames());
     }
 
-    /** A valid body of the operation's invalid-request response: its class's {@code requiredBody()}. */
-    byte[] requiredBody(JsonNode operation) {
-        String bodyClass = operation.get("cases").get(0).get("responseBodyClass").stringValue(null);
-        if (bodyClass == null) return "{}".getBytes(StandardCharsets.UTF_8);
-        try {
-            Object body = suite.type(suite.settings.basePackage() + "." + bodyClass).getMethod("requiredBody")
-                    .invoke(null);
-            return ((String) body).getBytes(StandardCharsets.UTF_8);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException(e);
+    /** A valid body of an operation's response: its class's {@code fullBody()}, or {@code requiredBody()}. */
+    byte[] fullBody(JsonNode operation, int status) {
+        String bodyClass = null;
+        for (JsonNode c : operation.get("cases")) {
+            if (c.get("expectedStatus").asInt() == status && !c.get("responseBodyClass").isNull()) {
+                bodyClass = c.get("responseBodyClass").stringValue();
+            }
         }
+        if (bodyClass == null) return "{}".getBytes(StandardCharsets.UTF_8);
+        Class<?> type = suite.type(suite.settings.basePackage() + "." + bodyClass);
+        for (String method : List.of("fullBody", "requiredBody")) {
+            try {
+                return ((String) type.getMethod(method).invoke(null)).getBytes(StandardCharsets.UTF_8);
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                // No valid value of this variant: try the next.
+            }
+        }
+        return "{}".getBytes(StandardCharsets.UTF_8);
+    }
+
+    /** The media types an operation's request body is declared with. */
+    private List<String> requestMediaTypes(String location) {
+        JsonNode body = suite.oracle.resolve(location + "/requestBody");
+        return new ArrayList<>(body.path("content").propertyNames());
+    }
+
+    /** Whether an {@code Accept} admits a media type any of an operation's responses is declared with. */
+    private boolean acceptable(String location, String accept) {
+        if (accept == null) return true;
+        List<String> offered = new ArrayList<>();
+        for (String status : suite.oracle.document.at(location + "/responses").propertyNames()) {
+            offered.addAll(suite.oracle.resolve(location + "/responses/" + status).path("content").propertyNames());
+        }
+        if (offered.isEmpty()) return true;
+        for (String range : accept.split(",")) {
+            for (String type : offered) {
+                if (matches(range, type) || matches(type, range)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a media type or range matches a media type: parameters and case ignored. */
+    static boolean matches(String range, String type) {
+        String[] r = bare(range).split("/", 2);
+        String[] t = bare(type).split("/", 2);
+        if (r.length < 2 || t.length < 2) return false;
+        if (r[0].equals("*")) return true;
+        return r[0].equals(t[0]) && (r[1].equals("*") || r[1].equals(t[1]));
+    }
+
+    private static String bare(String mediaType) {
+        int semicolon = mediaType.indexOf(';');
+        return (semicolon < 0 ? mediaType : mediaType.substring(0, semicolon)).strip().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean invalidRequest(JsonNode c) {
+        return c.get("kind").stringValue().equals("INVALID_REQUEST");
+    }
+
+    /** Whether a request is exactly a case's: path values, query, content type, body and {@code Accept}. */
+    private static boolean sameRequest(JsonNode c, Parsed parsed, ContractServer.Received received) {
+        JsonNode expected = c.get("request");
+        if (parsed.request() == null) return false;
+        if (!expected.get("method").stringValue().equals(parsed.operation().get("method").stringValue())
+                || !expected.get("pathTemplate").stringValue().equals(parsed.operation().get("pathTemplate").stringValue())
+                || !expected.get("pathParameters").equals(parsed.request().get("pathParameters"))
+                || !expected.get("query").equals(parsed.request().get("query"))) {
+            return false;
+        }
+        String contentType = expected.get("contentType").isNull() ? null : expected.get("contentType").stringValue();
+        if (contentType == null ? parsed.contentType() != null : !contentType.equals(parsed.contentType())) {
+            return false;
+        }
+        if (!expected.get("body").equals(parsed.request().get("body"))) return false;
+        String accept = null;
+        for (JsonNode h : expected.get("headers")) {
+            if (h.get("name").stringValue().equalsIgnoreCase("Accept")) accept = h.get("value").stringValue();
+        }
+        String sent = received.header("accept");
+        return accept == null ? sent == null : accept.equals(sent);
     }
 
     /** The problems without those that are one case's violation. */
@@ -190,7 +372,7 @@ final class ValidatingServer implements ContractServer.Behaviour {
      * {@code Parsed} without a request when the body is not JSON.
      */
     Parsed parse(ContractServer.Received received) {
-        for (JsonNode operation : suite.report.get("invalidRequests")) {
+        for (JsonNode operation : suite.report.get("contractCases")) {
             if (!operation.get("method").stringValue().equalsIgnoreCase(received.method())) continue;
             String template = operation.get("pathTemplate").stringValue();
             Matcher m = pattern(template).matcher(received.rawPath());

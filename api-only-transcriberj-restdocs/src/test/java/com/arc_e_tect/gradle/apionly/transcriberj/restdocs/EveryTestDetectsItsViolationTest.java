@@ -11,11 +11,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T14.2: for every case of the user-account contract and of the keyword corpus -- every one, not
- * a sample -- the whole generated suite runs against a server that stops enforcing exactly that
- * case's keyword at exactly that case's location, and answers {@code 200} there instead. Exactly
- * one test fails, the one for that case, saying the constraint is not enforced. This is what
- * proves each test detects the violation it claims to.
+ * T14.2, and T20.2's last mutant: for every invalid-request case of the user-account contract and
+ * of the keyword corpus -- every one, not a sample -- the whole generated suite, of every kind,
+ * runs against a server that stops enforcing exactly that case's keyword at exactly that case's
+ * location, and answers {@code 200} there instead. Exactly one test fails, the one for that case,
+ * saying the constraint is not enforced. This is what proves each test detects the violation it
+ * claims to.
  */
 @DisplayName("T14.2 Every test detects its own violation")
 class EveryTestDetectsItsViolationTest {
@@ -27,7 +28,7 @@ class EveryTestDetectsItsViolationTest {
                     GeneratedSuite suite = Suites.of(c);
                     ContractServer server = new ContractServer(ValidatingServer.of(suite));
                     List<GeneratedSuite.Case> cases = suite.cases;
-                    return Stream.concat(cases.stream().map(target -> DynamicTest.dynamicTest(target.id(), () -> {
+                    return Stream.concat(suite.cases("INVALID_REQUEST").stream().map(target -> DynamicTest.dynamicTest(target.id(), () -> {
                         server.behave(ValidatingServer.ignoring(suite, target.json()));
                         GeneratedSuite.Run run = suite.run(server);
 

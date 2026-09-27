@@ -95,6 +95,11 @@ final class ContractServer implements AutoCloseable {
         received.clear();
     }
 
+    /** How it answers now. */
+    Behaviour behaviour() {
+        return behaviour;
+    }
+
     /** Forgets what it received. */
     void clear() {
         received.clear();

@@ -28,24 +28,38 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * The harness: a contract generated with rendering on, its generated sources compiled, a
- * concrete class compiled for every generated interface, and the lot run in-process through the
- * JUnit Platform Launcher against a {@link ContractServer}, collecting each test's outcome, its
+ * The harness: a contract generated with rendering on, its generated sources compiled, concrete
+ * classes compiled for every generated interface, and the lot run in-process through the JUnit
+ * Platform Launcher against a {@link ContractServer}, collecting each test's outcome, its
  * failure, and the snippets written.
+ *
+ * <p>Two variants of concrete class are compiled with the suite: {@code Recording}, which records
+ * every hook call and has the harness's fixture arrange state; and {@code Plain}, which overrides
+ * no hook. Others, such as one whose {@code arrangeState} is the suggested implementation, are
+ * compiled on demand by {@link #variant}.
  */
 final class GeneratedSuite {
 
     /** The package the concrete classes are compiled into. */
     static final String HARNESS_PACKAGE = "harness";
 
+    /** The concrete classes that record the hooks and arrange state. */
+    static final String RECORDING = "Recording";
+
+    /** The concrete classes that override no hook. */
+    static final String PLAIN = "Plain";
+
     /** Rendering on. */
-    static final Map<String, String> ON = Map.of(InvalidRequestTests.OPTION, "true");
+    static final Map<String, String> ON = Map.of(ContractTests.OPTION, "true");
 
     /**
      * One test's outcome.
@@ -70,16 +84,28 @@ final class GeneratedSuite {
      * One run of the suite.
      *
      * @param outcomes     every test's outcome, by concrete class and method: {@code Class#method}
+     * @param order        the tests' keys, in the order they finished
      * @param snippets     where the snippets were written
-     * @param arrangements every call of the fixture hook
+     * @param arrangements every call of a fixture hook
      * @param received     every request the server received
      */
-    record Run(Map<String, Outcome> outcomes, Path snippets, List<Harness.Arrangement> arrangements,
-               List<ContractServer.Received> received) {
+    record Run(Map<String, Outcome> outcomes, List<String> order, Path snippets,
+               List<Harness.Arrangement> arrangements, List<ContractServer.Received> received) {
 
         List<Outcome> failed() {
             return outcomes.values().stream().filter(o -> !o.passed()).toList();
         }
+    }
+
+    /**
+     * How to run the suite.
+     *
+     * @param classes the concrete classes to run
+     * @param prefix  the documentation prefix to override with, or null for the default
+     * @param fixture the fixture that arranges state, or null for the server's correct one
+     * @param config  JUnit configuration parameters, such as a random order and its seed
+     */
+    record Options(List<Class<?>> classes, String prefix, Harness.Fixture fixture, Map<String, String> config) {
     }
 
     /**
@@ -97,9 +123,22 @@ final class GeneratedSuite {
             return json.get("id").stringValue();
         }
 
-        /** The concrete class and method that run it: {@code Class#method}. */
+        String kind() {
+            return json.get("kind").stringValue();
+        }
+
+        boolean requiresState() {
+            return json.get("requiresState").booleanValue();
+        }
+
+        /** The {@code Recording} or {@code Plain} class and method that run it: {@code Class#method}. */
         String key(boolean recording) {
-            return tests + (recording ? "Recording" : "Plain") + "#" + method;
+            return key(recording ? RECORDING : PLAIN);
+        }
+
+        /** A variant's class and method that run it: {@code Class#method}. */
+        String key(String variant) {
+            return tests + variant + "#" + method;
         }
     }
 
@@ -111,12 +150,15 @@ final class GeneratedSuite {
     final Oracle oracle;
     final List<Case> cases = new ArrayList<>();
     final List<String> interfaces = new ArrayList<>();
+    final Set<String> stateful = new HashSet<>();
     final List<Diagnostic<? extends JavaFileObject>> diagnostics = new ArrayList<>();
     private final Path directory;
+    private final Path classes;
     private final URLClassLoader loader;
     private final List<Class<?>> recording = new ArrayList<>();
     private final List<Class<?>> plain = new ArrayList<>();
     private int runs;
+    private int variants;
 
     private GeneratedSuite(String name, Path document, Settings settings, Path directory) {
         this.name = name;
@@ -126,41 +168,46 @@ final class GeneratedSuite {
         this.generated = Fixtures.generate(document, settings, directory, List.of(new RestDocsEmitter()));
         this.report = Oracle.JSON.readTree(generated.report().renderValidValues(settings.contract(), "1.0.0"));
         this.oracle = new Oracle(document);
-        for (JsonNode operation : report.get("invalidRequests")) {
-            String casesClass = operation.get("class").stringValue();
-            String tests = casesClass.substring(0, casesClass.length() - "InvalidRequests".length())
-                    + InvalidRequestTests.SUFFIX;
+        for (JsonNode operation : report.get("contractCases")) {
             JsonNode list = operation.get("cases");
             if (list.isEmpty()) continue;
+            String tests = stem(operation) + ContractTests.SUFFIX;
             interfaces.add(tests);
-            java.util.Set<String> methods = new java.util.HashSet<>();
+            Set<String> methods = new HashSet<>();
             for (int i = 0; i < list.size(); i++) {
                 JsonNode c = list.get(i);
-                String method = InvalidRequestTests.variableName(c.get("id").stringValue()) + "_returns"
+                String method = ContractTests.variableName(c.get("id").stringValue()) + "_returns"
                         + c.get("expectedStatus").asInt();
                 if (!methods.add(method)) method = method + "_" + i;
                 cases.add(new Case(operation, c, i, tests, method));
+                if (c.get("requiresState").booleanValue()) stateful.add(tests);
             }
         }
         try {
-            Path classes = Files.createDirectories(directory.resolve("classes"));
-            compile(generated.sources(), classes, System.getProperty("java.class.path"), true);
+            classes = Files.createDirectories(directory.resolve("classes"));
+            compile(generated.sources(), classes, System.getProperty("java.class.path"), diagnostics);
             Path harness = directory.resolve("harness");
             for (String tests : interfaces) {
-                writeConcrete(harness, tests, true);
-                writeConcrete(harness, tests, false);
+                writeConcrete(harness, tests, RECORDING, recordingMembers(tests));
+                writeConcrete(harness, tests, PLAIN, "");
             }
-            compile(harness, classes, System.getProperty("java.class.path") + File.pathSeparator + classes, false);
+            compile(harness, classes, System.getProperty("java.class.path") + File.pathSeparator + classes, null);
             loader = new URLClassLoader(new URL[]{classes.toUri().toURL()}, GeneratedSuite.class.getClassLoader());
             for (String tests : interfaces) {
-                recording.add(Class.forName(HARNESS_PACKAGE + "." + tests + "Recording", true, loader));
-                plain.add(Class.forName(HARNESS_PACKAGE + "." + tests + "Plain", true, loader));
+                recording.add(Class.forName(HARNESS_PACKAGE + "." + tests + RECORDING, true, loader));
+                plain.add(Class.forName(HARNESS_PACKAGE + "." + tests + PLAIN, true, loader));
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /** An operation's class names' stem: its case class's name without {@code ContractCases}. */
+    static String stem(JsonNode operation) {
+        String casesClass = operation.get("class").stringValue();
+        return casesClass.substring(0, casesClass.length() - "ContractCases".length());
     }
 
     /** A fixture contract, generated with rendering on. */
@@ -172,6 +219,61 @@ final class GeneratedSuite {
     static GeneratedSuite of(String name, Path document, Path directory) {
         return new GeneratedSuite(name, document, new Fixtures.Contract(name, null, List.of()).settings(ON),
                 directory);
+    }
+
+    /** The members of a {@code Recording} class: both hooks record, and the state hook has the fixture arrange. */
+    private String recordingMembers(String tests) {
+        String out = """
+
+                    @Override
+                    public void arrangeStatelessCase(ContractCase contractCase) {
+                        Harness.arranged(getClass().getSimpleName(), contractCase.id());
+                    }
+                """;
+        if (stateful.contains(tests)) {
+            out += """
+
+                        @Override
+                        public void arrangeState(ContractCase contractCase) {
+                            Harness.arrangeState(getClass().getSimpleName(), contractCase.id(), contractCase.kind().name(),
+                                    contractCase.expectedStatus(), contractCase.request().pathTemplate(),
+                                    contractCase.request().pathParameters());
+                        }
+                    """;
+        }
+        return out;
+    }
+
+    /**
+     * Compiles a variant of concrete class for every interface, with the members given -- or none,
+     * where the function gives null -- and every lint on, and loads them.
+     *
+     * @param variant     the variant's name, which the classes' names end with
+     * @param members     each interface's members, by the interface's simple name
+     * @param diagnostics what the compiler says
+     * @return the classes
+     */
+    List<Class<?>> variant(String variant, Function<String, String> members,
+                           List<Diagnostic<? extends JavaFileObject>> diagnostics) {
+        try {
+            Path sources = directory.resolve("variant-" + (++variants));
+            Path out = Files.createDirectories(directory.resolve("variant-classes-" + variants));
+            for (String tests : interfaces) {
+                String body = members.apply(tests);
+                writeConcrete(sources, tests, variant, body == null ? "" : body);
+            }
+            compile(sources, out, System.getProperty("java.class.path") + File.pathSeparator + classes, diagnostics);
+            URLClassLoader variantLoader = new URLClassLoader(new URL[]{out.toUri().toURL()}, loader);
+            List<Class<?>> loaded = new ArrayList<>();
+            for (String tests : interfaces) {
+                loaded.add(Class.forName(HARNESS_PACKAGE + "." + tests + variant, true, variantLoader));
+            }
+            return loaded;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** A generated class, loaded. */
@@ -202,9 +304,9 @@ final class GeneratedSuite {
     Request request(Case c) {
         try {
             String casesClass = c.operation().get("class").stringValue();
-            Object invalid = ((List<?>) type(settings.basePackage() + "." + casesClass).getField("CASES").get(null))
-                    .get(c.index());
-            Object request = invoke(invalid, "request");
+            Object contractCase = ((List<?>) type(settings.basePackage() + "." + casesClass).getField("CASES")
+                    .get(null)).get(c.index());
+            Object request = invoke(contractCase, "request");
             @SuppressWarnings("unchecked")
             List<String> path = (List<String>) invoke(request, "pathParameters");
             return new Request((String) invoke(request, "method"), (String) invoke(request, "pathTemplate"), path,
@@ -232,9 +334,7 @@ final class GeneratedSuite {
      */
     String snippetDirectory(String prefix, Case c) {
         JsonNode id = oracle.document.at(c.operation().get("location").stringValue()).path("operationId");
-        String casesClass = c.operation().get("class").stringValue();
-        String operationId = id.isString() ? id.stringValue()
-                : casesClass.substring(0, casesClass.length() - "InvalidRequests".length());
+        String operationId = id.isString() ? id.stringValue() : stem(c.operation());
         return prefix + "/" + operationId + "/" + c.id();
     }
 
@@ -255,31 +355,54 @@ final class GeneratedSuite {
         return found.get(0);
     }
 
-    /** Runs the recording classes against a server. */
+    /** The cases of a kind. */
+    List<Case> cases(String kind) {
+        return cases.stream().filter(c -> c.kind().equals(kind)).toList();
+    }
+
+    /** Runs the recording classes against a server, with the server's correct fixture. */
     Run run(ContractServer server) {
         return run(server, true, null);
     }
 
     /**
-     * Runs the suite against a server.
+     * Runs the suite against a server, with the server's correct fixture.
      *
      * @param server    the server, answering as it has been told to
-     * @param recording whether to run the classes that record the fixture hook, or those that keep
-     *                  its default
+     * @param recording whether to run the classes that record the hooks and arrange state, or those
+     *                  that keep every default
      * @param prefix    the documentation prefix to override with, or null for the default
      */
     Run run(ContractServer server, boolean recording, String prefix) {
+        return run(server, new Options(recording ? this.recording : plain, prefix, null, Map.of()));
+    }
+
+    /** Runs the recording classes against a server, with a fixture and JUnit configuration. */
+    Run run(ContractServer server, Harness.Fixture fixture, Map<String, String> config) {
+        return run(server, new Options(recording, null, fixture, config));
+    }
+
+    /** Runs the suite against a server, as the options say. */
+    Run run(ContractServer server, Options options) {
         Path snippets = directory.resolve("snippets-" + (++runs));
-        Harness.configure(server.baseUrl(), snippets.toString(), prefix);
+        Harness.Fixture fixture = options.fixture();
+        if (fixture == null) {
+            fixture = server.behaviour() instanceof ValidatingServer validating ? validating.store::arrange : c -> {
+            };
+        }
+        Harness.configure(server.baseUrl(), snippets.toString(), options.prefix(), fixture);
         server.clear();
         Map<String, Outcome> outcomes = Collections.synchronizedMap(new LinkedHashMap<>());
-        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors((recording ? this.recording : plain).stream().map(DiscoverySelectors::selectClass).toList())
-                .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "false")
-                .build();
+        List<String> order = Collections.synchronizedList(new ArrayList<>());
+        LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
+                .selectors(options.classes().stream().map(DiscoverySelectors::selectClass).toList())
+                .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "false");
+        options.config().forEach(builder::configurationParameter);
+        LauncherDiscoveryRequest request = builder.build();
         Thread thread = Thread.currentThread();
         ClassLoader previous = thread.getContextClassLoader();
-        thread.setContextClassLoader(loader);
+        thread.setContextClassLoader(options.classes().isEmpty() ? loader
+                : options.classes().get(0).getClassLoader());
         try {
             Launcher launcher = LauncherFactory.create();
             launcher.execute(request, new TestExecutionListener() {
@@ -294,8 +417,9 @@ final class GeneratedSuite {
                     }
                     MethodSource source = (MethodSource) id.getSource().orElseThrow();
                     String testClass = source.getClassName().substring(HARNESS_PACKAGE.length() + 1);
-                    outcomes.put(testClass + "#" + source.getMethodName(), new Outcome(testClass,
-                            source.getMethodName(), id.getDisplayName(),
+                    String key = testClass + "#" + source.getMethodName();
+                    order.add(key);
+                    outcomes.put(key, new Outcome(testClass, source.getMethodName(), id.getDisplayName(),
                             result.getStatus() == TestExecutionResult.Status.SUCCESSFUL ? null
                                     : result.getThrowable().orElse(new AssertionError(result.getStatus()))));
                 }
@@ -303,24 +427,17 @@ final class GeneratedSuite {
         } finally {
             thread.setContextClassLoader(previous);
         }
-        return new Run(Map.copyOf(outcomes), snippets, Harness.arrangements(), server.received());
+        return new Run(Map.copyOf(outcomes), List.copyOf(order), snippets, Harness.arrangements(), server.received());
     }
 
-    private void writeConcrete(Path harness, String tests, boolean recording) throws IOException {
+    private void writeConcrete(Path root, String tests, String variant, String members) throws IOException {
         String pkg = settings.basePackage();
-        String name = tests + (recording ? "Recording" : "Plain");
-        String arrange = recording ? """
-
-                    @Override
-                    public void arrangeInvalidRequest(InvalidRequestCase invalid) {
-                        Harness.arranged(getClass().getSimpleName(), invalid.id());
-                    }
-                """ : "";
+        String name = tests + variant;
         String source = """
                 package %1$s;
 
                 import com.arc_e_tect.gradle.apionly.transcriberj.restdocs.Harness;
-                import %2$s.InvalidRequestCase;
+                import %2$s.ContractCase;
                 import %2$s.restdocs.%3$s;
                 import org.junit.jupiter.api.BeforeEach;
                 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -354,14 +471,18 @@ final class GeneratedSuite {
                         return prefix == null ? %3$s.super.generatedDocumentationPrefix() : prefix;
                     }
                 }
-                """.formatted(HARNESS_PACKAGE, pkg, tests, name, arrange);
-        Path file = harness.resolve(HARNESS_PACKAGE).resolve(name + ".java");
+                """.formatted(HARNESS_PACKAGE, pkg, tests, name, members);
+        Path file = root.resolve(HARNESS_PACKAGE).resolve(name + ".java");
         Files.createDirectories(file.getParent());
         Files.writeString(file, source);
     }
 
-    /** Compiles every source under a root; the generated ones with every lint, recording what it says. */
-    private void compile(Path root, Path classes, String classpath, boolean generatedSources) throws IOException {
+    /**
+     * Compiles every source under a root. With a list to collect them in, with every lint on, and
+     * what the compiler says collected.
+     */
+    private static void compile(Path root, Path classes, String classpath,
+                                List<Diagnostic<? extends JavaFileObject>> diagnostics) throws IOException {
         List<Path> files;
         try (Stream<Path> walk = Files.walk(root)) {
             files = walk.filter(p -> p.toString().endsWith(".java")).toList();
@@ -370,12 +491,12 @@ final class GeneratedSuite {
         DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
         List<String> options = new ArrayList<>(List.of("-d", classes.toString(), "-classpath", classpath,
                 "--release", "21", "-proc:none"));
-        if (generatedSources) options.addAll(List.of("-Xlint:all", "-Xdoclint:all,-missing"));
+        if (diagnostics != null) options.addAll(List.of("-Xlint:all", "-Xdoclint:all,-missing"));
         try (StandardJavaFileManager fileManager =
                      compiler.getStandardFileManager(collector, null, StandardCharsets.UTF_8)) {
             boolean ok = compiler.getTask(null, fileManager, collector, options, null,
                     fileManager.getJavaFileObjectsFromPaths(files)).call();
-            if (generatedSources) diagnostics.addAll(collector.getDiagnostics());
+            if (diagnostics != null) diagnostics.addAll(collector.getDiagnostics());
             if (!ok) {
                 throw new IllegalStateException("Compiling " + root + " failed: " + collector.getDiagnostics());
             }

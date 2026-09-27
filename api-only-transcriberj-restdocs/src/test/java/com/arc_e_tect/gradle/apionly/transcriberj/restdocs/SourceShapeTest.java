@@ -15,16 +15,26 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T14.9: every generated test names its operation's {@code PATH}, calls {@code document(}, and
- * states no value of its own -- its case is taken from {@code CASES} by position, and everything
- * else from the case; and the generated sources compile with every lint on and nothing but notes.
+ * T14.9 and T20.7: every generated test names its operation's {@code PATH}, calls {@code document(},
+ * never {@code requestFields}, calls the hook its case's kind needs, and states no value of its own
+ * -- its case is taken from {@code CASES} by position, and everything else from the case; an
+ * interface declares {@code arrangeState} exactly when a case of its operation requires state; and
+ * the generated sources compile with every lint on and nothing but notes.
  */
-@DisplayName("T14.9 Source shape")
+@DisplayName("T14.9, T20.7 Source shape")
 class SourceShapeTest {
 
     private static final Pattern TEST = Pattern.compile(
             "    @Test\\n    @DisplayName\\((\"(?:[^\"\\\\]|\\\\.)*\")\\)\\n    default void (\\w+)\\(\\) \\{\\n(.*?)\\n    }\\n",
             Pattern.DOTALL);
+
+    /** The paragraph every interface and the support class end their class Javadoc with. */
+    static final String NOT_DOCUMENTATION = """
+             *
+             * <p>The snippets these tests write are a by-product of validation: {@code document()} is where
+             * Spring REST Docs checks a response against its declared fields. They are not documentation,
+             * and are not meant to be published.
+            """;
 
     static List<Fixtures.Contract> contracts() {
         return Fixtures.ALL;
@@ -45,10 +55,11 @@ class SourceShapeTest {
         int count = 0;
         for (String tests : suite.interfaces) {
             String source = Files.readString(suite.source("com/example/contract/restdocs/" + tests + ".java"));
-            String operation = tests.substring(0, tests.length() - InvalidRequestTests.SUFFIX.length()) + "Operation";
+            String operation = tests.substring(0, tests.length() - ContractTests.SUFFIX.length()) + "Operation";
             for (String[] test : tests(source)) {
                 String body = test[2];
-                assertThat(body).as(test[1]).contains(".uri(" + operation + ".PATH, ").contains(".consumeWith(document(");
+                assertThat(body).as(test[1]).contains(".uri(" + operation + ".PATH, ").contains(".consumeWith(document(")
+                        .doesNotContain("requestFields");
                 assertThat(body).as(test[1]).doesNotContain("\"").doesNotContain("'");
                 assertThat(body.replaceAll("CASES\\.get\\(\\d+\\)", "").replaceAll("\\w*\\d\\w*", ""))
                         .as(test[1] + " without its case's position").doesNotContainPattern("\\d");
@@ -69,8 +80,14 @@ class SourceShapeTest {
             String display = c.json().get("request").get("method").stringValue() + " "
                     + c.json().get("request").get("pathTemplate").stringValue() + ": "
                     + c.json().get("description").stringValue() + " returns " + c.json().get("expectedStatus").asInt();
-            assertThat(test[0]).isEqualTo(InvalidRequestTests.literal(display));
+            assertThat(test[0]).isEqualTo(ContractTests.literal(display));
             assertThat(test[2]).contains("CASES.get(" + c.index() + ")");
+            assertThat(test[1]).isEqualTo(c.method()).endsWith("_returns" + c.json().get("expectedStatus").asInt());
+            assertThat(test[2]).contains(c.requiresState() ? "        arrangeState(contractCase);\n"
+                    : "        arrangeStatelessCase(contractCase);\n");
+            if (!c.json().get("responseBodyClass").isNull()) {
+                assertThat(test[2]).contains(c.json().get("responseBodyClass").stringValue() + "Docs.responseFields()");
+            }
         }
     }
 
@@ -80,13 +97,28 @@ class SourceShapeTest {
             throws IOException {
         GeneratedSuite suite = Suites.of(contract);
         List<String> classes = new ArrayList<>(suite.interfaces);
-        classes.add(InvalidRequestTests.SUPPORT);
+        classes.add(ContractTests.SUPPORT);
         for (String name : classes) {
             String source = Files.readString(suite.source("com/example/contract/restdocs/" + name + ".java"));
-            assertThat(source).as(name).contains(RenderedOutputUnchangedTest.NOT_DOCUMENTATION
+            assertThat(source).as(name).contains(NOT_DOCUMENTATION
                     + " */\n@com.arc_e_tect.sedr.utils.jacoco.marker.ExcludeFromJacocoGeneratedCodeCoverage");
             assertThat(source).as(name).doesNotContain("[documented]");
         }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("contracts")
+    void onlyAnOperationWithAStatefulCaseHasAStateHook(Fixtures.Contract contract) throws IOException {
+        GeneratedSuite suite = Suites.of(contract);
+        for (String tests : suite.interfaces) {
+            String source = Files.readString(suite.source("com/example/contract/restdocs/" + tests + ".java"));
+            boolean stateful = suite.cases.stream().anyMatch(c -> c.tests().equals(tests) && c.requiresState());
+            assertThat(source.contains("default void arrangeState(ContractCase contractCase) {")).as(tests)
+                    .isEqualTo(stateful);
+            assertThat(source).as(tests).contains("default void arrangeStatelessCase(ContractCase contractCase) {");
+        }
+        // The degraded corpus declares no success status, so none of its operations has a stateful case.
+        assertThat(suite.stateful.isEmpty()).as("no operation with a stateful case").isEqualTo(contract == Fixtures.DEGRADED);
     }
 
     @ParameterizedTest(name = "{0}")

@@ -50,9 +50,13 @@ final class Fixtures {
     static final Contract KEYWORDS = new Contract("keywords", "/contracts/corpus/keywords.yaml", List.of("date", "uuid"));
     static final Contract DEGRADED = new Contract("degraded", "/contracts/corpus/degraded.yaml", List.of());
     static final Contract TRANSMISSION = new Contract("transmission", "/contracts/transmission.yaml", List.of());
+    static final Contract KINDS = new Contract("kinds", "/contracts/corpus/kinds.yaml", List.of());
 
     /** Every contract. */
-    static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION);
+    static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION, KINDS);
+
+    /** The contracts that existed before every kind of case was rendered, whose output with rendering off is golden. */
+    static final List<Contract> BEFORE_CONTRACT_CASES = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION);
 
     /**
      * One generation: where its sources and resources went, and its report.

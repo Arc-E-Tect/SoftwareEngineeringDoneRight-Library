@@ -30,7 +30,7 @@ class NoPublishedDocumentationTest {
     void renderingWritesNoResource(Fixtures.Contract contract) {
         Fixtures.Generated generated = Fixtures.generate(contract, Map.of("tests", "true"), directory);
 
-        assertThat(generated.sources().resolve("com/example/contract/restdocs/InvalidRequestContractSupport.java"))
+        assertThat(generated.sources().resolve("com/example/contract/restdocs/ContractTestSupport.java"))
                 .as("the tests were rendered").exists();
         assertThat(generated.resources().resolve(RestDocsEmitter.ID)).doesNotExist();
         assertThat(Fixtures.Generated.files(generated.resources())).isEmpty();

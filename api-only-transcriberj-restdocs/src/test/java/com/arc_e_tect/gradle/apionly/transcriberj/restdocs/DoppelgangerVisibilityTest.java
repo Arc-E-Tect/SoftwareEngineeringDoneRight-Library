@@ -21,12 +21,12 @@ import java.util.TreeMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T14.10: the Doppelganger API Detector's contract-evidence scan -- the one the API-Only Suite
- * runs, reading test sources without a classpath and resolving {@code ClassName.PATH} through
- * the TranscriberJ's endpoint index -- counts every operation with cases as having a
- * conformance test, and every generated test as one.
+ * T14.10 and T20.8: the Doppelganger API Detector's contract-evidence scan -- the one the API-Only
+ * Suite runs, reading test sources without a classpath and resolving {@code ClassName.PATH}
+ * through the TranscriberJ's endpoint index -- counts every operation with cases as having a
+ * conformance test, and every generated test, of every kind, as one.
  */
-@DisplayName("T14.10 Doppelganger visibility")
+@DisplayName("T14.10, T20.8 Doppelganger visibility")
 class DoppelgangerVisibilityTest {
 
     static List<Fixtures.Contract> contracts() {
@@ -48,12 +48,15 @@ class DoppelgangerVisibilityTest {
                 .scanWithStatusCodes(suite.source("com/example/contract/restdocs").toFile());
 
         assertThat(found).hasSize(suite.cases.size());
-        for (JsonNode operation : suite.report.get("invalidRequests")) {
+        for (JsonNode operation : suite.report.get("contractCases")) {
             if (operation.get("cases").isEmpty()) continue;
             String verb = operation.get("method").stringValue();
             String path = PathTemplates.normalize(operation.get("pathTemplate").stringValue());
             assertThat(found).as("%s %s", verb, path).filteredOn(t -> t.endpoint().verb().name().equals(verb)
                     && t.endpoint().path().equals(path)).hasSize(operation.get("cases").size());
         }
+        // The scan reads a status only from a literal status assertion; the generated tests take theirs
+        // from the case, so it counts every test as evidence for its operation and none for a status.
+        assertThat(found).extracting(VerifiedContractTest::statusCode).containsOnlyNulls();
     }
 }
