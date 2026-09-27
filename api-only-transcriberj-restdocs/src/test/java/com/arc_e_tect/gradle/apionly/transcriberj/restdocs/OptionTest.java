@@ -34,7 +34,7 @@ class OptionTest {
     }
 
     @Test
-    void renderingWritesAnInterfacePerOperationWithCasesTheSupportClassAndTheIncludeFile() {
+    void renderingWritesAnInterfacePerOperationWithCasesAndTheSupportClass() {
         Fixtures.Generated generated = Fixtures.generate(Fixtures.USER_ACCOUNT, Map.of("tests", "true"), directory);
         Path restdocs = generated.sources().resolve("com/example/contract/restdocs");
 
@@ -42,11 +42,11 @@ class OptionTest {
         assertThat(restdocs.resolve("ResendVerificationEmailInvalidRequestContractTests.java")).exists();
         assertThat(restdocs.resolve("GetUserInvalidRequestContractTests.java")).doesNotExist();
         assertThat(restdocs.resolve("InvalidRequestContractSupport.java")).exists();
-        assertThat(generated.resources().resolve("restdocs/user-account-invalid-requests.adoc")).exists();
+        assertThat(generated.resources().resolve("restdocs")).doesNotExist();
     }
 
     @Test
-    void aContractWithoutCasesGetsNoSupportClassAndNoIncludeFile() throws Exception {
+    void aContractWithoutCasesGetsNoSupportClass() throws Exception {
         Path contract = directory.resolve("openapi.yaml");
         Files.writeString(contract, """
                 openapi: 3.1.0
