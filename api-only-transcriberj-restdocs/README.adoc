@@ -195,7 +195,7 @@ Against WireMock, the response snippet holds WireMock's `Matched-Stub-Id` and `M
 
 Nothing this emitter generates includes them, and no document should.
 Published API documentation comes from documentation tests a developer writes on purpose: specific requests and responses with meaningful data, built on the generated schema classes and the `<Name>Docs` descriptors.
-// Placeholder: the guide prompt 17c writes. Replace the link once it exists.
+// Placeholder: the documentation guide does not exist yet. Replace the link once it does.
 link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/docs/guides/documentation-tests[The guide to documentation tests ↗] says how to write them.
 
 [#test-dependencies]
@@ -235,6 +235,6 @@ cd api-only-transcriberj-restdocs
 ./gradlew publishToMavenLocal
 ----
 
-The tests run the TranscriberJ over a copy of the reference implementation's user-account contract, two contracts of its invalid-request corpus and one of their own, with this emitter; compile what comes out against Spring REST Docs; call it; and run the rendered tests, as <<invalid-request-tests,How the tests are tested>> describes.
+The tests run the TranscriberJ over a copy of the user-account contract its own tests use, two contracts of its invalid-request corpus and one of their own, with this emitter; compile what comes out against Spring REST Docs; call it; and run the rendered tests, as <<invalid-request-tests,How the tests are tested>> describes.
 `check` gates on 90% instruction coverage and on Javadoc without warnings.
 // end::root[]
