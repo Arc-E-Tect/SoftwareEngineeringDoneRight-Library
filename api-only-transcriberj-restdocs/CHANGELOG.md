@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.3.0...api-only-transcriberj-restdocs-v0.4.0) (2026-09-27)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-restdocs:** render every contract case as a contract test ([#106](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/106)) ([03070a8](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/03070a8dd7a3821467dcf94fcbbb86694f0d6aec)), closes [#106](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/106)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-restdocs:** update README version to 0.3.0 [skip ci] ([f503dbe](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f503dbe65f9910ce70a1ea5bbb8fa32f71781d97))
+
 # [0.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.2.0...api-only-transcriberj-restdocs-v0.3.0) (2026-09-27)
 
 
