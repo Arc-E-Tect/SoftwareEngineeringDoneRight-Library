@@ -35,18 +35,18 @@ class InvalidRequestsNeverTripDocumentTest {
         }
 
         assertThat(run.failed()).extracting(GeneratedSuite.Outcome::message).isEmpty();
-        assertThat(suite.cases).extracting(c -> c.json().get("keyword").stringValue())
+        assertThat(suite.cases("INVALID_REQUEST")).extracting(c -> c.json().get("keyword").stringValue())
                 .contains(contract == Fixtures.DEGRADED ? new String[]{"required", "type"}
                         : new String[]{"required", "type", "additionalProperties"});
         for (GeneratedSuite.Case c : suite.cases) {
-            Path request = run.snippets().resolve(suite.snippetDirectory(InvalidRequestTests.PREFIX, c))
+            Path request = run.snippets().resolve(suite.snippetDirectory(ContractTests.PREFIX, c))
                     .resolve("http-request.adoc");
             assertThat(request).as(c.id()).exists();
             assertThat(request.resolveSibling("request-fields.adoc")).doesNotExist();
         }
         try (Stream<Path> sources = Files.list(suite.source("com/example/contract/restdocs"))) {
             for (Path source : sources.filter(p -> p.getFileName().toString()
-                    .endsWith(InvalidRequestTests.SUFFIX + ".java")).toList()) {
+                    .endsWith(ContractTests.SUFFIX + ".java")).toList()) {
                 assertThat(Files.readString(source)).as(source.getFileName().toString())
                         .doesNotContain("requestFields");
             }

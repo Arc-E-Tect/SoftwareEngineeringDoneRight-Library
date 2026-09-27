@@ -1,0 +1,122 @@
+# Every kind of contract case (T20.1 to T20.6, T20.9): a collection that creates with 201, an item
+# that is read, replaced -- 200 when it exists, 201 when it does not -- and deleted with 204, a
+# not-found answer with a body, content negotiation on Accept (406) and on Content-Type (415), an
+# optional request member that gives a full success case, and a closed response body with a
+# required member, which document() checks.
+openapi: 3.1.0
+info:
+  title: Kinds
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NewOrderV1'}
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderV1'}
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '406':
+          description: Not acceptable.
+        '415':
+          description: Unsupported media type.
+  /orders/{orderId}:
+    parameters:
+      - {name: orderId, in: path, required: true, schema: {type: string, pattern: '^[a-z]+$', maxLength: 8}}
+    get:
+      operationId: getOrder
+      responses:
+        '200':
+          description: The order.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderV1'}
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '404':
+          description: No such order.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '406':
+          description: Not acceptable.
+    put:
+      operationId: replaceOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NewOrderV1'}
+      responses:
+        '200':
+          description: Replaced.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderV1'}
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderV1'}
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '415':
+          description: Unsupported media type.
+    delete:
+      operationId: deleteOrder
+      responses:
+        '204':
+          description: Deleted.
+        '404':
+          description: No such order.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Up.
+components:
+  schemas:
+    NewOrderV1:
+      x-fragment-path: schemas/NewOrderV1.yaml
+      type: object
+      required: [item]
+      properties:
+        item: {type: string, maxLength: 20}
+        note: {type: string, maxLength: 40}
+    OrderV1:
+      x-fragment-path: schemas/OrderV1.yaml
+      type: object
+      additionalProperties: false
+      required: [id, item]
+      properties:
+        id: {type: string}
+        item: {type: string}
+        note: {type: string}
+    ProblemV1:
+      x-fragment-path: schemas/ProblemV1.yaml
+      type: object
+      required: [title, status]
+      properties:
+        title: {type: string}
+        status: {type: integer}

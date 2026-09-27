@@ -18,12 +18,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T14.11: with rendering off -- no option, or {@code tests} anything but {@code true} -- the
+ * T14.11 and T20.11: with rendering off -- no option, or {@code tests} anything but {@code true} -- the
  * emitter writes exactly what it wrote before rendering existed, byte for byte. The golden
  * files under {@code golden/<contract>/} were recorded from the emitter as it was then, and
  * are never re-recorded to make this test pass.
  */
-@DisplayName("T14.11 Off means off")
+@DisplayName("T14.11, T20.11 Off means off")
 class OffMeansOffTest {
 
     /** Set to the golden directory, as a path, to record it instead of comparing against it. */
@@ -35,7 +35,7 @@ class OffMeansOffTest {
     static Stream<Arguments> off() {
         List<Arguments> out = new ArrayList<>();
         Map<String, String> falseOption = Map.of("tests", "false");
-        for (Fixtures.Contract contract : Fixtures.ALL) {
+        for (Fixtures.Contract contract : Fixtures.BEFORE_CONTRACT_CASES) {
             out.add(Arguments.of(contract, null));
             out.add(Arguments.of(contract, Map.of()));
             out.add(Arguments.of(contract, falseOption));

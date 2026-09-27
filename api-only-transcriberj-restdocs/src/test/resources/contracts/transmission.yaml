@@ -1,7 +1,9 @@
-# What the rendered tests must send exactly (T14.4) and what document() must reject (T14.5).
+# What the rendered tests must send exactly (T14.4, T20.5) and what document() must reject (T14.5).
 # Every parameter and the body carry a value with a space, '+', '&', '=' and '%', and all but the
 # header a non-ASCII character -- header values are US-ASCII -- as a const, so that every case's
-# request holds them; the invalid-request response is a closed problem with required members.
+# request holds them; the invalid-request response is a closed problem with required members. It
+# declares 406 and 415, so that the not-acceptable and unsupported-media-type cases -- the body
+# sent as text/plain -- carry those values too.
 openapi: 3.1.0
 info:
   title: Transmission
@@ -31,6 +33,10 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemV1'
+        '406':
+          description: Not acceptable.
+        '415':
+          description: Unsupported media type.
 components:
   schemas:
     ItemV1:

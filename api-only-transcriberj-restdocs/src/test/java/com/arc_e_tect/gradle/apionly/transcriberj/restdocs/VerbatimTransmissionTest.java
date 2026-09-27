@@ -22,13 +22,13 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T14.4: what the server receives is exactly the case's request -- its path values, query,
+ * T14.4 and T20.5: what the server receives is exactly the case's request -- its path values, query,
  * headers, content type and body, decoded -- for every case of every fixture contract, including
  * values with a space, {@code +}, {@code &}, {@code =}, {@code %} and non-ASCII characters; and a
  * header value that is not US-ASCII, which no HTTP client sends as it is, fails the test before
  * anything is sent.
  */
-@DisplayName("T14.4 Verbatim transmission")
+@DisplayName("T14.4, T20.5 Verbatim transmission")
 class VerbatimTransmissionTest {
 
     static final Map<String, GeneratedSuite.Run> RUNS = new HashMap<>();
@@ -52,6 +52,26 @@ class VerbatimTransmissionTest {
         assertThat(request.get("headers").toString()).contains(" ", "+", "&", "=", "%");
         assertThat(request.get("body").toString()).contains(" ", "+", "&", "=", "%", "ñ");
         assertThat(RUNS.get("transmission").failed()).isEmpty();
+    }
+
+    @Test
+    void theNewKindsCarryThoseValuesAndTheUnsupportedMediaTypeIsSentAsIs() {
+        GeneratedSuite suite = Suites.of(Fixtures.TRANSMISSION);
+        for (String kind : List.of("SUCCESS", "NOT_ACCEPTABLE", "UNSUPPORTED_MEDIA_TYPE")) {
+            assertThat(suite.cases(kind)).as(kind).isNotEmpty();
+            for (GeneratedSuite.Case c : suite.cases(kind)) {
+                assertThat(c.json().get("request").get("pathParameters").get(0).stringValue()).contains("é", "+", "%");
+            }
+        }
+        GeneratedSuite.Case unsupported = suite.cases("UNSUPPORTED_MEDIA_TYPE").get(0);
+        GeneratedSuite.Request expected = suite.request(unsupported);
+        assertThat(expected.contentType()).isEqualTo("text/plain");
+        ContractServer.Received received = received(RUNS.get("transmission"), unsupported);
+        assertThat(received.header("content-type")).isEqualTo("text/plain");
+        assertThat(received.body()).isEqualTo(expected.body().getBytes(StandardCharsets.UTF_8));
+        GeneratedSuite.Case refused = suite.cases("NOT_ACCEPTABLE").get(0);
+        assertThat(received(RUNS.get("transmission"), refused).headers().get("accept"))
+                .containsExactly("application/vnd.apionly.not-acceptable");
     }
 
     @Test
@@ -83,8 +103,8 @@ class VerbatimTransmissionTest {
         assertThat(nonAscii).isNotEmpty();
         assertThat(run.received()).hasSize(suite.cases.size() - nonAscii.size());
         for (GeneratedSuite.Case c : nonAscii) {
-            assertThat(run.outcomes().get(c.key(true)).message()).isEqualTo("Case " + c.id() + " ("
-                    + c.json().get("description").stringValue() + "): header X-Label holds 'grün', which cannot be "
+            assertThat(run.outcomes().get(c.key(true)).message()).isEqualTo(Messages.name(c.json())
+                    + ": header X-Label holds 'grün', which cannot be "
                     + "sent as it is: HTTP header values are US-ASCII. Give the header's value in the contract in "
                     + "US-ASCII.");
         }

@@ -43,7 +43,7 @@ class SnippetsTest {
         GeneratedSuite suite = Suites.of(contract);
         GeneratedSuite.Run run = RUNS.get(contract.name());
         for (GeneratedSuite.Case c : suite.cases) {
-            Path directory = run.snippets().resolve(suite.snippetDirectory(InvalidRequestTests.PREFIX, c));
+            Path directory = run.snippets().resolve(suite.snippetDirectory(ContractTests.PREFIX, c));
             assertThat(directory.resolve("http-request.adoc")).as(c.id()).exists();
             assertThat(directory.resolve("http-response.adoc")).as(c.id()).exists();
         }
@@ -58,7 +58,7 @@ class SnippetsTest {
         }
 
         assertThat(run.failed()).isEmpty();
-        assertThat(run.snippets().resolve(InvalidRequestTests.PREFIX)).doesNotExist();
+        assertThat(run.snippets().resolve(ContractTests.PREFIX)).doesNotExist();
         for (GeneratedSuite.Case c : suite.cases) {
             assertThat(run.snippets().resolve(suite.snippetDirectory("moved", c)).resolve("http-request.adoc"))
                     .exists();
