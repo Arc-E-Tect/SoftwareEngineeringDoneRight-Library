@@ -1,0 +1,29 @@
+# A response body the TranscriberJ cannot build: its only required member has no value within
+# both bounds. In the files format, the stubs answering with it are left out and reported; in
+# the java format, making one throws the TranscriberJ's own exception.
+openapi: 3.1.0
+info:
+  title: Unbuildable response body
+  version: 1.0.0
+paths:
+  /counts/{name}:
+    get:
+      operationId: getCount
+      parameters:
+        - {name: name, in: path, required: true, schema: {type: string, maxLength: 4}}
+      responses:
+        '200':
+          description: A count nobody can give.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CountV1'}
+        '400':
+          description: The request is invalid.
+components:
+  schemas:
+    CountV1:
+      x-fragment-path: schemas/CountV1.yaml
+      type: object
+      required: [count]
+      properties:
+        count: {type: integer, minimum: 5, maximum: 2}

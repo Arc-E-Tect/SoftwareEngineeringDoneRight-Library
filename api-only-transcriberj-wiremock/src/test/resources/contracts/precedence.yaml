@@ -1,0 +1,64 @@
+# Path precedence (T21.7): a literal path and a template that would match it, each its own
+# operation with its own responses, so that a request to either says which stubs answered it.
+openapi: 3.1.0
+info:
+  title: Path precedence
+  version: 1.0.0
+paths:
+  /users/me:
+    get:
+      operationId: getMe
+      parameters:
+        - {name: X-Session, in: header, required: true, schema: {type: string, minLength: 4}}
+      responses:
+        '200':
+          description: The user making the request.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MeV1'}
+        '400':
+          description: The request is invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+  /users/{id}:
+    get:
+      operationId: getUser
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, pattern: '^[a-z]{2,8}$'}}
+      responses:
+        '200':
+          description: A user.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserV1'}
+        '400':
+          description: The request is invalid.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '404':
+          description: No such user.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+components:
+  schemas:
+    MeV1:
+      x-fragment-path: schemas/MeV1.yaml
+      type: object
+      required: [session]
+      properties:
+        session: {type: string, const: me}
+    UserV1:
+      x-fragment-path: schemas/UserV1.yaml
+      type: object
+      required: [id]
+      properties:
+        id: {type: string, const: someone}
+    ProblemV1:
+      x-fragment-path: schemas/ProblemV1.yaml
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, const: invalid}

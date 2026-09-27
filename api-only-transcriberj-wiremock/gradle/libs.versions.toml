@@ -13,18 +13,22 @@ owaspDependencycheck = "13.0.0"
 junit-jupiter = "6.1.3"
 junit-platform = "6.1.3"
 assertj = "3.27.7"
-# The API-Only TranscriberJ this emitter is built against; its emitter interface, and the
-# operation id and declared parameters each invalid-request case carries, are part of the
-# plugin artifact, published to the Gradle Plugin Portal.
-api-only-transcriberj = "0.10.0"
+# The API-Only TranscriberJ this emitter is built against; its emitter interface -- the contract
+# cases of every kind, the request schemas and, from 0.13.0, the text of each response body -- is
+# part of the plugin artifact, published to the Gradle Plugin Portal. The consumer builds the tests
+# run package the archive with this version.
+api-only-transcriberj = "0.13.0"
 # The WireMock the generated stubs are tested with; also the version the plugin adds to a
 # project that declares none (WireMockEmitter.dependencies()): the one wiremock-spring-boot
-# 4.4.1 brings.
+# 4.4.1 brings. The shipped-image test builds the README's Dockerfile on the official
+# wiremock/wiremock image of this same version: upgrading WireMock is this one line.
 wiremock = "3.13.2"
-# The REST Docs emitter whose rendered invalid-request tests the tests here run against the
-# generated stubs, and what those tests need: Spring REST Docs with its WebTestClient
+# What runs the image built from the packaged stubs (T21.2), as the Microcks emitter's tests do.
+testcontainers = "2.0.5"
+# The REST Docs emitter whose generated contract tests, of every kind, the tests here run against
+# the generated stubs, and what those tests need: Spring REST Docs with its WebTestClient
 # integration, which brings spring-test and spring-webflux.
-api-only-transcriberj-restdocs = "0.2.0"
+api-only-transcriberj-restdocs = "0.4.0"
 spring-restdocs = "4.0.1"
 # The marker annotation the generated code carries, so a coverage rule does not measure
 # code nobody wrote. The TranscriberJ manages it for the projects it generates into; the
@@ -49,7 +53,8 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 api-only-transcriberj = { module = "com.arc-e-tect:api-only-transcriberj", version.ref = "api-only-transcriberj" }
 api-only-transcriberj-restdocs = { module = "com.arc-e-tect:api-only-transcriberj-restdocs", version.ref = "api-only-transcriberj-restdocs" }
-wiremock-jetty12 = { module = "org.wiremock:wiremock-jetty12", version.ref = "wiremock" }
+wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 spring-restdocs-core = { module = "org.springframework.restdocs:spring-restdocs-core", version.ref = "spring-restdocs" }
 spring-restdocs-webtestclient = { module = "org.springframework.restdocs:spring-restdocs-webtestclient", version.ref = "spring-restdocs" }
 sedr-library = { module = "com.arc-e-tect.sedr.utils:sedr-library", version.ref = "sedr-library" }

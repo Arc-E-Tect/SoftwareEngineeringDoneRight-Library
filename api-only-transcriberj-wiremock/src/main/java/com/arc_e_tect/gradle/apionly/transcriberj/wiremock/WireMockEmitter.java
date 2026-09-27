@@ -1,40 +1,41 @@
 package com.arc_e_tect.gradle.apionly.transcriberj.wiremock;
 
 import com.arc_e_tect.gradle.apionly.transcriberj.model.Construct;
-import com.arc_e_tect.gradle.apionly.transcriberj.model.Operation;
+import com.arc_e_tect.gradle.apionly.transcriberj.model.Finding;
+import com.arc_e_tect.gradle.apionly.transcriberj.model.Treatment;
+import com.arc_e_tect.gradle.apionly.transcriberj.spi.ContractCase;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.Emitter;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.EmitterContext;
-import com.arc_e_tect.gradle.apionly.transcriberj.spi.InvalidRequestCase;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.ManagedDependency;
+import com.arc_e_tect.gradle.apionly.transcriberj.spi.Output;
+import com.arc_e_tect.gradle.apionly.transcriberj.spi.ResponseBody;
 
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
- * Exact WireMock stubs for the invalid-request cases the API-Only TranscriberJ derives.
+ * WireMock stubs that answer as the contract says: an early draft of the API, for the developers
+ * of its consumers, and the reference double for contract tests in any language.
  *
- * <p>{@code <basePackage>.wiremock.InvalidRequestStubs.mappingFor(InvalidRequestCase)} gives, for
- * any case, a stub that matches exactly that case's request and answers as the contract declares:
- * the case's status, the declared content type, and a valid body. A contract test written
- * against the real implementation then runs unchanged against a WireMock double, its fixture
- * hook registering the case's stub. See {@link Sources#stubs} for what is matched and why.
- *
- * <p>The stubs are generated only when at least one operation has a case. They depend on
- * WireMock, and so, like everything the TranscriberJ generates, are compiled only into the
- * source sets the subscription names: test source sets, never {@code main}.
+ * <p>For every contract case the TranscriberJ derives, of every kind, an exact stub that matches
+ * that case's request and answers as the contract declares; and, for every operation, fallback
+ * stubs that answer the requests no case sends. By default they are written as WireMock mapping
+ * files, on no source set, for the TranscriberJ to package; with {@code format = 'java'}, as a
+ * class building the same mappings. See {@link Mappings} for what a stub matches.
  */
 public final class WireMockEmitter implements Emitter {
 
-    /** The emitter's identifier, and the package its stubs go in. */
+    /** The emitter's identifier, and the package its Java goes in. */
     public static final String ID = "wiremock";
 
-    /** The option that sets the stubs' priority. */
-    static final String PRIORITY = "priority";
+    /** Where the mapping files go, in the files directory: WireMock's own name for them. */
+    static final String MAPPINGS = "mappings";
 
-    /** The priority the stubs have unless the option sets another: WireMock's highest. */
-    static final int DEFAULT_PRIORITY = 1;
+    /** Where the body files go, in the files directory: WireMock's own name for them. */
+    static final String FILES = "__files";
 
     /** Creates the emitter, as {@link java.util.ServiceLoader} does. */
     public WireMockEmitter() {
@@ -47,7 +48,8 @@ public final class WireMockEmitter implements Emitter {
 
     /**
      * WireMock's stubbing API, in the artifact {@code wiremock-spring-boot} 4.x brings -- the
-     * WireMock core on Jetty 12 -- so that a project using it resolves nothing new.
+     * WireMock core on Jetty 12 -- so that a project using it resolves nothing new. The plugin adds
+     * it only to the emitter's source sets, which the {@code java} format alone has.
      */
     @Override
     public List<ManagedDependency> dependencies() {
@@ -55,63 +57,100 @@ public final class WireMockEmitter implements Emitter {
     }
 
     /**
-     * Nothing: the stubs are generated from the core's invalid-request cases, not from a schema
-     * construct a core class represents.
+     * Nothing: the stubs are generated from the core's contract cases and request schemas, not
+     * from a schema construct a core class represents.
      */
     @Override
     public Set<Construct> represents() {
         return Set.of();
     }
 
+    /** Files, by default; Java with {@code format = 'java'}. */
+    @Override
+    public Set<Output> produces(Map<String, String> options) {
+        return Options.of(options).format() == Options.Format.FILES ? EnumSet.of(Output.FILES)
+                : EnumSet.of(Output.JAVA);
+    }
+
     @Override
     public void emit(EmitterContext context) {
-        int priority = priority(context.settings().emitterOptions(ID));
-        Set<String> bodyClasses = new TreeSet<>();
-        boolean any = false;
-        for (Operation operation : context.model().operations()) {
-            for (InvalidRequestCase c : context.invalidRequestCases(location(operation))) {
-                any = true;
-                if (c.responseBodyClass() != null && !c.expectedContentTypes().isEmpty()) {
-                    bodyClasses.add(c.responseBodyClass());
-                }
-            }
+        Options options = Options.of(context.settings().emitterOptions(ID));
+        Plan plan = Plan.of(context, options);
+        if (plan.operations().isEmpty()) return;
+        if (options.format() == Options.Format.JAVA) {
+            String base = context.settings().basePackage();
+            String pkg = base + "." + ID;
+            String header = "// Generated by the API-Only TranscriberJ WireMock emitter from contract "
+                    + plan.contract() + " " + plan.contractVersion() + ".\n"
+                    + "// Do not edit: this file is overwritten on every build. Copy it to change it.\n";
+            context.writeJava(pkg, Sources.STUBS, Sources.stubs(header, pkg, base, plan));
+        } else {
+            files(context, plan);
         }
-        if (!any) return;
-
-        String base = context.settings().basePackage();
-        String pkg = base + "." + ID;
-        String header = "// Generated by the API-Only TranscriberJ WireMock emitter from contract "
-                + context.settings().contract() + " " + context.model().version() + ".\n"
-                + "// Do not edit: this file is overwritten on every build.\n";
-        context.writeJava(pkg, Sources.STUBS, Sources.stubs(header, pkg, base, priority, List.copyOf(bodyClasses)));
     }
 
     /**
-     * The stubs' priority. Only {@value #PRIORITY} is an option; any other name, and any value
-     * that is not a positive whole number, is a mistake, and fails generation rather than being
-     * ignored.
+     * The mapping files, one per stub, and the body files, one per body: a stub whose body the core
+     * cannot build is left out, and reported.
      */
-    static int priority(Map<String, String> options) {
-        for (String name : options.keySet()) {
-            if (!name.equals(PRIORITY)) {
-                throw new IllegalArgumentException("The WireMock emitter has no option '" + name
-                        + "'; its only option is '" + PRIORITY + "'.");
+    private static void files(EmitterContext context, Plan plan) {
+        Map<String, String> bodies = new LinkedHashMap<>();
+        String bodyDirectory = Plan.fileName(plan.contract());
+        Mappings.Bodies files = bodyClass -> Map.of("bodyFileName", bodyDirectory + "/" + bodyClass + ".json");
+        for (Plan.Op op : plan.operations()) {
+            String directory = MAPPINGS + "/" + Plan.fileName(op.name()) + "/";
+            Map<String, String> requests = new LinkedHashMap<>();
+            for (ContractCase c : op.cases()) {
+                String path = directory + Plan.fileName(c.id()) + ".json";
+                String bodyClass = c.expectedContentTypes().isEmpty() ? null : c.responseBodyClass();
+                ResponseBody body = bodyClass == null ? null
+                        : context.responseBody(op.location(), String.valueOf(c.expectedStatus())).orElse(null);
+                Map<String, Object> mapping = Mappings.exact(plan, op, c, files);
+                String earlier = requests.putIfAbsent(Json.write(mapping.get("request")), c.id());
+                if (earlier != null) {
+                    sameRequest(context, op.location(), path, c, earlier);
+                    continue;
+                }
+                if (!available(context, path, body, bodies)) continue;
+                context.writeFile(path, Json.write(mapping));
+            }
+            for (Map.Entry<Plan.Fallback, Plan.Answer> answer : op.answers().entrySet()) {
+                String path = directory + answer.getKey().caseId() + ".json";
+                if (!available(context, path, answer.getValue().body(), bodies)) continue;
+                context.writeFile(path, Json.write(Mappings.fallback(plan, op, answer.getKey(), files)));
             }
         }
-        String value = options.get(PRIORITY);
-        if (value == null) return DEFAULT_PRIORITY;
-        try {
-            int priority = Integer.parseInt(value.trim());
-            if (priority >= 1) return priority;
-        } catch (NumberFormatException e) {
-            // Reported below, with what is expected.
-        }
-        throw new IllegalArgumentException("The WireMock emitter's option '" + PRIORITY + "' is '" + value
-                + "'; it must be a whole number of 1 or more, WireMock's highest priority being 1.");
+        bodies.forEach((bodyClass, text) -> context.writeFile(FILES + "/" + bodyDirectory + "/" + bodyClass + ".json", text));
     }
 
-    /** The operation's JSON pointer, as the core keys it. */
-    private static String location(Operation operation) {
-        return "/paths/" + operation.path().replace("~", "~0").replace("/", "~1") + "/" + operation.method().key();
+    /**
+     * Reports a case whose request an earlier case of its operation sends too -- a {@code PUT}
+     * that answers {@code 200} or {@code 201}, as the resource exists or not. Only the state of
+     * the implementation tells them apart, and mapping files hold no state: the earlier case's
+     * stub answers, and this one's is left out.
+     */
+    private static void sameRequest(EmitterContext context, String location, String path, ContractCase c,
+                                    String earlier) {
+        context.degraded(path, "request", new Finding(location, Construct.UNMODELLED_KEYWORD,
+                Treatment.DEGRADED, "the stub is left out: case " + c.id() + " sends the same request as case "
+                + earlier + ", and only the implementation's state tells which status is right, which mapping "
+                + "files cannot hold; " + earlier + "'s stub answers it"));
+    }
+
+    /**
+     * Whether a stub's body can be written: when it has none, or the core built it, which is then
+     * kept for its body file. Otherwise the stub is left out -- a stub answering with a body the
+     * contract does not allow would not be the contract's -- and the report says why.
+     */
+    private static boolean available(EmitterContext context, String path, ResponseBody body, Map<String, String> bodies) {
+        if (body == null) return true;
+        if (body.full().available()) {
+            bodies.putIfAbsent(body.bodyClass(), body.full().text());
+            return true;
+        }
+        context.degraded(path, "response body", new Finding(body.full().location(), Construct.UNMODELLED_KEYWORD,
+                Treatment.DEGRADED, "the stub is left out: " + body.bodyClass() + ".fullBody() has no valid value, "
+                + body.full().reason()));
+        return false;
     }
 }
