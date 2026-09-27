@@ -45,6 +45,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 
 |`examples/sedr-library/jacoco-marker/`
 |Runnable example that demonstrates compliant and non-compliant usage of `@ExcludeFromJacocoGeneratedCodeCoverage`.
+
+|https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/examples/transcriberj/generated-contract-tests[`examples/transcriberj/generated-contract-tests/`], in the API repository
+|Runnable example of everything the API-Only TranscriberJ and its REST Docs and WireMock emitters generate: contract tests run against the real service and against a WireMock double, their fixtures, the stubs as an archive and a Docker image, and published documentation from a documentation test suite.
 |===
 
 == sedr-library
