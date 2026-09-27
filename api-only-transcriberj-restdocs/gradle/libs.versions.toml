@@ -25,12 +25,10 @@ spring-restdocs = "4.0.1"
 sedr-library = "1.0.0"
 # The rendered invalid-request tests (RestDocsEmitter's "tests" option), run by the tests
 # here: the independent JSON Schema 2020-12 validator the TranscriberJ's own tests use as
-# their oracle, and what it reads contracts with; AsciidoctorJ, to render the include file;
-# and the Doppelganger API Detector, whose contract-evidence scan must see every rendered test.
+# their oracle, and what it reads contracts with; and the Doppelganger API Detector, whose contract-evidence scan must see every rendered test.
 json-schema-validator = "3.0.7"
 joni = "2.2.6"
 snakeyaml-engine = "3.1.1"
-asciidoctorj = "3.0.1"
 # What JUnit's own annotations refer to: on the compile classpath, so that compiling the
 # rendered tests with -Xlint:all reports nothing about JUnit's class files.
 apiguardian = "1.1.2"
@@ -49,7 +47,6 @@ spring-restdocs-webtestclient = { module = "org.springframework.restdocs:spring-
 json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 joni = { module = "org.jruby.joni:joni", version.ref = "joni" }
 snakeyaml-engine = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "snakeyaml-engine" }
-asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 doppelganger-api-detector = { module = "com.arc-e-tect:doppelganger-api-detector", version.ref = "doppelganger-api-detector" }
 api-detector-core = { module = "com.arc-e-tect:api-detector-core", version.ref = "api-detector-core" }
 apiguardian-api = { module = "org.apiguardian:apiguardian-api", version.ref = "apiguardian" }

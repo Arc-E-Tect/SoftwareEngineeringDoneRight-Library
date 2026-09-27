@@ -68,10 +68,24 @@ class SourceShapeTest {
             String[] test = tests(source).stream().filter(t -> t[1].equals(c.method())).findFirst().orElseThrow();
             String display = c.json().get("request").get("method").stringValue() + " "
                     + c.json().get("request").get("pathTemplate").stringValue() + ": "
-                    + c.json().get("description").stringValue() + " returns " + c.json().get("expectedStatus").asInt()
-                    + (c.json().get("representative").asBoolean() ? " [documented]" : "");
+                    + c.json().get("description").stringValue() + " returns " + c.json().get("expectedStatus").asInt();
             assertThat(test[0]).isEqualTo(InvalidRequestTests.literal(display));
             assertThat(test[2]).contains("CASES.get(" + c.index() + ")");
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("contracts")
+    void everyInterfaceAndTheSupportClassSayTheirSnippetsAreNotDocumentation(Fixtures.Contract contract)
+            throws IOException {
+        GeneratedSuite suite = Suites.of(contract);
+        List<String> classes = new ArrayList<>(suite.interfaces);
+        classes.add(InvalidRequestTests.SUPPORT);
+        for (String name : classes) {
+            String source = Files.readString(suite.source("com/example/contract/restdocs/" + name + ".java"));
+            assertThat(source).as(name).contains(RenderedOutputUnchangedTest.NOT_DOCUMENTATION
+                    + " */\n@com.arc_e_tect.sedr.utils.jacoco.marker.ExcludeFromJacocoGeneratedCodeCoverage");
+            assertThat(source).as(name).doesNotContain("[documented]");
         }
     }
 

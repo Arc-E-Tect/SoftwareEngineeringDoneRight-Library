@@ -49,7 +49,6 @@ dependencies {
     testImplementation libs.snakeyaml.engine
     testRuntimeOnly    libs.joni
     // The published documentation, rendered.
-    testImplementation libs.asciidoctorj
     // The contract-evidence scan the API-Only Suite runs over test sources.
     testImplementation libs.doppelganger.api.detector
     testImplementation libs.api.detector.core

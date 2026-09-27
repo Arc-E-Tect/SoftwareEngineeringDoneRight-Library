@@ -22,7 +22,9 @@ import java.util.Set;
  *
  * <p>With the option {@code tests} set to {@code true}, it also renders the invalid-request
  * cases the core derives as contract tests: per operation with cases, an interface of one
- * test per case, and an AsciiDoc file that includes each operation's representative case.
+ * test per case, and a support class they share. The tests verify; they do not document:
+ * the snippets they write are a by-product of validating the response, and nothing here
+ * publishes them.
  */
 public final class RestDocsEmitter implements Emitter {
 
