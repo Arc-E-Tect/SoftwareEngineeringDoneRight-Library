@@ -11,7 +11,7 @@ The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 
 [cols="1,1"]
 |===
-|Latest version |`0.0.1`
+|Latest version |`0.1.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`api-only-transcriberj-wiremock`
 |===
