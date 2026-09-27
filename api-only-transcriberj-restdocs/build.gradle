@@ -133,6 +133,11 @@ test {
     if (project.hasProperty('recordGolden')) {
         systemProperty 'golden.record', project.property('recordGolden')
     }
+    // RenderedOutputUnchangedTest records the rendered output before a change, the same way:
+    // ./gradlew test --tests '*RenderedOutputUnchangedTest' -PrecordRenderedGolden=$PWD/src/test/resources/golden-rendered
+    if (project.hasProperty('recordRenderedGolden')) {
+        systemProperty 'golden.rendered.record', project.property('recordRenderedGolden')
+    }
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
