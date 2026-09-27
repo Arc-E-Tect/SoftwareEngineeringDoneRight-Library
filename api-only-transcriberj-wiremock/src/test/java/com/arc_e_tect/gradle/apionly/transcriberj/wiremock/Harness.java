@@ -1,22 +1,25 @@
 package com.arc_e_tect.gradle.apionly.transcriberj.wiremock;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * What the concrete test classes {@link GeneratedSuite} compiles read and report to: where the
- * double is, how their fixture hook reaches it, and every case the hook was called with, in order.
+ * double is, how their hooks reach it, the headers their client adds, and every mapping the hooks
+ * registered, in order.
  *
  * <p>Public, since those classes are compiled into a package of their own. One suite runs at a
  * time.
  */
 public final class Harness {
 
-    /** How the fixture hook registers its case's mapping. */
+    /** How the hooks register a case's mapping, in the {@code java} format. */
     public enum Client {
         /** {@code server.stubFor(mapping)}, on the in-process server. */
         SERVER,
@@ -37,16 +40,13 @@ public final class Harness {
     private static volatile WireMock instance;
     private static volatile Client client = Client.SERVER;
     private static volatile String snippets;
-    private static volatile boolean defaultHeaders;
+    private static volatile Map<String, String> defaultHeaders = Map.of();
 
     private Harness() {
     }
 
-    /**
-     * Sets up a run: the server the tests are sent to, how the hook reaches it, where snippets go,
-     * and whether the tests' client adds the reference implementation's default headers.
-     */
-    static void configure(WireMockServer server, Client client, String snippets, boolean defaultHeaders) {
+    /** Sets up a run: the server the tests are sent to, how the hooks reach it, where snippets go, and extra headers. */
+    static void configure(WireMockServer server, Client client, String snippets, Map<String, String> defaultHeaders) {
         Harness.server = server;
         Harness.client = client;
         Harness.snippets = snippets;
@@ -84,51 +84,30 @@ public final class Harness {
     }
 
     /**
-     * Whether the tests' client adds the reference implementation's default headers.
+     * The headers the tests' client adds to every request that does not set them itself: a
+     * project's client defaults.
      *
-     * @return whether it does
+     * @return the headers
      */
-    public static boolean defaultHeaders() {
+    public static Map<String, String> defaultHeaders() {
         return defaultHeaders;
     }
 
     /**
-     * The in-process server.
+     * Registers a case's mapping as this run's client does, and records it.
      *
-     * @return the server
+     * @param mapping the mapping
      */
-    public static WireMockServer server() {
-        return server;
+    public static void register(MappingBuilder mapping) {
+        switch (client) {
+            case SERVER -> server.stubFor(mapping);
+            case STATIC -> WireMock.stubFor(mapping);
+            case INSTANCE -> instance.register(mapping);
+        }
+        ARRANGED.add(mapping.build().getName());
     }
 
-    /**
-     * The client instance pointing at the server, when the run uses one.
-     *
-     * @return the client
-     */
-    public static WireMock instance() {
-        return instance;
-    }
-
-    /**
-     * How the fixture hook registers its case's mapping in this run.
-     *
-     * @return the client
-     */
-    public static Client client() {
-        return client;
-    }
-
-    /**
-     * Records a call of the fixture hook.
-     *
-     * @param mappingName the name of the mapping it registered
-     */
-    public static void arranged(String mappingName) {
-        ARRANGED.add(mappingName);
-    }
-
-    /** The name of every mapping the fixture hook registered since the run was set up, in order. */
+    /** The name of every mapping the hooks registered since the run was set up, in order. */
     static List<String> arranged() {
         synchronized (ARRANGED) {
             return List.copyOf(ARRANGED);

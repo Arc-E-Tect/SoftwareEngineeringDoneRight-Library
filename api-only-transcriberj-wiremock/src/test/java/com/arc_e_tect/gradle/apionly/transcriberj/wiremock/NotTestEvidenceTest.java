@@ -1,7 +1,7 @@
 package com.arc_e_tect.gradle.apionly.transcriberj.wiremock;
 
-import com.arc_e_tect.gradle.detector.core.scan.PropertyResolutionContext;
 import com.arc_e_tect.gradle.doppelganger.detect.VerifiedContractTest;
+import com.arc_e_tect.gradle.detector.core.scan.PropertyResolutionContext;
 import com.arc_e_tect.gradle.doppelganger.scan.RestDocsScanner;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,13 +23,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * T15.11: generated stubs are not test evidence. The contract-evidence scan the API-Only Suite
- * runs over test sources -- the Doppelganger API Detector's, reading them without a classpath and
- * resolving {@code ClassName.PATH} through the TranscriberJ's endpoint index -- finds no conformance
- * test in the generated stubs alone, and, over the rendered REST Docs tests and the stubs together,
- * exactly what it finds in the rendered tests alone.
+ * T21.14: stubs are not test evidence. The contract-evidence scan the API-Only Suite runs over test
+ * sources -- the Doppelganger API Detector's, reading them without a classpath -- finds no test in
+ * the {@code java} format's class, nor in the mapping files; and over the REST Docs emitter's tests
+ * with the stubs of both formats beside them, exactly what it finds in the tests alone.
  */
-@DisplayName("T15.11 Generated stubs are not test evidence")
+@DisplayName("T21.14 Stubs are not test evidence")
 class NotTestEvidenceTest {
 
     @TempDir
@@ -44,20 +43,20 @@ class NotTestEvidenceTest {
     void theStubsAddNothingToWhatTheScanCounts(Fixtures.Contract contract) throws IOException {
         GeneratedSuite suite = Suites.of(contract);
         RestDocsScanner scanner = new RestDocsScanner("", PropertyResolutionContext.of(index(suite), Set.of()));
-        Path wiremock = suite.source("com/example/contract/wiremock");
-        Path restdocs = suite.source("com/example/contract/restdocs");
-        Path both = directory.resolve(contract.name());
-        copy(wiremock, both.resolve("wiremock"));
-        copy(restdocs, both.resolve("restdocs"));
+        Path java = suite.generated.java();
+        Path files = suite.files();
+        Path restdocs = suite.generated.restdocs();
+        Path together = directory.resolve(contract.name());
+        copy(java, together.resolve("java"));
+        copy(files, together.resolve("files"));
+        copy(restdocs, together.resolve("restdocs"));
 
-        List<VerifiedContractTest> stubsAlone = scanner.scanWithStatusCodes(wiremock.toFile());
         List<VerifiedContractTest> testsAlone = scanner.scanWithStatusCodes(restdocs.toFile());
-        List<VerifiedContractTest> together = scanner.scanWithStatusCodes(both.toFile());
-
-        assertThat(stubsAlone).isEmpty();
+        assertThat(scanner.scanWithStatusCodes(java.toFile())).isEmpty();
+        assertThat(scanner.scanWithStatusCodes(files.toFile())).isEmpty();
         assertThat(testsAlone).hasSize(suite.cases.size());
-        assertThat(together).hasSameSizeAs(testsAlone);
-        assertThat(together.stream().map(NotTestEvidenceTest::key).sorted().toList())
+        List<VerifiedContractTest> all = scanner.scanWithStatusCodes(together.toFile());
+        assertThat(all.stream().map(NotTestEvidenceTest::key).sorted().toList())
                 .isEqualTo(testsAlone.stream().map(NotTestEvidenceTest::key).sorted().toList());
     }
 
@@ -67,7 +66,8 @@ class NotTestEvidenceTest {
 
     private static Map<String, String> index(GeneratedSuite suite) throws IOException {
         Properties index = new Properties();
-        try (Reader in = Files.newBufferedReader(suite.generated.index(), StandardCharsets.ISO_8859_1)) {
+        Path file = suite.generated.core().getParent().resolve("contract-endpoints.properties");
+        try (Reader in = Files.newBufferedReader(file, StandardCharsets.ISO_8859_1)) {
             index.load(in);
         }
         Map<String, String> properties = new TreeMap<>();
@@ -76,9 +76,12 @@ class NotTestEvidenceTest {
     }
 
     private static void copy(Path from, Path to) throws IOException {
-        Files.createDirectories(to);
-        try (Stream<Path> files = Files.list(from)) {
-            for (Path f : files.toList()) Files.copy(f, to.resolve(f.getFileName()));
+        try (Stream<Path> walk = Files.walk(from)) {
+            for (Path f : walk.toList()) {
+                Path target = to.resolve(from.relativize(f).toString());
+                if (Files.isDirectory(f)) Files.createDirectories(target);
+                else Files.copy(f, target);
+            }
         }
     }
 }

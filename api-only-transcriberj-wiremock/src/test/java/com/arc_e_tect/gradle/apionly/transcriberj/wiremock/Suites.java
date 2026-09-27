@@ -13,16 +13,16 @@ import java.util.Map;
  */
 final class Suites {
 
-    private static final Map<String, GeneratedSuite> SUITES = new HashMap<>();
+    private static final Map<Fixtures.Contract, GeneratedSuite> SUITES = new HashMap<>();
     private static Path directory;
 
     private Suites() {
     }
 
-    /** A fixture contract's suite, its stubs at the default priority. */
+    /** A fixture contract's suite, its stubs with the default options. */
     static synchronized GeneratedSuite of(Fixtures.Contract contract) {
-        return SUITES.computeIfAbsent(contract.name(),
-                name -> GeneratedSuite.of(contract, null, directory().resolve(name)));
+        return SUITES.computeIfAbsent(contract, c -> GeneratedSuite.of(c, Map.of(),
+                directory().resolve(c.name() + (c.strict() ? "" : "-lenient") + "-" + String.join("-", c.formats()))));
     }
 
     /** A new directory for a test's own generation. */
@@ -37,7 +37,7 @@ final class Suites {
     private static Path directory() {
         if (directory == null) {
             try {
-                directory = Files.createTempDirectory("wiremock-invalid-request-suites");
+                directory = Files.createTempDirectory("wiremock-contract-suites");
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

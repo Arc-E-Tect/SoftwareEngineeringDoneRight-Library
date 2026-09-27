@@ -68,6 +68,15 @@ final class Replay {
     record Response(int status, String contentType, boolean catchAll, String body) {
     }
 
+    /** A request with one header set, replacing any of the same name, case aside. */
+    static Request withHeader(Request request, String name, String value) {
+        List<String[]> headers = new ArrayList<>();
+        for (String[] h : request.headers()) if (!h[0].equalsIgnoreCase(name)) headers.add(h);
+        headers.add(new String[]{name, value});
+        return new Request(request.method(), request.pathTemplate(), request.pathParameters(), request.query(),
+                headers, request.contentType(), request.body());
+    }
+
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
     private static final String UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{[^}]+}");
@@ -75,10 +84,10 @@ final class Replay {
     private Replay() {
     }
 
-    /** The request of a generated {@code InvalidRequestCase}. */
-    static Request of(Object invalid) {
+    /** The request of a generated {@code ContractCase}. */
+    static Request of(Object contractCase) {
         try {
-            return Request.of(invoke(invalid, "request"));
+            return Request.of(invoke(contractCase, "request"));
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
@@ -91,7 +100,12 @@ final class Replay {
 
     /** Sends a request to a double with extra headers, each added unless the request sets it itself. */
     static Response send(DoubleServer server, Request request, Map<String, String> extra) {
-        StringBuilder url = new StringBuilder(server.baseUrl()).append(path(request));
+        return send(server.baseUrl(), request, extra);
+    }
+
+    /** Sends a request to a server at a base URL, with extra headers, each added unless the request sets it itself. */
+    static Response send(String baseUrl, Request request, Map<String, String> extra) {
+        StringBuilder url = new StringBuilder(baseUrl).append(path(request));
         for (int i = 0; i < request.query().size(); i++) {
             url.append(i == 0 ? '?' : '&').append(encode(request.query().get(i)[0])).append('=')
                     .append(encode(request.query().get(i)[1]));

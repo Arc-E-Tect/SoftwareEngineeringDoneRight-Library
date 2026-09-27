@@ -4,7 +4,7 @@
 :icons: font
 :source-highlighter: rouge
 
-The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: for every invalid-request case the TranscriberJ derives from an API contract, an exact WireMock stub that answers the case as the contract declares, so that the same generated contract tests run unchanged against the real implementation and against a WireMock double.
+The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: WireMock stubs that answer as the API contract says -- an early, specification-compliant draft of the API, packaged for the developers of its consumers, and the reference double for contract tests in any language.
 
 // tag::root[]
 == Artifact Coordinates
@@ -23,163 +23,543 @@ The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 |Requirement |Version
 |Java |21+
 |Gradle |9.x
-|API-Only TranscriberJ |`0.10.0` or newer: the first version whose invalid-request cases carry their operation's `operationId` and declared query parameters and headers.
+|API-Only TranscriberJ |`0.13.0` or newer: the first version that gives emitters the text of each response body.
 Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
-|WireMock |`org.wiremock:wiremock-jetty12` `3.13.2`, in the project's test source sets. See <<dependency,The dependency, and Jetty §>>.
+|WireMock |The stubs are written for WireMock `3.13.2`: its mapping files, its `wiremock/wiremock:3.13.2` Docker image, and, in the `java` format, `org.wiremock:wiremock-jetty12` `3.13.2` in the project's test source sets. See <<java-dependency,The `java` format's dependencies §>>.
 |===
 
 == Why it exists
 
-A generated invalid-request contract test -- the API-Only TranscriberJ REST Docs emitter renders one per case -- sends a request the contract declares invalid, and expects the response the contract declares for it.
-Against the real implementation it needs no fixture: the inbound adapter rejects the request before any state is consulted.
-A double has no adapter, so for the same test to pass against it, the double needs a stub for every case, and writing those by hand for dozens of cases per operation is work nobody does.
-This emitter generates them.
+The team that implements an API owns its contract, and the developers of the API's consumers want to start before the implementation exists.
+What they need is something that answers *as the contract says*: the declared status, the declared content type, a body the contract allows -- for the requests they are going to send, not only for the ones somebody wrote an example for.
 
-The stubs are *exact*.
-A stub that matched more than its own request would make other tests pass for the wrong reason, and a stub that matched a *valid* request would answer the hand-written happy-path tests sharing the same server.
+This emitter generates that from the contract: WireMock stubs, packaged as an archive the team hands over or publishes.
+They are an *early draft implementation* of the API.
+The team implementing the API decides when to make them available; they are produced in that team's build, from the contract version it subscribes to.
+
+The same stubs are the reference double for contract tests.
+The contract tests the API-Only TranscriberJ's REST Docs emitter generates pass against them unchanged, so a team running its contract tests against the stubs tests *the artefact that is shipped*.
+A team whose implementation is in Go or Python uses the same archive, or a Docker image built from it, as the double for its own contract tests.
 
 == Using it
 
-Add it to the TranscriberJ's emitter configuration, beside the REST Docs emitter whose rendered tests it serves:
+Add it to the TranscriberJ's emitters, and configure it in the subscription:
 
 [source,groovy]
 ----
 dependencies {
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.2.0'
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-wiremock:0.0.1'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.4.0'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-wiremock:0.1.0'
 }
 
 apiOnlyTranscriberJ {
     subscription('user-account') {
         basePackage = 'com.example.useraccount.contract'
         sourceSets = ['testContract', 'testContractWireMock']
-        emitterOptions = [restdocs: [tests: 'true']]
+
+        emitter('restdocs') {
+            options = [tests: 'true']
+        }
+
+        // Mapping files, on no source set, packaged for the API's consumers.
+        emitter('wiremock')
     }
 }
 ----
 
-Then implement the generated tests' fixture hook in the class that runs them against WireMock, registering the case's stub:
+The files are written to `build/generated/files/transcriberj/user-account/wiremock` -- `intoFiles` sets another directory -- and `packageUserAccountWiremock` packages them.
+See <<packaging,Packaging and distribution §>>.
 
-[source,java]
+=== Options
+
+[cols="1,1,3",options="header"]
+|===
+|Option |Default |What it does
+
+|`format`
+|`files`
+|`files` writes WireMock mapping files, on no source set.
+`java` writes a class building the same mappings, compiled in the source sets the `emitter('wiremock')` block names.
+See <<formats,The two formats §>>.
+
+|`priority`
+|`1`
+|The priority of every exact stub: a whole number of 1 or more, WireMock's highest being 1.
+The fallbacks come right after it.
+See <<priorities,The priorities §>>.
+
+|`fallbacks`
+|`true`
+|`false` writes no fallback stubs: only the exact stubs, one per case.
+|===
+
+Another option name, or another value, fails generation, so that a mistake is not silently ignored.
+
+[source,groovy]
 ----
-// An in-process server, as wiremock-spring-boot gives one:
-@Override
-public void arrangeInvalidRequest(InvalidRequestCase invalid) {
-    wireMockServer.stubFor(InvalidRequestStubs.mappingFor(invalid));
+emitter('wiremock') {
+    options = [priority: '2', fallbacks: 'false']
 }
 ----
 
-[source,java]
+[#formats]
+== The two formats
+
+Both describe *the same stubs*: the tests hold the `java` format's mappings, serialised with WireMock's own mapper, equal to the files, ignoring only the identifiers WireMock generates and where a body is kept.
+
+=== `files`, the default
+
+One WireMock mapping file per stub, and one file per response body:
+
 ----
-// The static client, configured for the server with WireMock.configureFor(...):
-@Override
-public void arrangeInvalidRequest(InvalidRequestCase invalid) {
-    WireMock.stubFor(InvalidRequestStubs.mappingFor(invalid));
+mappings/
+  <operationId>/
+    <caseId>.json                  one exact stub per contract case
+    fallback-not-acceptable.json   the fallbacks, where the operation has them
+    fallback-unsupported-media-type.json
+    fallback-valid.json
+    fallback-invalid.json
+__files/
+  <contract>/
+    <BodyClass>.json               one body, shared by every stub that answers with it
+----
+
+An operation without an `operationId` is named after its generated class stem, such as `GetThingsById`.
+
+Each mapping file holds:
+
+* `name`: `<operationId>/<caseId>`, or `<operationId>/fallback-<name>`, so that WireMock's request journal and near-miss reports say which case or fallback answered;
+* `priority`;
+* `request` and `response`, the response's body as `bodyFileName`, relative to `__files`;
+* `metadata`: `contract`, `contractVersion`, `operation`, `case` (the case id, or `fallback-<name>`), `kind` (the kind of case it answers as, such as `SUCCESS` or `INVALID_REQUEST`) and `fallback` (`true` or `false`); the valid fallback adds `enforces` and `doesNotEnforce`, listing exactly what it checks, operation by operation.
+
+The files are written without WireMock on the TranscriberJ's classpath, following WireMock's mapping format; the tests hold every file to WireMock's own mapper, and to the mapping schema WireMock publishes.
+There is no Java, no source set and no managed dependency.
+
+=== `java`
+
+`<basePackage>.wiremock.ContractStubs`, compiled in the source sets the `emitter('wiremock')` block names:
+
+[source,groovy]
+----
+emitter('wiremock') {
+    sourceSets = ['testContractWireMock']
+    options = [format: 'java']
 }
 ----
-
-A `WireMock` client instance -- one pointing at a container, say -- takes the same mapping through `register`: `wireMock.register(InvalidRequestStubs.mappingFor(invalid))`.
-The class that runs the tests against the real implementation keeps the hook's default, which does nothing.
-
-A contract none of whose operations has a case generates nothing.
-
-== What it generates
-
-One class per contract, `<basePackage>.wiremock.InvalidRequestStubs`:
 
 [cols="1,3",options="header"]
 |===
 |Member |What it is
 
-|`static MappingBuilder mappingFor(InvalidRequestCase invalid)`
-|A mapping that matches exactly the case's request and answers as the contract declares for it.
-It returns the mapping rather than registering it, so the generated code does not depend on how the double is reached.
-It is named `<operationId>/<caseId>` -- `<METHOD> <path>/<caseId>` for an operation without an `operationId` -- so that WireMock's near-miss reports and request journal say which case a stub belongs to.
+|`static MappingBuilder mappingFor(ContractCase contractCase)`
+|A case's exact stub, of any kind: the case's request matched exactly, answered as the contract declares.
+Every value is taken from the case at run time.
 
-|`static final int PRIORITY`
-|The priority of every mapping. See <<priority,The priority §>>.
+|`static List<MappingBuilder> fallbacks()`, `fallbacks(Operation)`
+|Every operation's fallbacks, or one operation's.
+
+|`static List<MappingBuilder> all()`
+|Every case's exact stub, and every fallback.
+
+|`static final List<Operation> OPERATIONS`
+|A row per operation: its name, method and path template, the patterns its fallbacks match, its request body's schema, and what each fallback answers with.
+
+|`PRIORITY`, `CONTRACT`, `CONTRACT_VERSION`
+|The exact stubs' priority, and the contract the class is generated from.
 |===
 
-The method is generic: a case carries everything its stub needs -- the request's method, path template and values, query, headers, content type and body, the operation's `operationId` and declared parameters, and the expected status, content types and response class -- and every value is taken from the case at run time.
-The source holds no request value and no JSON; the only contract-specific code chooses a response body class's `requiredBody()` by the class's name.
+Choose `java` when the stubs are registered from Java rather than loaded from files: a contract test double that registers each case's stub in its hook, an in-process `WireMockServer` in a component test, or stubs a team wants to change.
 
-=== What a mapping matches
+*The class is written to be read, copied and changed.*
+It uses only the public classes of the generated tree -- `ContractCase`, `ContractRequest`, `CaseKind`, the response classes' `fullBody()` -- so a copy in a source set and package of your own keeps compiling against the generated tree.
+Change first what you came to change: replace a `fullBody()` in `body(String)` with a literal, change an operation's row in `OPERATIONS`, or a matcher in `mappingFor` or `valid`.
+The tests copy the class into a package of its own, change one response body to a literal, and serve the changed response from the copy.
 
-Every element of the case's request, and nothing looser:
+== The stubs
+
+[#exact]
+=== An exact stub for every case
+
+For every contract case the TranscriberJ derives, of every kind, one stub that matches exactly the case's request -- and nothing looser: a stub that matched more would make other tests pass for the wrong reason, and one that matched a valid request would answer in the fallback's place.
+
+[cols="1,3",options="header"]
+|===
+|Kind |Matches, besides the method, path, query parameters, headers and body
+
+|Every kind but not acceptable
+|`Accept` absent, or *acceptable*: it lists `\*/*`, a range covering one of the operation's declared response media types, or one of those media types, each with any parameters.
+Not the case's own value, so a consumer sending `Accept: application/json` alone still gets its answer; but a not-acceptable request is never answered by any other stub.
+
+|Not found
+|The case's own path values, which differ from the success case's by construction.
+
+|Not acceptable
+|`Accept` present, and not acceptable in the sense above: any unacceptable `Accept` a consumer sends gets the `406`.
+
+|Unsupported media type
+|The case's `Content-Type`.
+
+|Invalid request
+|The request with its one constraint violated.
+|===
+
+What a stub matches of the request:
 
 [cols="1,3",options="header"]
 |===
 |Element |Matched with
 
 |Method |The case's method, exactly.
-|Path |`urlPathEqualTo` the template filled with the case's path values, each percent-encoded as UTF-8 except the characters RFC 3986 leaves unreserved -- as the REST Docs emitter's rendered tests send them. WireMock compares the path as it travels, encoded.
-|Query parameters the case sends |`havingExactly` its values: a repeated name matches only with all of those values and no other. WireMock does not compare the values' order.
-|Query parameters the operation declares and the case leaves out |`absent()`: what tells a missing `required` parameter from the valid request.
-|Headers the case sends |`equalTo` the value.
-|Headers the operation declares and the case leaves out |`absent()`.
+|Path |`urlPath`: the template filled with the case's path values, each percent-encoded as UTF-8 except the characters RFC 3986 leaves unreserved. WireMock compares a path as it travels, encoded.
+|Query parameters the case sends |`hasExactly` their values: a repeated name matches only with all of those values and no other; WireMock does not compare their order.
+|Query parameters the operation declares and the case leaves out |`absent`: what tells a missing `required` parameter from the valid request.
+|Headers the case sends |`equalTo` the value; `Accept` as the table above says.
+|Headers the operation declares and the case leaves out |`absent`.
 |Content type, when the case has a body |The media type, in any case, with nothing after it but an optional `charset` parameter.
-|Body |`equalToJson(body, false, false)`: whitespace aside, array order matters and no member or element may be added or left out. WireMock takes `5` and `5.0` for the same number; no case of the fixture contracts differs from another request only so.
-|No body |`absent()`: the request has no body at all.
+|Body |`equalToJson`, array order and every member compared; `5` and `5.0` are the same number to it.
+|No body |`absent`.
 |===
 
-Headers the operation does *not* declare -- `Accept`, `User-Agent`, `Authorization`, and whatever defaults a project's client adds, such as the reference implementation's `Person-Agent` and `X-Forwarded-For` -- are not matched.
-A project's default client headers must never stop a stub from matching, and a case never violates a header the operation does not declare.
+Headers the operation does not declare -- `User-Agent`, `Authorization`, whatever defaults a consumer's client adds -- are not matched, so they never stop a stub from matching.
 
-=== What a mapping answers
+Each stub answers with the case's status; where the declared response has content, its first content type, and the body its generated class's `fullBody()` gives; where it has none, the status alone.
 
-* The case's expected status.
-* When the declared response has content: a `Content-Type` of the declared media type -- the first in declaration order, when several are declared -- and the body the response class's generated `requiredBody()` gives, which the rendered test's `document()` validates.
-* When the declared response has no content: the status alone, without a body or a `Content-Type`.
+=== Fallbacks, for every other request
 
-When the TranscriberJ cannot build a response class's valid body -- it degrades `requiredBody()` because of a construct it cannot represent -- `mappingFor` throws the TranscriberJ's own exception, naming the class and the construct, as calling any degraded method does.
-The TranscriberJ does not tell an emitter which bodies it degrades, so the case still has its mapping; it fails when the mapping is made, with the reason.
+A consumer sends requests nobody generated.
+For each operation, stubs of lower priority than every exact stub answer those as the contract would, as closely as WireMock's matchers allow, tried in this order:
 
-[#priority]
-=== The priority
+[cols="1,2,2",options="header"]
+|===
+|Fallback |Matches |Answers
 
-Every mapping has priority `1`, WireMock's highest, unless the `priority` option sets another.
-A project's own stubs usually have WireMock's default priority, `5`, and a hand-written happy-path stub for the same method and path -- `post(urlEqualTo(PATH)).willReturn(aResponse().withStatus(202))` -- would otherwise answer an invalid request in the generated stub's place when it was registered later.
-With a higher priority, the exact stub always wins for its own request, and never answers any other.
+|`fallback-not-acceptable`
+|Where the operation declares `406`: `Accept` present, and matching none of the declared response media types.
+|`406`
+
+|`fallback-unsupported-media-type`
+|Where the operation declares `415`: a `Content-Type` matching none of the declared request media types.
+|`415`
+
+|`fallback-valid`
+|The path template, each path parameter matched by the pattern its schema allows; every required query parameter and header present, and each parameter sent matching its pattern; `Accept` absent or acceptable; the request body's first declared media type; and the body by `matchesJsonSchema` against the TranscriberJ's own request body schema -- strict as `strictRequests` makes it, and its formats checked as <<fallback-limits,below>>.
+|The first `2xx` the operation declares, with its `fullBody()`
+
+|`fallback-invalid`
+|Where the operation declares the invalid-request status: the method and path template alone.
+|That status, with its `fullBody()`
+|===
+
+[#fallback-limits]
+==== What a fallback enforces, and what it does not
+
+The body is checked by its JSON Schema, and so exactly, but for one keyword: WireMock's `matchesJsonSchema` asserts no `format`.
+So beside each `uuid`, `date`, `date-time` and `email` format the schema asserts -- the TranscriberJ keeps `format` only where `validateFormats` names it -- the emitter adds a `pattern` of the format's shape, the same the parameters are checked with: `date` as four, two and two digits, `date-time` as a date, a time and an offset, `uuid` as its five groups of hexadecimal digits, and `email` as text around one `@`.
+A shape is not a calendar: `2024-02-30` has the shape of a date.
+Any other format is not checked, and the valid fallback's `metadata` names it.
+
+A parameter is checked by a regular expression derived from its schema, which cannot say everything a schema says.
+So a fallback is looser than the contract for parameters: a parameter whose value only a keyword it does not enforce rules out reaches the valid fallback, and gets the `2xx`.
+
+// tag::fallback-enforces[]
+[cols="1,2",options="header"]
+|===
+|Keyword |When the valid fallback enforces it on a parameter
+
+|`required`
+|Always: a required parameter must be sent.
+
+|`type`
+|For `string`, `integer`, `number` and `boolean`.
+
+|`enum`
+|Always.
+
+|`const`
+|Always.
+
+|`pattern`
+|For `string`.
+
+|`minLength`
+|For `string`.
+
+|`maxLength`
+|For `string`.
+
+|`format`
+|For `uuid`, `date`, `date-time` and `email`, by their shape, where `validateFormats` names them; in the body too.
+
+|`minimum`
+|Never.
+
+|`maximum`
+|Never.
+
+|`exclusiveMinimum`
+|Never.
+
+|`exclusiveMaximum`
+|Never.
+
+|`multipleOf`
+|Never.
+
+|`minItems`
+|Never.
+
+|`maxItems`
+|Never.
+
+|`uniqueItems`
+|Never.
+|===
+// end::fallback-enforces[]
+
+Besides:
+
+* A path value that travels percent-encoded -- one holding a character RFC 3986 does not leave unreserved -- is not checked at all: WireMock compares path parameters encoded, and a pattern written for the value cannot be applied to its encoding.
+* An array or object parameter is checked for presence only.
+* A body in a media type other than the request body's first is not answered by the valid fallback.
+* `Accept` is compared by media type; a `q=0` that refuses a media type is not read.
+
+The tests hold this table to the behaviour: every invalid-request case of every fixture contract, sent with the exact stubs removed, is answered by the invalid fallback exactly where the table says a keyword is enforced, and by the valid fallback where it says it is not -- a body's `format` by the table's `format` row, and every other body keyword by the invalid fallback.
+Each valid fallback's `metadata` lists, per parameter, what it enforces and what it does not.
+
+[#priorities]
+=== The priorities
+
+WireMock tries a lower number first.
+The exact stubs have `priority`, `1` by default.
+Each operation's fallbacks come after every exact stub, in the order above, and the operations whose path templates are more specific come first -- so that `/users/me` is tried before `/users/{id}`, and a request to `/users/me` is answered by its own operation's stubs, exact and fallback, never by `/users/{id}`'s:
+
+----
+fallback priority = priority + 1 + 4 × rank + tier
+----
+
+`rank` is the template's position among its method's templates, the most specific first: segment by segment, a literal before a placeholder.
+`tier` is 0 to 3, in the order of the table above.
+
+A project's own stubs at WireMock's default priority, `5`, fall among the fallbacks: set `priority` higher, or switch the fallbacks off, for a project stub to win over them.
+
+=== What the stubs cannot do
+
+* *Answer by state: a limitation of stateless stubbing.*
+An operation that answers `200` or `201` to the same `PUT`, as the resource exists or not, has two success cases with the same request, and only the implementation's state tells which answer is right.
+Stateless stubs answer a request in one way only.
+So the files keep the stub of the case the contract lists first, leave out the other case's, and the TranscriberJ's report names the case left out and why; a consumer always gets the first answer.
+Against the files, the other case's contract test fails, expecting its status and receiving the first one; with the `java` format, each test's hook registers its own case's stub just before its request, and both pass.
+WireMock's scenarios could hold such state, and are out of scope.
+* *Answer with a body the TranscriberJ cannot build.*
+Where a response's body has no valid value -- constraints nothing satisfies, a construct no rule represents -- the files leave out every stub that would answer with it, and the report says why; in the `java` format, making such a stub throws the TranscriberJ's own exception, naming the class and the reason.
+* Keep state across requests, template a response from the request, or answer with the contract's `examples`.
+* Answer `401`, `403`, `409`, `422`, `429`, a `3xx` or a `5xx`: those stay hand-written.
+
+[#contract-tests]
+== The double in contract tests
+
+With `files`, the double loads the whole mappings directory before the tests run, and the hooks of the class that runs the generated contract tests against it do nothing:
+
+[source,java]
+----
+class UserAccountStubsContractTest implements GetUserContractTests {
+
+    static WireMockServer stubs = new WireMockServer(options().dynamicPort()
+            .usingFilesUnderDirectory("build/stubs/user-account"));    // the unpacked archive
+
+    @Override
+    public void arrangeState(ContractCase contractCase) {
+        // Nothing to arrange: the published stubs already hold every case.
+    }
+    // client(), bound to stubs.baseUrl() ...
+}
+----
+
+`arrangeStatelessCase` keeps its default, which does nothing.
+The exact stubs never answer each other's requests, so every case is answered by its own stub: the contract tests verify *the artefact that is shipped*.
+
+With `java`, the hooks register each case's stub instead:
+
+[source,java]
+----
+@Override
+public void arrangeState(ContractCase contractCase) {
+    wireMockServer.stubFor(ContractStubs.mappingFor(contractCase));
+}
+
+@Override
+public void arrangeStatelessCase(ContractCase contractCase) {
+    wireMockServer.stubFor(ContractStubs.mappingFor(contractCase));
+}
+----
+
+`WireMock.stubFor(...)`, with the static client configured for the server, and `wireMock.register(...)`, with a client instance pointing at a container, take the same mapping.
+
+[WARNING]
+====
+WireMock *deletes* the mapping files in its working directory when its stubs are reset or removed -- `resetAll()`, `resetMappings()`, `removeStub(...)`, or `POST /__admin/reset` on a running server.
+Point a server at a copy of the unpacked archive, never at the archive's only copy or the generated directory, and unpack it afresh for every run.
+====
+
+[#packaging]
+== Packaging and distribution
+
+=== The archive
+
+`package<Contract>Wiremock` -- `packageUserAccountWiremock` for `user-account` -- packages the files directory and an `apionly-provenance.json`, the contract's name, version and hash and the TranscriberJ's and this emitter's version and options, into `build/distributions/<contract>-wiremock-<contractVersion>.zip`.
+`mappings/` and `__files/` sit at the archive's root, so the archive unpacks straight into WireMock's working directory.
+The archive is reproducible: the same bytes for the same contract and options, on any machine.
+`assemble` does not build it.
+
+=== A Docker image
+
+This `Dockerfile`, beside the unpacked archive, builds an image of the official WireMock image with the stubs in it:
+
+[source,dockerfile]
+----
+# tag::dockerfile[]
+ARG WIREMOCK_VERSION=3.13.2
+FROM wiremock/wiremock:${WIREMOCK_VERSION}
+COPY mappings /home/wiremock/mappings
+COPY __files /home/wiremock/__files
+# end::dockerfile[]
+----
+
+The tests build exactly this `Dockerfile` from the archive, run the image, and replay every case against it.
+To move to another WireMock, change `WIREMOCK_VERSION`, or pass it with `--build-arg`.
+
+The TranscriberJ does not build images.
+A project that wants one owns the task; for instance, with the `Dockerfile` at `src/docker/stubs/Dockerfile`:
 
 [source,groovy]
 ----
-emitterOptions = [restdocs: [tests: 'true'], wiremock: [priority: '2']]
+def stubsArchive = tasks.named('packageUserAccountWiremock', Zip)
+
+tasks.register('unpackStubs', Sync) {
+    from(zipTree(stubsArchive.flatMap { it.archiveFile }))
+    from('src/docker/stubs/Dockerfile')
+    into(layout.buildDirectory.dir('docker/user-account-stubs'))
+}
+
+tasks.register('stubsImage', Exec) {
+    dependsOn 'unpackStubs'
+    workingDir layout.buildDirectory.dir('docker/user-account-stubs')
+    commandLine 'docker', 'build', '--build-arg', 'WIREMOCK_VERSION=3.13.2',
+            '-t', "example/user-account-stubs:${version}", '.'
+}
 ----
 
-`priority` is the emitter's only option: a whole number of 1 or more.
-Another option name, or another value, fails generation, so that a mistake is not silently ignored.
+=== Running it, and using it from Go or Python
 
-== Where the generated code lives
+A consumer runs the image, and sends its requests to port 8080:
 
-The TranscriberJ compiles everything its emitters generate into the source sets the subscription names -- `test` unless it names others -- and never anywhere else.
-The stubs depend on WireMock, so they must only be compiled where WireMock is on the classpath: test source sets, never `main`.
-*Do not name `main` in a subscription with this emitter*: WireMock would become a production dependency.
+[source,console]
+----
+docker run --rm -p 8080:8080 example/user-account-stubs:1.0.0
+----
 
-The TranscriberJ has no way to place one emitter's output in fewer source sets than another's, so the stubs are compiled into every source set the subscription names, including one whose tests run against the real implementation.
-Each of those source sets gets the managed WireMock dependency, below.
+Or runs the official image over the unpacked archive, without building one:
 
-[#dependency]
-== The dependency, and Jetty
+[source,console]
+----
+unzip user-account-wiremock-1.0.0.zip -d stubs
+docker run --rm -p 8080:8080 -v "$PWD/stubs:/home/wiremock" wiremock/wiremock:3.13.2
+----
 
-The TranscriberJ adds `org.wiremock:wiremock-jetty12` to the source sets it generates into, at 3.13.2, unless the project declares a version itself; a version from 4 on is reported as not tested with this emitter.
-It is the artifact `org.wiremock.integrations:wiremock-spring-boot` 4.x brings, at the version 4.4.1 brings, so a project that uses it resolves nothing new.
+A team whose implementation is in Go or Python uses the same image as the double for its own contract tests, started by Testcontainers and waited for on WireMock's health endpoint:
 
-`wiremock-jetty12` 3.13.2 imports the Jetty 12.0.30 BOM, while `wiremock-spring-boot` 4.4.1 asks for Jetty 12.1.6, and Spring Boot's own dependency management may ask for yet another.
-Keep WireMock's Jetty stack on one version, in every source set the stubs are compiled into, as the reference implementation does:
+[source,go]
+----
+stubs, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+    ContainerRequest: testcontainers.ContainerRequest{
+        Image:        "example/user-account-stubs:1.0.0",
+        ExposedPorts: []string{"8080/tcp"},
+        WaitingFor:   wait.ForHTTP("/__admin/health").WithPort("8080/tcp"),
+    },
+    Started: true,
+})
+----
+
+[source,python]
+----
+with DockerContainer("example/user-account-stubs:1.0.0").with_exposed_ports(8080) as stubs:
+    base_url = f"http://{stubs.get_container_host_ip()}:{stubs.get_exposed_port(8080)}"
+----
+
+Each stub's `name` and `metadata` say which case or fallback answered, in the container's request journal at `GET /__admin/requests`.
+
+=== Publishing the archive
+
+The archive is the artifact of the consumable configuration `transcriberjUserAccountWiremockElements`, and of the component `transcriberjUserAccountWiremock`, so `maven-publish` publishes it without naming a task:
 
 [source,groovy]
 ----
-testImplementation(enforcedPlatform('org.eclipse.jetty:jetty-bom:12.1.5'))
-testImplementation(enforcedPlatform('org.eclipse.jetty.ee10:jetty-ee10-bom:12.1.5'))
+plugins {
+    id 'maven-publish'
+}
+
+publishing {
+    publications {
+        userAccountStubs(MavenPublication) {
+            from components.transcriberjUserAccountWiremock
+            artifactId = 'user-account-wiremock-stubs'
+        }
+    }
+}
 ----
 
-`spring-cloud-contract-wiremock` brings `org.wiremock:wiremock-standalone`, which holds the same classes shaded; a project that has both on a classpath has two copies of WireMock, and should settle on one.
+A consumer resolves it as `'<group>:user-account-wiremock-stubs:<version>@zip'`.
 
-== What it does not do
+== The Mirage API Detector
 
-* It stubs invalid-request cases only. Successful responses, and the `401`, `403`, `409`, `422` and `429` a double answers, stay hand-written.
-* It writes no mapping files for a containerized WireMock: a Java-registered stub serves the contract tests, and a mapping file would be read by the Mirage API Detector as a stubbed endpoint.
-* It keeps no state across requests: no WireMock scenarios.
+The Mirage API Detector reads WireMock mapping files as evidence of stubbed endpoints, from `src/test/resources/mappings` unless told otherwise.
+The generated files are not there, so it does not read them.
+To have it read them as well, add their `mappings` directory to `stubDirs`:
+
+[source,groovy]
+----
+mirageApiDetector {
+    scanMocks = true
+    stubDirs.from('src/test/resources/mappings',
+            layout.buildDirectory.dir('generated/files/transcriberj/user-account/wiremock/mappings'))
+}
+----
+
+Run the generation first -- `generateContractSourcesUserAccountWiremock` -- or make `detectMirageApis` depend on it.
+
+Two things the detector does not read the way these stubs are written, as of Mirage API Detector 4.8.1:
+
+* the fallbacks match `urlPathTemplate`, which the detector does not read, so it finds no endpoint in them;
+* an exact stub matches its case's literal path, and the detector recognises a path value as a path variable only when it is all digits, so `/v1/users/aaaa` is read as an endpoint of its own rather than as `/v1/users/{username}`.
+
+Reading both is tracked in https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle/issues/292[SoftwareEngineeringDoneRight-Gradle#292 ↗].
+Since the stubs are generated from the contract, they stub nothing the contract does not declare.
+
+[#java-dependency]
+== The `java` format's dependencies
+
+In the `java` format the TranscriberJ adds `org.wiremock:wiremock-jetty12` to the emitter's source sets, at 3.13.2, unless the project declares a version itself; a version from 4 on is reported as not tested with this emitter.
+It is the artifact `org.wiremock.integrations:wiremock-spring-boot` 4.x brings, so a project that uses it resolves nothing new.
+The `files` format has no source set, and so no dependency.
+
+* The valid fallback's `matchesJsonSchema` needs WireMock's own `com.networknt:json-schema-validator` 1.x.
+A project that puts version 2 or later on the same classpath -- for its own schema validation -- breaks it with `NoClassDefFoundError: com/networknt/schema/SchemaValidatorsConfig`; `org.wiremock:wiremock-standalone`, which shades its dependencies, avoids that, and is what this emitter's own tests use.
+* `wiremock-jetty12` 3.13.2 imports the Jetty 12.0 BOM, while `wiremock-spring-boot` 4.4.1 asks for Jetty 12.1: keep WireMock's Jetty on one version in every source set the stubs are compiled into, with `enforcedPlatform('org.eclipse.jetty:jetty-bom:<version>')`.
+* `spring-cloud-contract-wiremock` brings `wiremock-standalone`, which holds the same classes shaded: settle on one of the two per classpath.
+
+== Upgrading from 0.0.1
+
+0.0.1 wrote Java only, `InvalidRequestStubs`, for invalid-request cases only.
+
+* *The default is now mapping files.*
+A subscription that relied on `InvalidRequestStubs` sets `options = [format: 'java']` in its `emitter('wiremock')` block, and names the source sets the class is compiled in; without it, no Java is generated, and the project stops compiling.
+* *`InvalidRequestStubs.mappingFor(InvalidRequestCase)` is `ContractStubs.mappingFor(ContractCase)`*, for a case of any kind.
+The REST Docs emitter 0.4 calls the hooks `arrangeState` and `arrangeStatelessCase`; register the case's mapping in each.
+* A stub now answers with the response class's `fullBody()`, not `requiredBody()`.
+* An operation without an `operationId` names its stubs after its class stem, not `<METHOD> <path>`.
+* `Accept` is now matched: absent or acceptable for every case but the not-acceptable one.
+* The fallbacks are new, and on by default; `fallbacks: 'false'` switches them off.
 
 == Development
 
@@ -190,11 +570,9 @@ cd api-only-transcriberj-wiremock
 ./gradlew publishToMavenLocal
 ----
 
-The tests generate the fixture contracts -- a copy of the reference implementation's user-account contract, the TranscriberJ's invalid-request keyword corpus and its degraded construct, and two contracts of their own for encoding and responses -- with the REST Docs emitter's rendered tests and this emitter's stubs.
-They compile what comes out with `-Xlint:all`, and run the rendered tests in-process through the JUnit Platform Launcher against a real, in-process WireMock server whose only fixture is the stub each test's hook registers.
-Every server carries a catch-all stub at the lowest priority, answering `200`, so a request no generated stub matches fails its test with the "accepted" message rather than for WireMock's `404`.
-
-Exactness is proven over every case: with every mapping registered at one priority, once in canonical order and once in reverse, each request is answered by its own stub -- WireMock answers with the most recently added of several matching stubs, so a request that matched another stub would be answered by it in one of the two orders.
-Every operation's valid requests reach the catch-all, alone and with a project's extra headers; with any one stub left out, or answering `200`, exactly that case's test fails; and the Doppelganger API Detector's contract-evidence scan counts no stub as a test.
+The tests generate the fixture contracts -- a copy of the reference API's user-account contract, the TranscriberJ's invalid-request keyword corpus and contract-case corpus, and contracts of their own for encoding, responses, path precedence and an unbuildable body -- with the REST Docs emitter's contract tests and this emitter's stubs in both formats.
+They compile what comes out with `-Xlint:all`, and run the contract tests in-process through the JUnit Platform Launcher against a real WireMock server loading only the generated files, and again registering the `java` format's mappings.
+A consumer build of the TranscriberJ, run with Gradle TestKit, packages the archive; the tests build the README's `Dockerfile` from it, run the image with Testcontainers, and replay every case against it.
+Docker must be running for those tests.
 `check` gates on 90% instruction coverage and on Javadoc without warnings.
 // end::root[]

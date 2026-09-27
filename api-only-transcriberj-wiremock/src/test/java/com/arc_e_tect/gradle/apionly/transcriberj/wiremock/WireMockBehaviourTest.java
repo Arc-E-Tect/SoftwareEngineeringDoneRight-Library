@@ -2,6 +2,7 @@ package com.arc_e_tect.gradle.apionly.transcriberj.wiremock;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock.JsonSchemaVersion;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.absent;
+import static com.github.tomakehurst.wiremock.client.WireMock.and;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonSchema;
+import static com.github.tomakehurst.wiremock.client.WireMock.not;
+import static com.github.tomakehurst.wiremock.client.WireMock.or;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathTemplate;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
@@ -138,5 +145,98 @@ class WireMockBehaviourTest {
         assertThat(status(mapping, "POST", "/n", "{\"n\":5}")).isEqualTo(400);
         assertThat(send("POST", "/n", "{\"n\":5.0}")).isEqualTo(400);
         assertThat(send("POST", "/n", "{\"n\":5.5}")).isEqualTo(299);
+    }
+
+    // --------------------------------------------- what the fallbacks and the Accept rule rely on
+
+    private static int send(String method, String pathAndQuery, String body, String... headers)
+            throws IOException, InterruptedException {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(server.baseUrl() + pathAndQuery));
+        request.method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body));
+        for (int i = 0; i < headers.length; i += 2) request.header(headers[i], headers[i + 1]);
+        return CLIENT.send(request.build(), HttpResponse.BodyHandlers.discarding()).statusCode();
+    }
+
+    private static void answer(MappingBuilder mapping) {
+        server.stubFor(mapping.willReturn(aResponse().withStatus(400)));
+    }
+
+    @Test
+    void absentOrMatchingMatchesAnAbsentHeaderAndAMatchingOneOnly() throws Exception {
+        answer(get(urlPathEqualTo("/h")).withHeader("Accept", or(absent(), matching("(?i)application/json"))));
+        assertThat(send("GET", "/h", null)).as("absent").isEqualTo(400);
+        assertThat(send("GET", "/h", null, "Accept", "application/json")).as("matching").isEqualTo(400);
+        assertThat(send("GET", "/h", null, "Accept", "text/csv")).as("other").isEqualTo(299);
+    }
+
+    /** Why "present and not acceptable" is written {@code and(matching(".*"), not(...))}. */
+    @Test
+    void aNegatedPatternAloneAlsoMatchesAnAbsentHeader() throws Exception {
+        answer(get(urlPathEqualTo("/n")).withHeader("Accept", not(matching("(?i)application/json"))));
+        assertThat(send("GET", "/n", null)).as("absent").isEqualTo(400);
+        reset();
+        answer(get(urlPathEqualTo("/a")).withHeader("Accept", and(matching(".*"), not(matching("(?i)application/json")))));
+        assertThat(send("GET", "/a", null)).as("absent").isEqualTo(299);
+        assertThat(send("GET", "/a", null, "Accept", "text/csv")).as("other").isEqualTo(400);
+        assertThat(send("GET", "/a", null, "Accept", "application/json")).as("matching").isEqualTo(299);
+    }
+
+    /** Why a fallback does not check a path value that travels percent-encoded. */
+    @Test
+    void aPathParameterIsComparedAsItTravelsPercentEncoded() throws Exception {
+        answer(get(urlPathTemplate("/users/{id}")).withPathParam("id", matching("[a-z ]+")));
+        assertThat(send("GET", "/users/abc", null)).isEqualTo(400);
+        assertThat(send("GET", "/users/a%20b", null)).as("decoded, it would match").isEqualTo(299);
+        assertThat(send("GET", "/users/123", null)).isEqualTo(299);
+        assertThat(send("GET", "/users/abc/def", null)).as("one segment only").isEqualTo(299);
+    }
+
+    @Test
+    void aLiteralTemplateMatchesItsPathOnly() throws Exception {
+        answer(get(urlPathTemplate("/users/me")));
+        assertThat(send("GET", "/users/me", null)).isEqualTo(400);
+        assertThat(send("GET", "/users/you", null)).isEqualTo(299);
+    }
+
+    private static final String SCHEMA = "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\","
+            + "\"type\":\"object\",\"required\":[\"e\"],\"properties\":{\"e\":{\"type\":\"string\","
+            + "\"format\":\"email\"}},\"additionalProperties\":false}";
+
+    /** What the valid fallback's body check asserts, and what it does not: {@code format}. */
+    @Test
+    void matchesJsonSchemaAssertsEveryKeywordButFormat() throws Exception {
+        answer(post(urlPathEqualTo("/s")).withRequestBody(matchingJsonSchema(SCHEMA, JsonSchemaVersion.V202012)));
+        assertThat(send("POST", "/s", "{\"e\":\"a@b.c\"}")).as("valid").isEqualTo(400);
+        assertThat(send("POST", "/s", "{\"e\":\"a@b.c\",\"x\":1}")).as("unknown member").isEqualTo(299);
+        assertThat(send("POST", "/s", "{}")).as("missing member").isEqualTo(299);
+        assertThat(send("POST", "/s", null)).as("no body").isEqualTo(299);
+        assertThat(send("POST", "/s", "{\"e\":\"not an email\"}")).as("format, not asserted").isEqualTo(400);
+    }
+
+    @Test
+    void anAbsentOrValidBodyMatchesNoBodyAndAValidOneOnly() throws Exception {
+        answer(post(urlPathEqualTo("/o")).withRequestBody(or(absent(),
+                matchingJsonSchema(SCHEMA, JsonSchemaVersion.V202012))));
+        assertThat(send("POST", "/o", null)).isEqualTo(400);
+        assertThat(send("POST", "/o", "{\"e\":\"a@b.c\"}")).isEqualTo(400);
+        assertThat(send("POST", "/o", "{}")).isEqualTo(299);
+    }
+
+    /** Why the tests serve every stub from a copy of the files directory. */
+    @Test
+    void resettingAServerDeletesTheMappingFilesOfItsWorkingDirectory(@org.junit.jupiter.api.io.TempDir java.nio.file.Path root)
+            throws Exception {
+        java.nio.file.Path mapping = java.nio.file.Files.createDirectories(root.resolve("mappings")).resolve("m.json");
+        java.nio.file.Files.writeString(mapping, "{\"request\":{\"method\":\"GET\",\"urlPath\":\"/f\"},"
+                + "\"response\":{\"status\":204}}");
+        WireMockServer files = new WireMockServer(options().dynamicPort().usingFilesUnderDirectory(root.toString()));
+        files.start();
+        try {
+            assertThat(files.getStubMappings()).hasSize(1);
+            files.resetMappings();
+            assertThat(mapping).doesNotExist();
+        } finally {
+            files.stop();
+        }
     }
 }
