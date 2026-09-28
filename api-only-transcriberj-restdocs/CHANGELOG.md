@@ -1,3 +1,15 @@
+## [0.4.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.4.0...api-only-transcriberj-restdocs-v0.4.1) (2026-09-28)
+
+
+### 🐛 Bug Fixes
+
+* **api-only-transcriberj-restdocs:** say how to read a red run in the generated Javadoc, and link the guides ([#108](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/108)) ([14ebda3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/14ebda3e18b0f09a3f20e382b7268ac6b2a72808)), closes [#108](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/108) [#59](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/59)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-restdocs:** update README version to 0.4.0 [skip ci] ([a0ed547](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a0ed5473af5698655ec4f3aa32f6e31cea966a04))
+
 # [0.4.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.3.0...api-only-transcriberj-restdocs-v0.4.0) (2026-09-27)
 
 
