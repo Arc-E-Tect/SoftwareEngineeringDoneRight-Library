@@ -101,7 +101,12 @@ class FixtureHookTest {
         }
         for (String tests : suite.interfaces) {
             assertThat(Files.readString(suite.source("com/example/contract/restdocs/" + tests + ".java")))
-                    .contains("    default void arrangeStatelessCase(ContractCase contractCase) {\n    }\n");
+                    .contains("    default void arrangeStatelessCase(ContractCase contractCase) {\n    }\n")
+                    // The stateless tests' limit, as the TranscriberJ's README states it: read the first
+                    // failure first and re-run on fresh state, rather than reset between runs.
+                    .contains(" * <p><b>WARNING:</b> these tests are not independent of each other.")
+                    .contains("Read the first failing stateless test first")
+                    .doesNotContain("reset the state between runs");
         }
     }
 

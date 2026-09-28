@@ -41,6 +41,9 @@ The same stubs are the reference double for contract tests.
 The contract tests the API-Only TranscriberJ's REST Docs emitter generates pass against them unchanged, so a team running its contract tests against the stubs tests *the artefact that is shipped*.
 A team whose implementation is in Go or Python uses the same archive, or a Docker image built from it, as the double for its own contract tests.
 
+So the stubs have two purposes: an early, specification-compliant draft of the API, for its consumers, and the reference double for contract tests, in any language.
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/docs/guides/generated-contract-tests/overview.adoc[The guide to generated contract tests ↗] says what a fallback enforces and how the double runs the generated tests; https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/examples/transcriberj/generated-contract-tests/README.adoc[its worked example ↗] packages the stubs, builds an image from them, and runs the same contract tests against them and against the real service.
+
 == Using it
 
 Add it to the TranscriberJ's emitters, and configure it in the subscription:
@@ -356,7 +359,7 @@ Where a response's body has no valid value -- constraints nothing satisfies, a c
 * Keep state across requests, template a response from the request, or answer with the contract's `examples`.
 * Answer `401`, `403`, `409`, `422`, `429`, a `3xx` or a `5xx`: those stay hand-written.
 
-[#contract-tests]
+[#double-in-contract-tests]
 == The double in contract tests
 
 With `files`, the double loads the whole mappings directory before the tests run, and the hooks of the class that runs the generated contract tests against it do nothing:
