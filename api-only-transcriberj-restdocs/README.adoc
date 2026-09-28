@@ -88,6 +88,17 @@ With the option `tests` on, this emitter renders every case as a Spring REST Doc
 
 This is what makes the suite a contract test suite rather than a validation suite: a `GET` whose success case expects `200` runs after the fixture has put the resource in place, and passes when the service answers `200` with a body matching the declared fields, whatever the values.
 
+[WARNING]
+.Generated stateless contract tests are not independent of each other
+====
+The not-acceptable, unsupported-media-type and invalid-request tests start from the same valid request, so one the service wrongly accepts may leave state behind, and later tests then answer differently.
+The success and not-found tests are independent when their `arrangeState` is correct.
+A green run is trustworthy; in a red one, read the first failing stateless test first, fix it, and re-run on fresh state before you diagnose the next.
+This is a known and accepted limit, not a defect awaiting a fix: {PRIN}[the TranscriberJ's README ↗] states it in full, and <<principle,Independence: stateless and stateful tests>> says why.
+====
+
+{GEN}[The guide to generated contract tests ↗] adopts these tests step by step, on {EX}[a worked example ↗]; {HW}[the guide to hand-written contract tests ↗] writes the ones the generator cannot, on the same pattern.
+
 [source,groovy]
 ----
 apiOnlyTranscriberJ {
@@ -259,17 +270,14 @@ A double overrides it, to answer the request as the contract declares.
 [#principle]
 ==== Independence: stateless and stateful tests
 
-[IMPORTANT]
-====
 *A stateless test is only as independent as the implementation is correct.*
 A correct implementation refuses every not-acceptable, unsupported-media-type and invalid request without storing anything.
 One it _wrongly_ accepts may leave state behind -- an order created from an invalid body -- and the tests after it run against a service that is no longer what they assume.
-The failing test reports that defect; until it is fixed, reset the state between runs.
+So read the first failing stateless test first, fix what it points at, and re-run on fresh state before you diagnose the next failure.
 
 *A stateful test is independent and repeatable when its hook is correct.*
 The success and not-found tests say what state they need, and a hook that creates exactly that makes each of them pass in any order, any number of times, whatever ran before.
 This emitter's own tests run the suite twice without resetting the service, and three times in a random order, to prove it.
-====
 
 This follows from generating tests from a contract rather than from an implementation: the generator cannot know what an implementation stores, or how.
 
@@ -330,8 +338,7 @@ Against WireMock, the response snippet holds WireMock's `Matched-Stub-Id` and `M
 
 Nothing this emitter generates includes them, and no document should.
 Published API documentation comes from documentation tests a developer writes on purpose: specific requests and responses with meaningful data, built on the generated schema classes and the `<Name>Docs` descriptors.
-// Placeholder: the documentation guide does not exist yet. Replace the link once it does.
-link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/docs/guides/documentation-tests[The guide to documentation tests ↗] says how to write them.
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/blob/main/docs/guides/documentation-tests/overview.adoc[The guide to documentation tests ↗] says how to write them.
 
 [#test-dependencies]
 === What the tests depend on

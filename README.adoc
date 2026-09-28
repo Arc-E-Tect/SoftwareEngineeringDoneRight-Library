@@ -35,7 +35,7 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |Published Microcks emitter for the API-Only TranscriberJ Gradle plugin: a JUnit 5 conformance test per `send` operation of an API contract's AsyncAPI document, checking what an application publishes against a Microcks-imported copy of the contract.
 
 |`api-only-transcriberj-wiremock/`
-|Published WireMock emitter for the API-Only TranscriberJ Gradle plugin: an exact WireMock stub per invalid-request case the TranscriberJ derives from an API contract, so its generated contract tests run unchanged against a WireMock double.
+|Published WireMock emitter for the API-Only TranscriberJ Gradle plugin: WireMock stubs for every contract case the TranscriberJ derives from an API contract, with fallbacks for every other request, packaged for the API's consumers and serving as the reference double for contract tests in any language.
 
 |`nvd-cache-primer/`
 |Internal utility project that primes and validates the shared OWASP Dependency-Check NVD cache used by this repository's security-scan workflows. Not published.
@@ -45,6 +45,12 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 
 |`examples/sedr-library/jacoco-marker/`
 |Runnable example that demonstrates compliant and non-compliant usage of `@ExcludeFromJacocoGeneratedCodeCoverage`.
+
+|`examples/api-only-transcriberj/description-bundles/`
+|Runnable example of the API-Only TranscriberJ's descriptions from a `ResourceBundle` the project owns, in more than one language.
+
+|`examples/api-only-transcriberj/hand-written-contract-tests/`
+|Runnable example of contract tests written by hand on the classes the API-Only TranscriberJ generates, where the generator cannot write a request body.
 
 |https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/examples/transcriberj/generated-contract-tests[`examples/transcriberj/generated-contract-tests/`], in the API repository
 |Runnable example of everything the API-Only TranscriberJ and its REST Docs and WireMock emitters generate: contract tests run against the real service and against a WireMock double, their fixtures, the stubs as an archive and a Docker image, and published documentation from a documentation test suite.
