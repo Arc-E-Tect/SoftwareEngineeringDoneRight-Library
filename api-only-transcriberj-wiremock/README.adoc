@@ -531,12 +531,9 @@ mirageApiDetector {
 
 Run the generation first -- `generateContractSourcesUserAccountWiremock` -- or make `detectMirageApis` depend on it.
 
-Two things the detector does not read the way these stubs are written, as of Mirage API Detector 4.8.1:
-
-* the fallbacks match `urlPathTemplate`, which the detector does not read, so it finds no endpoint in them;
-* an exact stub matches its case's literal path, and the detector recognises a path value as a path variable only when it is all digits, so `/v1/users/aaaa` is read as an endpoint of its own rather than as `/v1/users/{username}`.
-
-Reading both is tracked in https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle/issues/292[SoftwareEngineeringDoneRight-Gradle#292 ↗].
+Use Mirage API Detector 4.8.2 or later.
+It reads a fallback's `urlPathTemplate` as the template it is, and an exact stub's literal path as the operation the stub's `metadata.operation` names, so `/v1/users/aaaa` counts as evidence for `/v1/users/{username}`.
+Earlier versions find no endpoint in the fallbacks, and read an exact stub's path as an endpoint of its own unless its path values are all digits.
 Since the stubs are generated from the contract, they stub nothing the contract does not declare.
 
 [#java-dependency]
