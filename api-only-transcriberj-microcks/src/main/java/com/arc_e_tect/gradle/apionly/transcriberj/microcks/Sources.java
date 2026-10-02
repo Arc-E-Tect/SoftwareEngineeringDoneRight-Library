@@ -91,10 +91,16 @@ final class Sources {
                 import org.junit.jupiter.api.Test;
                 import org.junit.jupiter.api.TestInstance;
                 import org.testcontainers.containers.Network;
+                import org.testcontainers.shaded.com.fasterxml.jackson.databind.DeserializationFeature;
+                import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
                 import java.io.IOException;
                 import java.io.InputStream;
                 import java.io.UncheckedIOException;
+                import java.net.URI;
+                import java.net.http.HttpClient;
+                import java.net.http.HttpRequest;
+                import java.net.http.HttpResponse;
                 import java.nio.file.Path;
                 import java.time.Duration;
                 import java.util.List;
@@ -252,6 +258,12 @@ final class Sources {
                      * publishing: {@link #testTimeout()} plus five seconds by default, so a longer
                      * listening time is waited for without overriding this as well.
                      *
+                     * <p>Microcks reports only once it has listened for all of
+                     * {@link #testTimeout()}, and its async minion can take a while longer to report
+                     * the first test, while it is still cold. A test that has no result when this
+                     * has passed fails, saying Microcks had not finished; override this to wait
+                     * longer.
+                     *
                      * @return the waiting time
                      */
                     default Duration resultTimeout() {
@@ -317,8 +329,58 @@ final class Sources {
                         return matches.get(0).getName() + ":" + matches.get(0).getVersion();
                     }
 
-                    /** Every failed step of a test result's test cases, for a clear assertion. */
+                    /**
+                     * Microcks' final result of the test {@code future} is running, waited for for
+                     * no longer than {@code within}.
+                     *
+                     * <p>microcks-testcontainers waits for Microcks to finish a test for only the
+                     * test's own timeout plus one second, and then returns the result as it stands.
+                     * When Microcks takes longer to report, that result is still in progress: not a
+                     * success, though nothing failed. So this asks Microcks for it again until it is
+                     * final or {@code within} has passed, and returns what it has then. Nothing is
+                     * published again: there is still one message and one verdict on it.
+                     */
+                    private static TestResult verdict(CompletableFuture<TestResult> future, Duration within,
+                                                      String microcksEndpoint) throws Exception {
+                        long deadline = System.nanoTime() + within.toNanos();
+                        TestResult result = future.get(within.toMillis(), TimeUnit.MILLISECONDS);
+                        while (result.isInProgress() && System.nanoTime() < deadline) {
+                            Thread.sleep(200);
+                            result = testResult(microcksEndpoint, result.getId());
+                        }
+                        return result;
+                    }
+
+                    /**
+                     * Microcks' result of the test {@code id} as it stands, from its REST API at
+                     * {@code microcksEndpoint}. Read with the Jackson microcks-testcontainers reads
+                     * its own results with, the one Testcontainers shades.
+                     */
+                    private static TestResult testResult(String microcksEndpoint, String id)
+                            throws IOException, InterruptedException {
+                        try (HttpClient client = HttpClient.newHttpClient()) {
+                            HttpResponse<String> response = client.send(
+                                    HttpRequest.newBuilder(URI.create(microcksEndpoint + "/api/tests/" + id)).GET().build(),
+                                    HttpResponse.BodyHandlers.ofString());
+                            if (response.statusCode() != 200) {
+                                throw new IOException("Microcks answered " + response.statusCode()
+                                        + " when asked for the result of test " + id + ".");
+                            }
+                            return new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                                    .readValue(response.body(), TestResult.class);
+                        }
+                    }
+
+                    /**
+                     * Why a test result is not a success, for a clear assertion: every failed step
+                     * of its test cases, or, when Microcks had not finished, that there is no verdict.
+                     */
                     private static String diagnostics(TestResult result) {
+                        if (result.isInProgress()) {
+                            return "Microcks had not finished testing " + result.getTestedEndpoint()
+                                    + " when resultTimeout() had passed, so there is no verdict on the message:"
+                                    + " it is not known to conform or not to. Override resultTimeout() to wait longer.";
+                        }
                         StringBuilder out = new StringBuilder();
                         result.getTestCaseResults().forEach(testCase -> testCase.getTestStepResults().stream()
                                 .filter(step -> !step.isSuccess())
@@ -368,7 +430,8 @@ final class Sources {
                     /**
                      * Asks Microcks to listen on a suffixed channel, waits {@link #subscriptionDelay()}
                      * for it to subscribe, publishes a message through {@link #%1$s(String)}, and
-                     * checks what Microcks received against operation {@code %1$s} of {@link %2$s}.
+                     * checks what Microcks received against operation {@code %1$s} of {@link %2$s},
+                     * once Microcks has reported, within {@link #resultTimeout()}.
                      */
                     @Test
                     default void %1$s_conformsToContract() throws Exception {
@@ -384,7 +447,8 @@ final class Sources {
                                 ensemble().getMicrocksContainer().testEndpointAsync(request);
                         Thread.sleep(subscriptionDelay().toMillis());
                         %1$s(suffixedChannel);
-                        TestResult result = future.get(resultTimeout().toMillis(), TimeUnit.MILLISECONDS);
+                        TestResult result = verdict(future, resultTimeout(),
+                                ensemble().getMicrocksContainer().getHttpEndpoint());
                         Assertions.assertTrue(result.isSuccess(), () -> diagnostics(result));
                     }
 

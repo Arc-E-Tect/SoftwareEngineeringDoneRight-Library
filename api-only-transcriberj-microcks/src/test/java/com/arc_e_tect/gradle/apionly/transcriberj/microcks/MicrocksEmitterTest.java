@@ -5,6 +5,8 @@ import com.arc_e_tect.gradle.apionly.transcriberj.core.GenerationException;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.Emitter;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.ManagedDependency;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.Settings;
+import com.sun.net.httpserver.HttpServer;
+import io.github.microcks.testcontainers.model.TestResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -15,17 +17,23 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import java.lang.reflect.Executable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -147,7 +155,7 @@ class MicrocksEmitterTest {
         String test = source.substring(source.indexOf("default void publishRegistrationInitiated_conformsToContract"));
         test = test.substring(0, test.indexOf("\n    }\n"));
         assertThat(test).contains(".timeout(testTimeout())")
-                .contains("future.get(resultTimeout().toMillis(), TimeUnit.MILLISECONDS)")
+                .contains("verdict(future, resultTimeout(),")
                 .doesNotContain("ofSeconds(10)").doesNotContain("15, TimeUnit");
 
         Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
@@ -162,6 +170,163 @@ class MicrocksEmitterTest {
                         ? java.time.Duration.ofSeconds(60)
                         : java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
         assertThat(harness.getMethod("resultTimeout").invoke(slower)).isEqualTo(java.time.Duration.ofSeconds(65));
+    }
+
+    @Test
+    void aTestPublishesOnceAndAssertsOnMicrocksVerdict() throws Exception {
+        userAccount();
+        String source = Files.readString(sources.resolve(PACKAGE.replace('.', '/') + "/microcks/AsyncConformanceHarness.java"));
+        String test = source.substring(source.indexOf("default void publishRegistrationInitiated_conformsToContract"));
+        test = test.substring(0, test.indexOf("\n    }\n"));
+
+        assertThat(test.split("publishRegistrationInitiated\\(suffixedChannel\\)", -1)).hasSize(2);
+        assertThat(test.indexOf("publishRegistrationInitiated(suffixedChannel)"))
+                .isLessThan(test.indexOf("verdict(future"));
+        assertThat(test.indexOf("verdict(future")).isLessThan(test.indexOf("Assertions.assertTrue(result.isSuccess()"));
+    }
+
+    @Test
+    void aResultMicrocksHadNotFinishedIsAskedForAgainUntilItIsFinal() throws Exception {
+        Class<?> harness = harness();
+        try (FakeMicrocks microcks = FakeMicrocks.answering(200, IN_PROGRESS, IN_PROGRESS, CONFORMS)) {
+            TestResult result = verdict(harness, inProgress(), Duration.ofSeconds(10), microcks.endpoint());
+
+            assertThat(result.isInProgress()).isFalse();
+            assertThat(result.isSuccess()).isTrue();
+            assertThat(microcks.asked()).hasValue(3);
+        }
+    }
+
+    @Test
+    void aMessageThatDoesNotConformStillFailsWithWhatMicrocksFound() throws Exception {
+        Class<?> harness = harness();
+        try (FakeMicrocks microcks = FakeMicrocks.answering(200, IN_PROGRESS, DOES_NOT_CONFORM)) {
+            TestResult result = verdict(harness, inProgress(), Duration.ofSeconds(10), microcks.endpoint());
+
+            assertThat(result.isSuccess()).isFalse();
+            assertThat(microcks.asked()).hasValue(2);
+            assertThat(diagnostics(harness, result))
+                    .isEqualTo("SEND publishRegistrationInitiated: $.username: is missing but it is required\n");
+        }
+    }
+
+    @Test
+    void aResultThatIsAlreadyFinalIsNotAskedForAgain() throws Exception {
+        Class<?> harness = harness();
+        TestResult returned = new TestResult();
+        returned.setId("t1");
+        returned.setInProgress(false);
+        returned.setSuccess(false);
+        try (FakeMicrocks microcks = FakeMicrocks.answering(200, CONFORMS)) {
+            TestResult result = verdict(harness, returned, Duration.ofSeconds(10), microcks.endpoint());
+
+            assertThat(result).isSameAs(returned);
+            assertThat(microcks.asked()).hasValue(0);
+        }
+    }
+
+    @Test
+    void noVerdictWithinTheResultTimeoutFailsSayingMicrocksHadNotFinished() throws Exception {
+        Class<?> harness = harness();
+        try (FakeMicrocks microcks = FakeMicrocks.answering(200, IN_PROGRESS)) {
+            long started = System.nanoTime();
+            TestResult result = verdict(harness, inProgress(), Duration.ofMillis(700), microcks.endpoint());
+
+            assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(5));
+            assertThat(result.isInProgress()).isTrue();
+            assertThat(result.isSuccess()).isFalse();
+            assertThat(diagnostics(harness, result))
+                    .contains("Microcks had not finished testing kafka://kafka:9092/audit.v1-x",
+                            "no verdict", "Override resultTimeout()");
+        }
+    }
+
+    @Test
+    void anErrorFromMicrocksIsReportedNotTakenForAVerdict() throws Exception {
+        Class<?> harness = harness();
+        try (FakeMicrocks microcks = FakeMicrocks.answering(404, "{}")) {
+            assertThatThrownBy(() -> verdict(harness, inProgress(), Duration.ofSeconds(10), microcks.endpoint()))
+                    .isInstanceOf(java.io.IOException.class)
+                    .hasMessage("Microcks answered 404 when asked for the result of test t1.");
+        }
+    }
+
+    /** Microcks' answers for test {@code t1}: still running, and final both ways. */
+    private static final String IN_PROGRESS = """
+            {"id": "t1", "inProgress": true, "success": false, "testedEndpoint": "kafka://kafka:9092/audit.v1-x"}""";
+    private static final String CONFORMS = """
+            {"id": "t1", "inProgress": false, "success": true, "testedEndpoint": "kafka://kafka:9092/audit.v1-x",
+             "testCaseResults": [{"operationName": "SEND publishRegistrationInitiated", "success": true,
+                                  "testStepResults": [{"success": true}]}],
+             "aFieldThisClientDoesNotKnow": 1}""";
+    private static final String DOES_NOT_CONFORM = """
+            {"id": "t1", "inProgress": false, "success": false, "testedEndpoint": "kafka://kafka:9092/audit.v1-x",
+             "testCaseResults": [{"operationName": "SEND publishRegistrationInitiated", "success": false,
+                                  "testStepResults": [{"success": false,
+                                                       "message": "$.username: is missing but it is required"}]}]}""";
+
+    /** What microcks-testcontainers returns when it stops waiting before Microcks has finished. */
+    private static TestResult inProgress() {
+        TestResult result = new TestResult();
+        result.setId("t1");
+        result.setInProgress(true);
+        result.setTestedEndpoint("kafka://kafka:9092/audit.v1-x");
+        return result;
+    }
+
+    private Class<?> harness() throws Exception {
+        return Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, userAccount());
+    }
+
+    /** The generated harness's own {@code verdict}, on a future that has already returned {@code returned}. */
+    private static TestResult verdict(Class<?> harness, TestResult returned, Duration within, String microcksEndpoint)
+            throws Exception {
+        Method verdict = harness.getDeclaredMethod("verdict", CompletableFuture.class, Duration.class, String.class);
+        verdict.setAccessible(true);
+        try {
+            return (TestResult) verdict.invoke(null, CompletableFuture.completedFuture(returned), within, microcksEndpoint);
+        } catch (InvocationTargetException e) {
+            throw (Exception) e.getCause();
+        }
+    }
+
+    /** The generated harness's own {@code diagnostics}. */
+    private static String diagnostics(Class<?> harness, TestResult result) throws Exception {
+        Method diagnostics = harness.getDeclaredMethod("diagnostics", TestResult.class);
+        diagnostics.setAccessible(true);
+        return (String) diagnostics.invoke(null, result);
+    }
+
+    /**
+     * A stand-in for Microcks' REST API that answers {@code GET /api/tests/<id>} with each
+     * of {@code answers} in turn, and with the last from then on, counting how often it was asked.
+     */
+    private record FakeMicrocks(HttpServer server, AtomicInteger asked) implements AutoCloseable {
+
+        static FakeMicrocks answering(int status, String... answers) throws java.io.IOException {
+            HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+            AtomicInteger asked = new AtomicInteger();
+            server.createContext("/api/tests/t1", exchange -> {
+                byte[] body = answers[Math.min(asked.getAndIncrement(), answers.length - 1)]
+                        .getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(status, body.length);
+                try (var out = exchange.getResponseBody()) {
+                    out.write(body);
+                }
+            });
+            server.start();
+            return new FakeMicrocks(server, asked);
+        }
+
+        String endpoint() {
+            return "http://" + server.getAddress().getHostString() + ":" + server.getAddress().getPort();
+        }
+
+        @Override
+        public void close() {
+            server.stop(0);
+        }
     }
 
     @Test
