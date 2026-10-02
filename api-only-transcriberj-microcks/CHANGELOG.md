@@ -1,3 +1,15 @@
+## [1.3.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.3.0...api-only-transcriberj-microcks-v1.3.1) (2026-10-02)
+
+
+### 🐛 Bug Fixes
+
+* **api-only-transcriberj-microcks:** a generated test waits for Microcks' verdict within resultTimeout() ([#110](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/110)) ([b4a2369](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b4a23695a4b63957a6f484176903476259e5d673)), closes [#110](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/110)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-microcks:** update README version to 1.3.0 [skip ci] ([f3f74e1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/f3f74e129f22786986b01d32453ed2daa715eea2))
+
 # [1.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.2.0...api-only-transcriberj-microcks-v1.3.0) (2026-09-25)
 
 
