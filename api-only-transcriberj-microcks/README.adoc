@@ -55,6 +55,7 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 
 |`@Test default void <operationId>_conformsToContract()`, one per `send` operation
 |Generates an isolation-suffixed channel address, asks Microcks to listen on it, waits `subscriptionDelay()` for it to subscribe, calls the operation's hook (below) to publish on it, and asks Microcks whether what it received conforms to the contract.
+It publishes once, and asserts on Microcks' verdict on that one message: see `resultTimeout()`.
 
 |`void <operationId>(String suffixedChannel)`, one per `send` operation, abstract
 |What a generator cannot know: how the application publishes that operation's message, on the suffixed channel it is given, exactly as production code would. It must not return before the message has been sent -- flush a buffering producer. The project implements one of these per operation.
@@ -75,7 +76,11 @@ One interface per contract, `<basePackage>.microcks.AsyncConformanceHarness`, ca
 |How long Microcks listens on the channel for the published message. Ten seconds by default; override it for an application or broker that takes longer to deliver.
 
 |`Duration resultTimeout()`
-|How long a test waits, after publishing, for Microcks to report its result. `testTimeout()` plus five seconds by default, so overriding `testTimeout()` alone is enough.
+|How long a test waits, after publishing, for Microcks to report its result.
+`testTimeout()` plus five seconds by default, so overriding `testTimeout()` alone is enough.
+Microcks reports only after listening for all of `testTimeout()`, and its async minion can take a few seconds longer on the first test, while it is still cold.
+`microcks-testcontainers` waits only one second past `testTimeout()`, and then returns a result that is still in progress, so the test asks Microcks again until the result is final or `resultTimeout()` has passed.
+A test that still has no verdict then fails, saying that Microcks had not finished rather than that the message does not conform.
 
 |`String microcksImage()`
 |The Microcks image the ensemble runs: `MICROCKS_IMAGE`, the one this emitter was tested with, unless the project overrides it. See <<other-image,Using another Microcks image §>>.
@@ -168,5 +173,6 @@ cd api-only-transcriberj-microcks
 
 The tests run the TranscriberJ over a copy of the reference implementation's user-account contract with this emitter, and compile what comes out against `microcks-testcontainers`.
 They do not start a real Microcks ensemble or a real broker: that is exercised where a project actually implements the harness's hooks.
+How a test waits for Microcks' verdict is tested against a stand-in for Microcks' REST API, an HTTP server that answers with a result still in progress before it answers with a final one.
 `check` gates on 90% instruction coverage and on Javadoc without warnings.
 // end::root[]
