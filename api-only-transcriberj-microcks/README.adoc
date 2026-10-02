@@ -67,10 +67,14 @@ It publishes once, and asserts on Microcks' verdict on that one message: see `re
 |Where the build put the fetched AsyncAPI document, for Microcks to import. The emitter cannot know this: it depends on the project's own build layout.
 
 |`String endpoint(String suffixedChannel)`, abstract
-|Turn a suffixed channel address into the endpoint Microcks tests against, in the broker's own address form -- `"kafka://kafka:9092/" + suffixedChannel`, for instance.
+|Turn a suffixed channel address into the endpoint Microcks tests against, in the broker's own address form -- `"kafka://kafka:9092/" + suffixedChannel + "?startOffset=0"`, for instance.
+For Kafka, add `startOffset=0`: see <<kafka,Kafka §>>.
 
 |`Duration subscriptionDelay()`
-|How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed: a message sent earlier is missed. One second by default; override it for a slower broker.
+|How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed.
+One second by default; override it for a slower broker.
+A message published before Microcks has subscribed is missed, unless the broker lets Microcks read it afterwards, as Kafka does with `startOffset=0`.
+A delay is not a reliable way to cover the first test: see <<kafka,Kafka §>>.
 
 |`Duration testTimeout()`
 |How long Microcks listens on the channel for the published message. Ten seconds by default; override it for an application or broker that takes longer to deliver.
@@ -102,6 +106,7 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
         kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.9.0"))
                 .withNetwork(ensemble.getNetwork()).withNetworkAliases("kafka");
         kafka.start();
+        awaitConsumerGroupReadiness(); // see "Kafka", below
         ensemble.withKafkaConnection(new KafkaConnection(kafka.getBootstrapServers()));
     }
 
@@ -112,7 +117,7 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
 
     @Override
     public String endpoint(String suffixedChannel) {
-        return "kafka://kafka:9092/" + suffixedChannel;
+        return "kafka://kafka:9092/" + suffixedChannel + "?startOffset=0";
     }
 
     @Override
@@ -123,6 +128,53 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
     // one such method per send operation ...
 }
 ----
+
+[#kafka]
+== Kafka: the first operation's test
+
+On a freshly started Kafka broker, the first operation's test can fail with Microcks' verdict `Timeout: no message received`, while every later test passes.
+A longer `testTimeout()` or `subscriptionDelay()` is not a reliable way to fix it.
+Two things together are, and a project wiring a Kafka broker should do both.
+
+=== Read each test's topic from offset 0
+
+Microcks' Kafka consumer starts at the latest offset, which is fixed only once Kafka assigns it its partition.
+For the first test, Microcks creates that consumer while it is still cold, and it can be assigned its partition after the test has published, so it never reads the message.
+Later tests' consumers are assigned well within `subscriptionDelay()`.
+
+Add Microcks' `startOffset=0` endpoint option in `endpoint(String)`, as in the example above.
+Every test publishes to a topic of its own, suffixed for isolation, so offset 0 is that test's message and nothing else.
+
+=== Wait until the broker can serve a consumer group
+
+A started broker accepts connections, but creates the internal `__consumer_offsets` topic its group coordinator needs only when the first consumer group asks for it.
+Without a wait, that first group is Microcks' consumer for the first test, which then spends its listening time waiting for the broker.
+
+In `wireBroker`, after starting the broker and before the ensemble starts, join a consumer group and poll until it is assigned a partition:
+
+[source,java]
+----
+private static void awaitConsumerGroupReadiness() {
+    long deadline = System.nanoTime() + Duration.ofSeconds(90).toNanos();
+    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers(),
+            ConsumerConfig.GROUP_ID_CONFIG, "consumer-group-readiness-" + UUID.randomUUID(),
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()))) {
+        consumer.subscribe(List.of("consumer-group-readiness"));
+        while (consumer.assignment().isEmpty()) {
+            if (System.nanoTime() > deadline) {
+                throw new IllegalStateException("The Kafka broker could not serve a consumer group in time.");
+            }
+            consumer.poll(Duration.ofMillis(500));
+        }
+    }
+}
+----
+
+This waits until the broker is ready, not for a fixed time, and fails saying so if it never is.
+It needs `org.apache.kafka:kafka-clients` in the test source set; the emitter does not add it, because which broker a project uses is its own choice.
+On a CI runner this wait was about three seconds, which would otherwise come out of the first test's listening time.
 
 [#other-image]
 == Using another Microcks image

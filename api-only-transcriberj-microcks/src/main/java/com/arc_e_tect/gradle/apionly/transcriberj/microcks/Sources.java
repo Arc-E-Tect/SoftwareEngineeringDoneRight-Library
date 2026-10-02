@@ -221,9 +221,16 @@ final class Sources {
 
                     /**
                      * The endpoint Microcks tests against for a suffixed channel address, in the
-                     * broker's own address form -- {@code "kafka://kafka:9092/" + suffixedChannel}
-                     * for a Kafka broker reachable as {@code kafka} on
-                     * {@code ensemble.getNetwork()}, for instance.
+                     * broker's own address form --
+                     * {@code "kafka://kafka:9092/" + suffixedChannel + "?startOffset=0"} for a Kafka
+                     * broker reachable as {@code kafka} on {@code ensemble.getNetwork()}, for
+                     * instance.
+                     *
+                     * <p>For Kafka, add {@code startOffset=0}. Microcks' Kafka consumer otherwise
+                     * starts at the latest offset, fixed only once its partition is assigned, and
+                     * the first test's consumer can be assigned after the message was published, so
+                     * the message is never read. Every test publishes to a topic of its own, so
+                     * offset 0 is that test's message and nothing else.
                      *
                      * @param suffixedChannel the channel address a test generated, with its
                      *                        isolation suffix
@@ -233,8 +240,14 @@ final class Sources {
 
                     /**
                      * How long a test waits, after asking Microcks to listen on a channel and before
-                     * publishing to it, for Microcks to have subscribed: a message sent earlier is
-                     * missed. One second by default; override it for a slower broker.
+                     * publishing to it, for Microcks to have subscribed. One second by default;
+                     * override it for a slower broker.
+                     *
+                     * <p>A message published before Microcks has subscribed is missed, unless the
+                     * broker lets Microcks read it afterwards, as Kafka does with the
+                     * {@code startOffset=0} of {@link #endpoint(String)}. A delay is not a reliable
+                     * way to cover the first test, whose consumer Microcks creates while it is still
+                     * cold, and which can take longer than the later ones to subscribe.
                      *
                      * @return the delay
                      */
