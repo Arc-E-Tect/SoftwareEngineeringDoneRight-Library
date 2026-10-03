@@ -104,10 +104,11 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
     @Override
     public void wireBroker(MicrocksContainersEnsemble ensemble) {
         kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.9.0"))
-                .withNetwork(ensemble.getNetwork()).withNetworkAliases("kafka");
+                .withNetwork(ensemble.getNetwork()).withNetworkAliases("kafka")
+                .withListener("kafka:19092");   // for the Microcks containers, on the network
         kafka.start();
         awaitConsumerGroupReadiness(); // see "Kafka", below
-        ensemble.withKafkaConnection(new KafkaConnection(kafka.getBootstrapServers()));
+        ensemble.withKafkaConnection(new KafkaConnection("kafka:19092"));
     }
 
     @Override
@@ -117,7 +118,7 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
 
     @Override
     public String endpoint(String suffixedChannel) {
-        return "kafka://kafka:9092/" + suffixedChannel + "?startOffset=0";
+        return "kafka://kafka:19092/" + suffixedChannel + "?startOffset=0";
     }
 
     @Override
@@ -128,6 +129,10 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
     // one such method per send operation ...
 }
 ----
+
+The broker has two addresses, and each side uses its own.
+The Microcks containers reach it on the Docker network, through the listener `withListener` adds, so `KafkaConnection` and `endpoint` use `kafka:19092`.
+The tests run on the host, so the application's producer, and the readiness probe below, use `kafka.getBootstrapServers()`, which is the port Testcontainers maps to the host and is not reachable from inside another container.
 
 [#kafka]
 == Kafka: the first operation's test
