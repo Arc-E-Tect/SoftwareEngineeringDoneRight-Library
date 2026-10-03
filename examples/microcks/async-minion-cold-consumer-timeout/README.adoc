@@ -2,7 +2,7 @@
 :toc: left
 :icons: font
 
-This project reproduces an issue in the Microcks async minion.
+This project reproduces an issue in the Microcks async minion, reported as https://github.com/microcks/microcks/issues/2351[microcks/microcks issue #2351 ↗].
 The first AsyncAPI test a freshly started minion runs can report `Timeout: no message received` even though the message is on the topic and the minion's Kafka consumer received it.
 Every later test on the same minion passes.
 

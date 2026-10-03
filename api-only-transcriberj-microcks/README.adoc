@@ -166,7 +166,7 @@ The generated harness therefore runs that first test itself, when the ensemble h
 Each attempt is logged at `INFO` on the `System.Logger` named after `AsyncConformanceHarness`, so a slow start shows in the test output as a first attempt in which Microcks received nothing, followed by one in which it did.
 The first operation's hook therefore publishes once more than its test does, before any test runs.
 
-The cause is in Microcks, up to at least 1.15.0.
+The cause is in Microcks, up to at least 1.15.0, and is reported as https://github.com/microcks/microcks/issues/2351[microcks/microcks issue #2351 ↗].
 https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/tree/main/examples/microcks/async-minion-cold-consumer-timeout[The reproduction example in this repository ↗] shows it with nothing but Microcks, Testcontainers and Kafka, and explains it in full.
 
 [#other-image]
