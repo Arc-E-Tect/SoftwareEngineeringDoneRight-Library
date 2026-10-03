@@ -330,6 +330,54 @@ class MicrocksEmitterTest {
     }
 
     @Test
+    void theEnsembleWaitsUntilTheAsyncMinionIsReadyBeforeAnyOperationsTestRuns() throws Exception {
+        ClassLoader loader = userAccount();
+        String start = member(harnessSource(), "default void startMicrocksEnsemble()");
+        assertThat(start.indexOf("SERVICE_ID.set(")).isPositive()
+                .isLessThan(start.indexOf("awaitAsyncMinionReadiness();"));
+
+        Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);
+        Object defaults = java.lang.reflect.Proxy.newProxyInstance(loader, new Class<?>[]{harness},
+                (proxy, method, args) -> java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args));
+        assertThat(harness.getMethod("readinessTimeout").invoke(defaults)).isEqualTo(Duration.ofMinutes(2));
+    }
+
+    @Test
+    void theReadinessCheckRunsAMicrocksTestThroughTheFirstOperationUntilMicrocksReceivesItsMessage() throws Exception {
+        userAccount();
+        String readiness = member(harnessSource(), "private void awaitAsyncMinionReadiness()");
+
+        // The first send operation's own hook publishes, on a channel of the check's own.
+        assertThat(readiness).contains("\"SEND \" + PublishRegistrationInitiatedOperation.OPERATION_ID",
+                "PublishRegistrationInitiatedOperation.CHANNEL_ADDRESS + \"-readiness-\"",
+                "publishRegistrationInitiated(suffixedChannel);");
+        // As an operation's test does: listen, wait, publish once, then wait for Microcks' verdict.
+        assertThat(readiness.indexOf("testEndpointAsync(request)")).isPositive()
+                .isLessThan(readiness.indexOf("subscriptionDelay()"));
+        assertThat(readiness.indexOf("subscriptionDelay()"))
+                .isLessThan(readiness.indexOf("publishRegistrationInitiated(suffixedChannel);"));
+        assertThat(readiness.indexOf("publishRegistrationInitiated(suffixedChannel);"))
+                .isLessThan(readiness.indexOf("verdict(future, resultTimeout(),"));
+        // Ready once Microcks received a message, whether or not it conforms; otherwise again,
+        // on a fresh channel, until readinessTimeout() has passed.
+        assertThat(readiness).contains(".getEventMessagesForTestCase(result, operation).size()",
+                        "if (received > 0) return;", "readinessTimeout().toNanos()",
+                        "throw new IllegalStateException(\"The async minion was not ready for a test within \"")
+                .doesNotContain("isSuccess()");
+        assertThat(readiness.indexOf("while (true)")).isLessThan(readiness.indexOf("UUID.randomUUID()"));
+    }
+
+    private String harnessSource() throws java.io.IOException {
+        return Files.readString(sources.resolve(PACKAGE.replace('.', '/') + "/microcks/AsyncConformanceHarness.java"));
+    }
+
+    /** The member of {@code source} that starts with {@code signature}, up to its closing brace. */
+    private static String member(String source, String signature) {
+        String member = source.substring(source.indexOf(signature));
+        return member.substring(0, member.indexOf("\n    }\n"));
+    }
+
+    @Test
     void theMicrocksImageIsTheTestedOneUnlessAProjectOverridesIt() throws Exception {
         ClassLoader loader = userAccount();
         Class<?> harness = Class.forName(PACKAGE + ".microcks.AsyncConformanceHarness", true, loader);

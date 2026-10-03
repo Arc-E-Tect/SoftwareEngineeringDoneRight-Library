@@ -68,13 +68,13 @@ It publishes once, and asserts on Microcks' verdict on that one message: see `re
 
 |`String endpoint(String suffixedChannel)`, abstract
 |Turn a suffixed channel address into the endpoint Microcks tests against, in the broker's own address form -- `"kafka://kafka:9092/" + suffixedChannel + "?startOffset=0"`, for instance.
-For Kafka, add `startOffset=0`: see <<kafka,Kafka §>>.
+For Kafka, add `startOffset=0`: the example below says why.
 
 |`Duration subscriptionDelay()`
 |How long a test waits, after asking Microcks to listen and before publishing, for it to have subscribed.
 One second by default; override it for a slower broker.
 A message published before Microcks has subscribed is missed, unless the broker lets Microcks read it afterwards, as Kafka does with `startOffset=0`.
-A delay is not a reliable way to cover the first test: see <<kafka,Kafka §>>.
+A delay is not a reliable way to cover the async minion's first test: see <<first-test,The async minion's first test §>>.
 
 |`Duration testTimeout()`
 |How long Microcks listens on the channel for the published message. Ten seconds by default; override it for an application or broker that takes longer to deliver.
@@ -86,6 +86,11 @@ Microcks reports only after listening for all of `testTimeout()`, and its async 
 `microcks-testcontainers` waits only one second past `testTimeout()`, and then returns a result that is still in progress, so the test asks Microcks again until the result is final or `resultTimeout()` has passed.
 A test that still has no verdict then fails, saying that Microcks had not finished rather than that the message does not conform.
 
+|`Duration readinessTimeout()`
+|How long the ensemble's start lets the async minion take to become ready for a test, before any operation's test runs.
+Two minutes by default.
+See <<first-test,The async minion's first test §>>.
+
 |`String microcksImage()`
 |The Microcks image the ensemble runs: `MICROCKS_IMAGE`, the one this emitter was tested with, unless the project overrides it. See <<other-image,Using another Microcks image §>>.
 
@@ -94,6 +99,7 @@ A test that still has no verdict then fails, saying that Microcks had not finish
 |===
 
 The interface runs with `@TestInstance(Lifecycle.PER_CLASS)`: one Microcks ensemble for every test it declares, not one per test, so `wireBroker` and `contractFile` run once, before any operation's test, and stop once after the last.
+Once the ensemble has started and imported the contract, it waits until the async minion is ready for a test: see <<first-test,The async minion's first test §>>.
 
 [source,java]
 ----
@@ -107,7 +113,6 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
                 .withNetwork(ensemble.getNetwork()).withNetworkAliases("kafka")
                 .withListener("kafka:19092");   // for the Microcks containers, on the network
         kafka.start();
-        awaitConsumerGroupReadiness(); // see "Kafka", below
         ensemble.withKafkaConnection(new KafkaConnection("kafka:19092"));
     }
 
@@ -132,54 +137,37 @@ class UserAccountAsyncConformanceTest implements AsyncConformanceHarness {
 
 The broker has two addresses, and each side uses its own.
 The Microcks containers reach it on the Docker network, through the listener `withListener` adds, so `KafkaConnection` and `endpoint` use `kafka:19092`.
-The tests run on the host, so the application's producer, and the readiness probe below, use `kafka.getBootstrapServers()`, which is the port Testcontainers maps to the host and is not reachable from inside another container.
+The tests run on the host, so the application's producer uses `kafka.getBootstrapServers()`, which is the port Testcontainers maps to the host and is not reachable from inside another container.
 
-[#kafka]
-== Kafka: the first operation's test
-
-On a freshly started Kafka broker, the first operation's test can fail with Microcks' verdict `Timeout: no message received`, while every later test passes.
-A longer `testTimeout()` or `subscriptionDelay()` is not a reliable way to fix it.
-Two things together are, and a project wiring a Kafka broker should do both.
-
-=== Read each test's topic from offset 0
-
-Microcks' Kafka consumer starts at the latest offset, which is fixed only once Kafka assigns it its partition.
-For the first test, Microcks creates that consumer while it is still cold, and it can be assigned its partition after the test has published, so it never reads the message.
-Later tests' consumers are assigned well within `subscriptionDelay()`.
-
-Add Microcks' `startOffset=0` endpoint option in `endpoint(String)`, as in the example above.
+For Kafka, `endpoint` adds Microcks' `startOffset=0` option.
+Microcks' Kafka consumer otherwise starts at the latest offset, which is fixed only once Kafka assigns it its partition, and a consumer the async minion creates while it is still cold can be assigned its partition after the test has published.
 Every test publishes to a topic of its own, suffixed for isolation, so offset 0 is that test's message and nothing else.
 
-=== Wait until the broker can serve a consumer group
+[#first-test]
+== The async minion's first test
 
-A started broker accepts connections, but creates the internal `__consumer_offsets` topic its group coordinator needs only when the first consumer group asks for it.
-Without a wait, that first group is Microcks' consumer for the first test, which then spends its listening time waiting for the broker.
+The Microcks async minion can lose the first test it runs: Microcks reports `Timeout: no message received`, although the message was published on time and the minion's consumer received it.
+Every later test on the same minion passes.
 
-In `wireBroker`, after starting the broker and before the ensemble starts, join a consumer group and poll until it is assigned a partition:
+The minion allows a test's message consumption `testTimeout()` plus one second.
+The consumption, however, starts that timeout only once it has created its broker client, consumes for the whole timeout, and then disconnects the client.
+On a warm minion, creating and disconnecting the client take milliseconds.
+On its first test, with its client still cold, they can take longer than that second, and the minion then discards the message it received.
+A longer `testTimeout()` does not help: it lengthens the minion's limit and the consumption alike.
 
-[source,java]
-----
-private static void awaitConsumerGroupReadiness() {
-    long deadline = System.nanoTime() + Duration.ofSeconds(90).toNanos();
-    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
-            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers(),
-            ConsumerConfig.GROUP_ID_CONFIG, "consumer-group-readiness-" + UUID.randomUUID(),
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()))) {
-        consumer.subscribe(List.of("consumer-group-readiness"));
-        while (consumer.assignment().isEmpty()) {
-            if (System.nanoTime() > deadline) {
-                throw new IllegalStateException("The Kafka broker could not serve a consumer group in time.");
-            }
-            consumer.poll(Duration.ofMillis(500));
-        }
-    }
-}
-----
+The generated harness therefore runs that first test itself, when the ensemble has started and imported the contract, before any operation's test:
 
-This waits until the broker is ready, not for a fixed time, and fails saying so if it never is.
-It needs `org.apache.kafka:kafka-clients` in the test source set; the emitter does not add it, because which broker a project uses is its own choice.
-On a CI runner this wait was about three seconds, which would otherwise come out of the first test's listening time.
+. it asks Microcks to test the contract's first `send` operation on a channel of its own;
+. after `subscriptionDelay()`, it publishes through that operation's hook, as the operation's own test does;
+. it waits for Microcks' result, within `resultTimeout()`;
+. the minion is ready once Microcks has received the message, whether it conforms or not -- a message that does not conform is that operation's own test's to report;
+. until then it tries again on a fresh channel, and fails, listing every attempt, if the minion is not ready within `readinessTimeout()`.
+
+Each attempt is logged at `INFO` on the `System.Logger` named after `AsyncConformanceHarness`, so a slow start shows in the test output as a first attempt in which Microcks received nothing, followed by one in which it did.
+The first operation's hook therefore publishes once more than its test does, before any test runs.
+
+The cause is in Microcks, up to at least 1.15.0, and is reported as https://github.com/microcks/microcks/issues/2351[microcks/microcks issue #2351 ↗].
+https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/tree/main/examples/microcks/async-minion-cold-consumer-timeout[The reproduction example in this repository ↗] shows it with nothing but Microcks, Testcontainers and Kafka, and explains it in full.
 
 [#other-image]
 == Using another Microcks image
