@@ -52,6 +52,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`examples/api-only-transcriberj/hand-written-contract-tests/`
 |Runnable example of contract tests written by hand on the classes the API-Only TranscriberJ generates, where the generator cannot write a request body.
 
+|`examples/microcks/async-minion-cold-consumer-timeout/`
+|Self-contained reproduction of a Microcks async minion issue: the first AsyncAPI test a freshly started minion runs can report "no message received" although its Kafka consumer received the message. Expected to fail while the issue exists.
+
 |https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/examples/transcriberj/generated-contract-tests[`examples/transcriberj/generated-contract-tests/`], in the API repository
 |Runnable example of everything the API-Only TranscriberJ and its REST Docs and WireMock emitters generate: contract tests run against the real service and against a WireMock double, their fixtures, the stubs as an archive and a Docker image, and published documentation from a documentation test suite.
 |===

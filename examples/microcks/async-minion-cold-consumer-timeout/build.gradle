@@ -1,0 +1,40 @@
+// Reproduces a Microcks async minion issue: the first AsyncAPI test a freshly started minion
+// runs can report "Timeout: no message received" although its Kafka consumer received the
+// message. See README.adoc.
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'io.github.microcks:microcks-testcontainers:0.5.0'
+    testImplementation 'org.testcontainers:testcontainers:2.0.5'
+    testImplementation 'org.testcontainers:testcontainers-kafka:2.0.5'
+    testImplementation 'org.apache.kafka:kafka-clients:3.9.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
+test {
+    useJUnitPlatform()
+    // Optional: limit the async minion container to this many CPUs, e.g. -PminionCpus=0.5,
+    // which makes its cold start, and so the issue, more likely on a fast machine.
+    if (project.hasProperty('minionCpus')) {
+        systemProperty 'minionCpus', project.property('minionCpus')
+    }
+    // Every test runs on a fresh set of containers, so a rerun must not be skipped as up to date.
+    outputs.upToDateWhen { false }
+    testLogging {
+        events 'passed', 'failed'
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+}

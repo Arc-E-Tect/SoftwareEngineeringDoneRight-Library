@@ -1,0 +1,109 @@
+= Microcks async minion: the first test can lose its message
+:toc: left
+:icons: font
+
+This project reproduces an issue in the Microcks async minion.
+The first AsyncAPI test a freshly started minion runs can report `Timeout: no message received` even though the message is on the topic and the minion's Kafka consumer received it.
+Every later test on the same minion passes.
+
+It is self-contained: one AsyncAPI document, one JUnit 5 test class, and Testcontainers for Kafka and Microcks.
+It needs Java 21 or newer and Docker; the Gradle wrapper downloads everything else.
+
+== Running it
+
+[source,console]
+----
+./gradlew test                      # usually passes on a fast machine
+./gradlew test -PminionCpus=0.15    # limits the async minion container to 0.15 CPU: reproduces the issue
+----
+
+`-PminionCpus` limits the CPU of the async minion container only, which makes its cold start slower.
+On an Apple M4 Pro laptop, with 8 CPUs for Docker, 0.5 and 0.25 CPU still passed, and 0.15 CPU failed the first test in 3 runs out of 3.
+On CI runners the issue occurs without any limit: the minion's first test takes longer there.
+In this repository, the workflow `.github/workflows/example-microcks-async-minion-cold-consumer-timeout.yml` runs the example on a GitHub-hosted runner when started by hand, a given number of times, optionally with a CPU limit.
+
+== What it does
+
+`src/test/java/example/ColdAsyncMinionTest.java` starts Kafka (`confluentinc/cp-kafka:7.8.0`) and the Microcks ensemble with the async feature (`quay.io/microcks/microcks-uber:1.15.0`, through `io.github.microcks:microcks-testcontainers:0.5.0`), and imports `src/test/resources/orders-asyncapi.yaml`, an AsyncAPI 3.0 document with one `send` operation.
+
+It then runs the same test twice, in order:
+
+. ask Microcks to test operation `SEND publishOrderPlaced` on a Kafka topic of the test's own, with a 10-second timeout and `startOffset=0`;
+. wait one second, and publish one message that conforms to the contract;
+. wait for Microcks' final result -- microcks-testcontainers returns after the timeout plus one second, so the test asks Microcks' REST API again until the result is no longer in progress;
+. read the topic from offset 0 with a consumer of its own, and assert that the message is on it;
+. assert that Microcks reports a success.
+
+Both tests should pass.
+With the issue, the first fails on the last assertion only: the message is on the topic, and Microcks reports `Timeout: no message received in 10000 ms`.
+
+The async minion logs at `DEBUG`, its Kafka consumer included, and after the tests the class prints the minion's timeline: when each test started consuming, when its Kafka consumer was created and closed, and what became of what it consumed.
+
+== Expected and actual
+
+With `-PminionCpus=0.15`:
+
+[source,text]
+----
+Topic orders-865c5eeb-…: 1 message(s) on it; Microcks: success=false, inProgress=false, steps=[Timeout: no message received in 10000 ms]
+ColdAsyncMinionTest > firstTestOfAFreshMinion() FAILED
+Topic orders-d980c9db-…: 1 message(s) on it; Microcks: success=true, inProgress=false, steps=[null]
+ColdAsyncMinionTest > secondTestOfTheSameMinion() PASSED
+----
+
+The minion's timeline for the two tests:
+
+[source,text]
+----
+08:10:17,179 (Thread-3)        Starting consuming messages for {10000} ms
+08:10:17,676 (pool-5-thread-1) Initializing the Kafka consumer
+08:10:18,777 (pool-5-thread-1) Kafka consumer initialized
+08:10:28,283 (Thread-3)        AsyncAPITestThread for {…} was timed-out
+08:10:28,676 (Thread-3)        Kafka consumer has been closed
+08:10:28,676 (Thread-3)        No consumed message to validate, test {…} will be marked as timed-out
+
+08:10:34,180 (Thread-4)        Starting consuming messages for {10000} ms
+08:10:34,180 (pool-6-thread-1) Initializing the Kafka consumer
+08:10:34,183 (pool-6-thread-1) Kafka consumer initialized
+08:10:44,272 (pool-6-thread-1) Kafka consumer has been closed
+08:10:44,273 (Thread-4)        Consumption ends and we got {1} messages to validate
+----
+
+The first test's consumption task started 0.5 seconds after its thread, and took 1.1 seconds to create its Kafka consumer; the second's took 3 milliseconds for both.
+
+== Why
+
+In `AsyncAPITestManager`, the test thread gives the message consumption task the test's timeout plus one second:
+
+[source,java]
+----
+// Adding an extra seconds to allow to close and clean all the machinery ;-)
+outputs = executorService.invokeAny(Collections.singletonList(messageConsumptionTask),
+      specification.getTimeoutMS() + 1000L, TimeUnit.MILLISECONDS);
+----
+
+In `KafkaMessageConsumptionTask`, `call()` first creates the Kafka consumer, and only then starts its own clock, consumes for the whole timeout, and closes the consumer:
+
+[source,java]
+----
+long startTime = System.currentTimeMillis();
+long timeoutTime = startTime + specification.getTimeoutMS();
+while (System.currentTimeMillis() - startTime < specification.getTimeoutMS()) {
+----
+
+So the task needs the time to start, plus the time to create the consumer, plus the timeout, plus the time to close the consumer, while the thread allows the timeout plus one second.
+When starting, creating and closing take longer than that second, `invokeAny` throws a `TimeoutException`, and the messages the task consumed are discarded: the test is reported as `Timeout: no message received`.
+On a warm minion they take milliseconds; on its first test, with its Kafka client still cold, they can take more than a second.
+
+A longer test timeout does not help: it lengthens both the thread's limit and the task's consumption, and leaves the one second of slack unchanged.
+
+Sources, at Microcks 1.15.0, unchanged on `master` when this was written:
+
+* https://github.com/microcks/microcks/blob/1.15.0/minions/async/src/main/java/io/github/microcks/minion/async/AsyncAPITestManager.java#L124-L127[`AsyncAPITestManager.java`, lines 124 to 127 ↗]
+* https://github.com/microcks/microcks/blob/1.15.0/minions/async/src/main/java/io/github/microcks/minion/async/consumer/KafkaMessageConsumptionTask.java#L240-L243[`KafkaMessageConsumptionTask.java`, lines 240 to 243 ↗]
+
+The AMQP, MQTT, NATS and WebSocket consumption tasks also connect first and then wait for the whole timeout, so they look exposed in the same way; only Kafka is reproduced here.
+
+== Working around it
+
+Until the minion allows for it, a test suite can run one Microcks test of its own before its real tests, and repeat it until Microcks has received its message: the minion's first, cold test is then that one, not a real test's.

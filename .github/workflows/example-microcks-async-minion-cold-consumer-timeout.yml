@@ -1,0 +1,56 @@
+name: Example - Microcks Async Minion Cold Consumer Timeout
+# Reproduces a Microcks async minion issue on a GitHub-hosted runner, on request only: while
+# the issue exists, the example's first test is expected to fail. See the example's README.adoc.
+on:
+  workflow_dispatch:
+    inputs:
+      minion_cpus:
+        description: 'CPUs for the async minion container, e.g. 0.15; empty for no limit'
+        required: false
+        default: ''
+      runs:
+        description: 'How many times to run the example, each on fresh containers'
+        required: false
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  Reproduce:
+    name: Reproduce
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Run the example
+        env:
+          MINION_CPUS: ${{ inputs.minion_cpus }}
+          RUNS: ${{ inputs.runs }}
+        run: |
+          cd examples/microcks/async-minion-cold-consumer-timeout
+          chmod +x ./gradlew
+          ARGS=()
+          [ -n "$MINION_CPUS" ] && ARGS+=("-PminionCpus=$MINION_CPUS")
+          failed=0
+          for run in $(seq 1 "$RUNS"); do
+            echo "::group::Run $run of $RUNS"
+            ./gradlew test --no-daemon "${ARGS[@]}" || failed=$((failed + 1))
+            echo "::endgroup::"
+          done
+          echo "::notice title=Result::$failed of $RUNS runs failed"
+          [ "$failed" -eq 0 ]
