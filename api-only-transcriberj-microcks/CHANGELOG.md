@@ -1,3 +1,15 @@
+## [1.3.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.3.1...api-only-transcriberj-microcks-v1.3.2) (2026-10-03)
+
+
+### 🐛 Bug Fixes
+
+* **api-only-transcriberj-microcks:** document how a Kafka project makes the first operation's test reliable ([#111](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/111)) ([cdd0e5b](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/cdd0e5b9bf7455e5969af56f3f922b15cb2ddbaa)), closes [#111](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/111)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-microcks:** update README version to 1.3.1 [skip ci] ([7624427](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/76244274769374aa3c692d8831da41ab65bdce83))
+
 ## [1.3.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.3.0...api-only-transcriberj-microcks-v1.3.1) (2026-10-02)
 
 
