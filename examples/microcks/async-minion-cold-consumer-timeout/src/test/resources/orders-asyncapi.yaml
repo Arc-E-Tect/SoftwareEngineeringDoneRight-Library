@@ -1,0 +1,40 @@
+asyncapi: 3.0.0
+info:
+  title: Order Events
+  version: 1.0.0
+  description: One event an application publishes, for reproducing the issue.
+channels:
+  orders:
+    address: orders
+    messages:
+      orderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+operations:
+  publishOrderPlaced:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/orderPlaced'
+components:
+  messages:
+    OrderPlaced:
+      name: OrderPlaced
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+          - orderId
+          - quantity
+        properties:
+          orderId:
+            type: string
+          quantity:
+            type: integer
+            minimum: 1
+      examples:
+        - name: anOrder
+          payload:
+            orderId: order-1
+            quantity: 2
