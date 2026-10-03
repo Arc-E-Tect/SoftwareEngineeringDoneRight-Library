@@ -103,6 +103,7 @@ final class Sources {
                 import java.net.http.HttpResponse;
                 import java.nio.file.Path;
                 import java.time.Duration;
+                import java.util.ArrayList;
                 import java.util.List;
                 import java.util.Properties;
                 import java.util.UUID;
@@ -115,8 +116,10 @@ final class Sources {
                  * operations of contract %3$s.
                  *
                  * <p><b>What is generated:</b> one {@code @Test} per operation, below, and the
-                 * Microcks ensemble's lifecycle. {@link #SERVICE_NAME} and {@link #MICROCKS_IMAGE}
-                 * are read from a properties resource this emitter generates with it. It is
+                 * Microcks ensemble's lifecycle, which waits until the async minion is ready for a
+                 * test before any operation's test runs (see {@link #readinessTimeout()}).
+                 * {@link #SERVICE_NAME} and {@link #MICROCKS_IMAGE} are read from a properties
+                 * resource this emitter generates with it. It is
                  * regenerated on every build, so it is not a place to configure anything.
                  *
                  * <p><b>What the implementing class must supply:</b>
@@ -170,13 +173,15 @@ final class Sources {
                     /**
                      * Starts the Microcks ensemble, wired to this application's broker by
                      * {@link #wireBroker(MicrocksContainersEnsemble)}, and imports the contract
-                     * {@link #contractFile()} names. Runs once for every test this interface
+                     * {@link #contractFile()} names, and waits until the async minion is ready for a
+                     * test (see {@link #readinessTimeout()}). Runs once for every test this interface
                      * declares.
                      *
-                     * @throws IOException the contract could not be read
+                     * @throws Exception the contract could not be read, or the async minion did not
+                     *                   become ready
                      */
                     @BeforeAll
-                    default void startMicrocksEnsemble() throws IOException {
+                    default void startMicrocksEnsemble() throws Exception {
                         String image = microcksImage();
                         warnIfNotTheTestedImage(image);
                         MicrocksContainersEnsemble ensemble =
@@ -192,6 +197,7 @@ final class Sources {
                         }
                         ENSEMBLE.set(ensemble);
                         SERVICE_ID.set(resolveServiceId(ensemble));
+                        awaitAsyncMinionReadiness();
                     }
 
                     /** Stops the Microcks ensemble {@link #startMicrocksEnsemble()} started. */
@@ -245,9 +251,9 @@ final class Sources {
                      *
                      * <p>A message published before Microcks has subscribed is missed, unless the
                      * broker lets Microcks read it afterwards, as Kafka does with the
-                     * {@code startOffset=0} of {@link #endpoint(String)}. A delay is not a reliable
-                     * way to cover the first test, whose consumer Microcks creates while it is still
-                     * cold, and which can take longer than the later ones to subscribe.
+                     * {@code startOffset=0} of {@link #endpoint(String)}. A delay does not cover the
+                     * async minion's first, cold test; the harness runs that test itself, before any
+                     * operation's test: see {@link #readinessTimeout()}.
                      *
                      * @return the delay
                      */
@@ -281,6 +287,33 @@ final class Sources {
                      */
                     default Duration resultTimeout() {
                         return testTimeout().plusSeconds(5);
+                    }
+
+                    /**
+                     * How long {@link #startMicrocksEnsemble()} lets the async minion take to become
+                     * ready for a test, before any operation's test runs. Two minutes by default.
+                     *
+                     * <p>The Microcks async minion can lose the first test it runs. It allows a
+                     * test's message consumption {@link #testTimeout()} plus one second, but the
+                     * consumption starts that timeout only once it has created its broker client,
+                     * and disconnects the client after it. On the minion's first test, with its
+                     * client still cold, creating and disconnecting it can take longer than that
+                     * second; the minion then discards the message it received, and reports that
+                     * no message was received. A longer {@link #testTimeout()} does not help: both
+                     * sides grow with it. Later tests are not affected.
+                     *
+                     * <p>So the harness runs that first test itself: it asks Microcks to listen on a
+                     * channel of its own, publishes through the first operation's hook, and waits for
+                     * Microcks' result. The minion is ready once Microcks has received the message,
+                     * whether it conforms or not -- a message that does not conform is that
+                     * operation's own test's to report. Until then the harness tries again on a fresh
+                     * channel, logging each attempt, and fails if the minion is not ready within this
+                     * time.
+                     *
+                     * @return the time the async minion may take to become ready
+                     */
+                    default Duration readinessTimeout() {
+                        return Duration.ofMinutes(2);
                     }
 
                     /**
@@ -340,6 +373,45 @@ final class Sources {
                                     + SERVICE_NAME + "', found " + matches.size() + ".");
                         }
                         return matches.get(0).getName() + ":" + matches.get(0).getVersion();
+                    }
+
+                    /**
+                     * Runs the async minion's first test before any operation's test does, until
+                     * Microcks has received its message; see {@link #readinessTimeout()}.
+                     */
+                    private void awaitAsyncMinionReadiness() throws Exception {
+                        System.Logger logger = System.getLogger(AsyncConformanceHarness.class.getName());
+                        String operation = "SEND " + %7$s.OPERATION_ID;
+                        long deadline = System.nanoTime() + readinessTimeout().toNanos();
+                        List<String> attempts = new ArrayList<>();
+                        while (true) {
+                            String suffixedChannel = %7$s.CHANNEL_ADDRESS + "-readiness-" + UUID.randomUUID();
+                            TestRequest request = new TestRequest.Builder()
+                                    .serviceId(serviceId())
+                                    .filteredOperations(List.of(operation))
+                                    .runnerType(TestRunnerType.ASYNC_API_SCHEMA)
+                                    .testEndpoint(endpoint(suffixedChannel))
+                                    .timeout(testTimeout())
+                                    .build();
+                            CompletableFuture<TestResult> future =
+                                    ensemble().getMicrocksContainer().testEndpointAsync(request);
+                            Thread.sleep(subscriptionDelay().toMillis());
+                            %6$s(suffixedChannel);
+                            TestResult result = verdict(future, resultTimeout(),
+                                    ensemble().getMicrocksContainer().getHttpEndpoint());
+                            int received = result.isInProgress() ? 0 : ensemble().getMicrocksContainer()
+                                    .getEventMessagesForTestCase(result, operation).size();
+                            String attempt = "attempt " + (attempts.size() + 1) + " on " + suffixedChannel + ": "
+                                    + (result.isInProgress() ? "Microcks had not finished"
+                                    : "Microcks received " + received + " message(s)");
+                            attempts.add(attempt);
+                            logger.log(System.Logger.Level.INFO, "Async minion readiness, " + attempt + ".");
+                            if (received > 0) return;
+                            if (System.nanoTime() > deadline) {
+                                throw new IllegalStateException("The async minion was not ready for a test within "
+                                        + readinessTimeout() + ": " + String.join("; ", attempts) + ".");
+                            }
+                        }
                     }
 
                     /**
@@ -417,7 +489,8 @@ final class Sources {
                         return properties;
                     }
                 }
-                """.formatted(pkg, imports, contract, contract, members);
+                """.formatted(pkg, imports, contract, contract, members,
+                        operations.get(0).operationId(), operations.get(0).operationClass());
     }
 
     /** The abstract hook that publishes one operation's message. */
