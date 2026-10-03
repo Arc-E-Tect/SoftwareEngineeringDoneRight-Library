@@ -1,3 +1,15 @@
+## [1.3.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.3.2...api-only-transcriberj-microcks-v1.3.3) (2026-10-03)
+
+
+### 🐛 Bug Fixes
+
+* **api-only-transcriberj-microcks:** the generated harness waits until the async minion is ready before any operation's test ([#113](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/113)) ([040f76a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/040f76a97f2e4be44b24fbeb1ec9fb54c17870f6)), closes [#113](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/113) [#112](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/112)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-microcks:** update README version to 1.3.2 [skip ci] ([9db7675](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9db7675e312a1d13304154025a9a44c9ee35ae12))
+
 ## [1.3.2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-microcks-v1.3.1...api-only-transcriberj-microcks-v1.3.2) (2026-10-03)
 
 
