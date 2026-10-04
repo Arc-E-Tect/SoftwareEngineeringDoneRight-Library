@@ -1,3 +1,20 @@
+## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/sedr-library-v1.0.0...sedr-library-v1.0.1) (2026-10-04)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** correct the Latest-version sed pattern in two release workflows ([#76](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/76)) ([a02c3ce](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/a02c3ce1f04ac70f5d72a79878e2c7ea8c73755f)), closes [#76](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/76)
+
+
+### 📝 Documentation
+
+* **sedr-library:** update README version to 1.0.0 [skip ci] ([2838a47](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2838a47f11ced6e3f30b79a5b91a47a4d7fd2337))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)) ([1f0e58c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1f0e58cb059874b631a7298ba9add3475b1a1e1b)), closes [#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)
+
 # [1.0.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/sedr-library-v0.5.2...sedr-library-v1.0.0) (2026-08-21)
 
 
