@@ -1,3 +1,15 @@
+## [1.0.4](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.3...hexagonal-spring-rules-v1.0.4) (2026-10-04)
+
+
+### 📝 Documentation
+
+* **hexagonal-spring-rules:** update README version to 1.0.3 [skip ci] ([5333c6b](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/5333c6bdca1829fcbf5a5ff933b27e29468edef7))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)) ([1f0e58c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1f0e58cb059874b631a7298ba9add3475b1a1e1b)), closes [#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)
+
 ## [1.0.3](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/hexagonal-spring-rules-v1.0.2...hexagonal-spring-rules-v1.0.3) (2026-09-22)
 
 
