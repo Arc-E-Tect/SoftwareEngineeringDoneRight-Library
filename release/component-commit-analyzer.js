@@ -6,9 +6,12 @@
 // Resolved from process.cwd() rather than from this file: semantic-release runs in the
 // module's directory, and the dependency is installed in the module's own node_modules, not
 // beside this file.
-const commitAnalyzer = require(require.resolve('@semantic-release/commit-analyzer', { paths: [process.cwd()] }));
+// The commit analyzer, and the rule that a breaking change before 1.0.0 releases a minor
+// version: see zero-major-analyzer.js.
+const { commitAnalyzer, releaseType } = require('./zero-major-analyzer');
 const { forComponent } = require('./component-commits');
 
 module.exports = {
-  analyzeCommits: async (pluginConfig, context) => commitAnalyzer.analyzeCommits(pluginConfig, forComponent(context))
+  analyzeCommits: async (pluginConfig, context) =>
+    releaseType(await commitAnalyzer().analyzeCommits(pluginConfig, forComponent(context)), (context.lastRelease || {}).version)
 };

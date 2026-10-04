@@ -16,6 +16,7 @@ Release tags use this module's own scoped namespace (`dsl-updater-core-v*`), ind
 shared `v*` tag stream used by `sedr-library`. `first-release-patch-analyzer.js` forces the first
 real release after the seeded `dsl-updater-core-v0.0.0` baseline tag to compute as `0.0.1`
 regardless of the triggering commit's type.
+Before `1.0.0` it releases a breaking change as a minor version, never a major one, as link:../release/zero-major-analyzer.js[`release/zero-major-analyzer.js` →] explains.
 
 Security scanning does not run from this module's own workflows - it's wired into the shared
 `.github/workflows/nvd-cache-refresh.yml` schedule via a `Read-Version-Dsl-Updater-Core` /
