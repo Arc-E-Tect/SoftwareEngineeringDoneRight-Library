@@ -13,26 +13,10 @@ owaspDependencycheck = "13.0.0"
 junit-jupiter = "6.1.3"
 junit-platform = "6.1.3"
 assertj = "3.27.7"
-# The API-Only TranscriberJ this emitter is built against; its emitter interface,
-# EmitterContext.writeResource(...) and ContractModel.asyncTitle are part of the plugin
-# artifact, published to the Gradle Plugin Portal.
-api-only-transcriberj = "0.5.0"
-# Testcontainers and the Microcks Testcontainers module the generated harness is tested
-# with; also the versions the plugin adds to a project that declares none
-# (MicrocksEmitter.dependencies()). microcks-testcontainers 0.5.0 is built against
-# Testcontainers 2.x; see the emitter's Javadoc. No broker-specific Testcontainers
-# module (kafka, and so on) is pinned here: which broker a project publishes over, and
-# so which Testcontainers module wires it, is the harness user's choice, made in the
-# wireBroker(...) hook.
+api-only-transcriberj = "0.14.1"
 testcontainers = "2.0.5"
 microcks-testcontainers = "0.5.0"
-# The marker annotation the generated code carries, so a coverage rule does not measure
-# code nobody wrote. The TranscriberJ manages it for the projects it generates into; the
-# tests here need it because they compile that generated code.
 sedr-library = "1.0.0"
-# The generated harness carries JUnit Jupiter annotations, which apiguardian-api
-# annotates; the tests compile that generated code with -Xdoclint:all and need it on
-# the classpath so that does not warn about a class it cannot find.
 apiguardian = "1.1.2"
 
 [libraries]
@@ -45,3 +29,4 @@ api-only-transcriberj = { module = "com.arc-e-tect:api-only-transcriberj", versi
 testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 microcks-testcontainers = { module = "io.github.microcks:microcks-testcontainers", version.ref = "microcks-testcontainers" }
 sedr-library = { module = "com.arc-e-tect.sedr.utils:sedr-library", version.ref = "sedr-library" }
+
