@@ -11,7 +11,7 @@ The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 
 [cols="1,1"]
 |===
-|Latest version |`0.1.0`
+|Latest version |`0.1.1`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`api-only-transcriberj-wiremock`
 |===
@@ -52,7 +52,7 @@ Add it to the TranscriberJ's emitters, and configure it in the subscription:
 ----
 dependencies {
     transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-restdocs:0.4.0'
-    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-wiremock:0.1.0'
+    transcriberjEmitters 'com.arc-e-tect:api-only-transcriberj-wiremock:0.1.1'
 }
 
 apiOnlyTranscriberJ {
