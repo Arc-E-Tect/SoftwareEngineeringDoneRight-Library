@@ -1,4 +1,6 @@
-const commitAnalyzer = require(require.resolve('@semantic-release/commit-analyzer', { paths: [process.cwd()] }));
+// The commit analyzer, and the rule that a breaking change before 1.0.0 releases a minor
+// version: see zero-major-analyzer.js.
+const { commitAnalyzer, releaseType } = require('../release/zero-major-analyzer');
 // Only the commits that change this module count for its version: see ../release/component-commits.js.
 const { forComponent } = require('../release/component-commits');
 
@@ -17,6 +19,6 @@ module.exports = {
     if (!context.lastRelease || !context.lastRelease.version || context.lastRelease.version === SEED_VERSION) {
       return 'patch';
     }
-    return commitAnalyzer.analyzeCommits(pluginConfig, forComponent(context));
+    return releaseType(await commitAnalyzer().analyzeCommits(pluginConfig, forComponent(context)), context.lastRelease.version);
   }
 };
