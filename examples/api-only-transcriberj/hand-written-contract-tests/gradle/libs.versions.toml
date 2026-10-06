@@ -7,8 +7,8 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 
 [versions]
 
-api-only-transcriberj = "0.14.1"
-api-only-transcriberj-restdocs = "0.4.1"
+api-only-transcriberj = "0.14.4"
+api-only-transcriberj-restdocs = "0.4.2"
 spring-boot = "4.1.1"
 
 [libraries]
