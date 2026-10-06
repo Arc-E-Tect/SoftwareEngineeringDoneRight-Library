@@ -6,7 +6,7 @@
 
 [versions]
 
-sedr-library = "1.0.0"
+sedr-library = "1.0.1"
 junit-jupiter = "6.1.3"
 
 [libraries]
