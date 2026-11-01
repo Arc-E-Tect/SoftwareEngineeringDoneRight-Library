@@ -1,3 +1,15 @@
+# [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.1.1...api-only-transcriberj-wiremock-v0.2.0) (2026-11-01)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-wiremock:** update README version to 0.1.1 [skip ci] ([0542002](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/054200244b91c71471773f2e613812af34c95623))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)) ([56032e2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/56032e21611809134f291f988940bd52178d2cf5)), closes [#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)
+
 ## [0.1.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.1.0...api-only-transcriberj-wiremock-v0.1.1) (2026-10-04)
 
 
