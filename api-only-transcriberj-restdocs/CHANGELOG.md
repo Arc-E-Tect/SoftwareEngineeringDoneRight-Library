@@ -1,3 +1,17 @@
+# [0.5.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.4.1...api-only-transcriberj-restdocs-v0.5.0) (2026-11-01)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-restdocs:** update README version to 0.4.1 [skip ci] ([697f340](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/697f340570bf6878667e3d9db3c5c03839034217))
+* **api-only-transcriberj-restdocs:** update README version to 0.4.2 [skip ci] ([9f77736](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/9f7773677d45073784c3a71b0ca7259e2de0258c))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)) ([1f0e58c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1f0e58cb059874b631a7298ba9add3475b1a1e1b)), closes [#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)
+* dependency updates for Library projects ([#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)) ([56032e2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/56032e21611809134f291f988940bd52178d2cf5)), closes [#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)
+
 ## [0.4.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-restdocs-v0.4.0...api-only-transcriberj-restdocs-v0.4.1) (2026-09-28)
 
 
