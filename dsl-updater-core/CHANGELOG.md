@@ -1,3 +1,17 @@
+# [2.0.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/dsl-updater-core-v1.0.1...dsl-updater-core-v2.0.0) (2026-11-01)
+
+
+### 📝 Documentation
+
+* **dsl-updater-core:** update README version to 1.0.1 [skip ci] ([0e899ed](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/0e899ed1481112641ea72206597f08c1ac86c7ee))
+* **dsl-updater-core:** update README version to 1.0.2 [skip ci] ([dd45f60](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/dd45f603b73f41917d9565dbeae5a9a45679a409))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)) ([1f0e58c](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/1f0e58cb059874b631a7298ba9add3475b1a1e1b)), closes [#115](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/115)
+* dependency updates for Library projects ([#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)) ([56032e2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/56032e21611809134f291f988940bd52178d2cf5)), closes [#118](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/118)
+
 ## [1.0.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/dsl-updater-core-v1.0.0...dsl-updater-core-v1.0.1) (2026-09-04)
 
 
