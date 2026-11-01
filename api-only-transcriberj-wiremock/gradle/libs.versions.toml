@@ -7,24 +7,24 @@ owaspDependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspD
 
 [versions]
 
-jreleaser = "1.26.0"
+jreleaser = "1.27.0"
 owaspDependencycheck = "13.0.0"
 
 junit-jupiter = "6.1.3"
 junit-platform = "6.1.3"
 assertj = "3.27.7"
-api-only-transcriberj = "0.14.1"
+api-only-transcriberj = "0.17.0"
 wiremock = "3.13.2"
 testcontainers = "2.0.5"
-api-only-transcriberj-restdocs = "0.4.1"
-spring-restdocs = "4.0.1"
-sedr-library = "1.0.0"
+api-only-transcriberj-restdocs = "0.4.2"
+spring-restdocs = "4.0.2"
+sedr-library = "1.0.1"
 apiguardian = "1.1.2"
 json-schema-validator = "3.0.8"
-joni = "2.2.7"
+joni = "2.2.9"
 snakeyaml-engine = "3.2"
 doppelganger-api-detector = "2.10.1"
-api-detector-core = "1.8.0"
+api-detector-core = "1.8.1"
 
 [libraries]
 
