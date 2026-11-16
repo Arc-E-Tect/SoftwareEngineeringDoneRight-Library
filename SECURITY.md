@@ -3,20 +3,46 @@
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | Latest  | Yes       |
+
+Only the latest release of each component receives security fixes.
 
 ## Reporting a Vulnerability
 
-Please **do not** open a public GitHub issue for security vulnerabilities.
+Please do not report security vulnerabilities through public GitHub issues.
 
-To report a security vulnerability, email the maintainer directly. You can find contact information on the [Arc-E-Tect GitHub profile](https://github.com/Arc-E-Tect).
+Instead, use GitHub private vulnerability reporting:
+[Report a vulnerability](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/security/advisories/new)
 
-Please include:
+You can expect an initial response within 5 business days.
+After confirmation, a fix is released as soon as practical.
+Reporters are credited in the release notes unless they prefer to remain anonymous.
 
-- A description of the vulnerability and its potential impact
-- Steps to reproduce the issue
-- Any proof-of-concept code or screenshots
+## Security Practices
 
-You can expect an acknowledgement within 5 business days.
-Fixes will be released as a patch version as soon as practically possible.
+### Credentials
+
+- No credentials of any kind are committed to this repository, test credentials included; see [ZERO_CREDENTIALS_POLICY.md](ZERO_CREDENTIALS_POLICY.md).
+- GitHub secret scanning, including generic patterns and validity checks, and push protection guard the repository server-side.
+- Contributors install the repository's Git hooks with `./scripts/setup-hooks.sh`; they reject keystores and likely hardcoded secrets before a commit is made.
+
+### Changes to the default branch
+
+- Every change reaches `main` through a pull request that needs an approving review from a code owner.
+- Commits must be signed, and the history of `main` is linear.
+- Release tags cannot be deleted or moved.
+
+### GitHub Actions
+
+- Every external action is pinned to a full commit SHA, which GitHub enforces.
+- Only GitHub-owned actions, actions from verified creators, and explicitly allowed actions can run.
+- The `GITHUB_TOKEN` is read-only by default; a job is granted more only when it needs it.
+- The credentials for the Gradle Plugin Portal and Maven Central, and the signing keys, are only available to release jobs running on `main`, through the `release` environment.
+- Workflows from pull requests by outside contributors run only after a maintainer approves them.
+
+### Dependencies
+
+- Dependabot alerts report known vulnerabilities in dependencies.
+- A weekly OWASP dependency-check scan runs in `nvd-cache-refresh.yml`.
+- Dependencies are updated through `maintenance` pull requests.
