@@ -12,6 +12,15 @@ When the text is updated to fix typos, grammatical errors, or formatting issues,
 When the text is updated to improve clarity, readability, or flow, the commit type `review` is used.
 When content is removed from the book, such as outdated information or redundant sections, the commit type `review` is used.
 
+### Co-author trailer
+When a commit contains code that Claude changed, the commit message ends with this trailer:
+
+```
+Co-authored-by: Claude <noreply@anthropic.com>
+```
+
+A commit without code changed by Claude carries no trailer.
+
 ### Commit scope and type for specific files
 
 **Copilot-related files:**

@@ -34,6 +34,9 @@ concurrency:
   group: api-only-transcriberj-wiremock-release
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   Calculate-Version:
     uses: ./.github/workflows/semantic-version-calculate.yml
@@ -51,6 +54,7 @@ jobs:
       contents: read
 
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       GRADLE_PROPERTIES_FILE: ./api-only-transcriberj-wiremock/gradle.properties
@@ -115,7 +119,9 @@ jobs:
     permissions:
       contents: read
 
+    environment: release
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       GRADLE_PROPERTIES_FILE: ./api-only-transcriberj-wiremock/gradle.properties
@@ -165,9 +171,10 @@ jobs:
     needs: [Calculate-Version, Publish]
     if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
     permissions:
-      contents: write
+      contents: read
 
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       VERSION: ${{ needs.Calculate-Version.outputs.next_version }}
@@ -175,6 +182,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # Credentials stay persisted on purpose: a later step in this job pushes with git.
         with:
           fetch-depth: 0
           ref: main
@@ -210,6 +218,7 @@ jobs:
     needs: [Build, Publish, Update-README, Release-api-only-transcriberj-wiremock, Determine-Release-Type]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Output build completion
         run: |
