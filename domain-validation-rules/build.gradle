@@ -1,0 +1,197 @@
+/*
+ * Build file for architecture-validator-domain-validation-rules.
+ * Version: gradle.properties when not prerelease, DOMAIN_VALIDATION_RULES_VERSION
+ *          env var (CI), latest matching GitHub release tag (local dev, requires
+ *          gh CLI), or 1.0.0-PRERELEASE as fallback.
+ */
+plugins {
+    id 'jacoco'
+    id 'java-library'
+    id 'java-test-fixtures'
+    id 'maven-publish'
+    alias(libs.plugins.owasp.dependency.check.iff)
+    alias(libs.plugins.jreleaser.iff)
+}
+
+group = rootProject.group
+
+def resolveVersion = {
+    def propsVersion = rootProject.version as String
+    if (propsVersion != '1.0.0-PRERELEASE') {
+        logger.lifecycle('[domain-validation-rules] version from gradle.properties: ' + propsVersion)
+        return propsVersion
+    }
+
+    def envVersion = System.getenv('DOMAIN_VALIDATION_RULES_VERSION')
+    if (envVersion) {
+        logger.lifecycle('[domain-validation-rules] version from DOMAIN_VALIDATION_RULES_VERSION: ' + envVersion)
+        return envVersion
+    }
+
+    try {
+        def cmd = ['gh', 'release', 'list',
+                   '--repo', 'Arc-E-Tect/SoftwareEngineeringDoneRight-Library',
+                   '--limit', '100',
+                   '--json', 'tagName',
+                   '--jq', '.[] | .tagName']
+        def proc = cmd.execute()
+        proc.waitForOrKill(10_000)
+        def tag = proc.text.readLines()
+            .findAll { it.startsWith('domain-validation-rules-v') }
+            .sort()
+            .last()
+
+        if (tag) {
+            def v = tag
+                .replaceFirst(/^domain-validation-rules-v/, '')
+            logger.lifecycle('[domain-validation-rules] version from GitHub release: ' + v)
+            return v
+        }
+    } catch (Exception ignored) {
+        logger.lifecycle('[domain-validation-rules] GitHub CLI query failed, using 1.0.0-PRERELEASE')
+    }
+
+    logger.lifecycle('[domain-validation-rules] No release found, using 1.0.0-PRERELEASE')
+    return '1.0.0-PRERELEASE'
+}
+
+version = resolveVersion()
+
+base {
+    archivesName = 'architecture-validator-domain-validation-rules'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+jacoco {
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyCheck {
+    failBuildOnCVSS = (System.getenv('FAIL_ON_FATAL') == 'true') ? 9 : 11
+    nvd {
+        apiKey = System.getenv('NVD_APIKEY_SEDR')
+    }
+    analyzers {
+        nodeAuditEnabled = false
+        nodeEnabled = false
+    }
+    format = 'HTML'
+}
+
+dependencies {
+    api libs.archunit.junit5.iff
+    compileOnly libs.junit.jupiter.iff
+
+    testFixturesImplementation libs.spring.context.iff
+    testFixturesImplementation libs.spring.web.iff
+
+    testImplementation libs.junit.jupiter.iff
+    testImplementation(testFixtures(project))
+    testRuntimeOnly libs.junit.platform.launcher.iff
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'architecture-validator-domain-validation-rules'
+            pom {
+                name = 'Architecture Validator Domain Validation API Rules'
+                description = 'Architecture rules of the Domain Validation API pattern for the Architecture Validator plugin. Add com.arc-e-tect.architecture-validator:architecture-validator-domain-validation-rules as a testArchitectureImplementation dependency to activate them.'
+                url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
+                inceptionYear = '2026'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'ieising'
+                        name = 'Iwan Eising'
+                        email = 'iwan@arc-e-tect.com'
+                        organizationUrl = 'https://github.com/Arc-E-Tect'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    developerConnection = 'scm:git:ssh://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library.git'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library'
+                }
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues'
+                }
+                ciManagement {
+                    system = 'GitHub Actions'
+                    url = 'https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/actions'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library')
+            credentials {
+                username = System.getenv('GITHUB_ACTOR') ?: project.findProperty('gpr.user')
+                password = System.getenv('GITHUB_TOKEN') ?: project.findProperty('gpr.key')
+            }
+        }
+        maven {
+            name = 'StagingDeploy'
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
+}
+
+jreleaser {
+    gitRootSearch = true
+    signing {
+        active = 'ALWAYS'
+        armored = true
+        mode = 'MEMORY'
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'RELEASE'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepositories = ['build/staging-deploy']
+                }
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PACKAGE
+    options.addBooleanOption('html5', true)
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.links('https://docs.oracle.com/javase/21/docs/api/')
+    options.docTitle = "Architecture Validator Domain Validation API Rules"
+    options.windowTitle = "Domain Validation API Architecture Rules (${project.version})"
+}
+
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}

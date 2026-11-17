@@ -22,6 +22,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`hexagonal-spring-rules/`
 |Published Spring-focused external architecture rule pack for the Architecture Validator plugin.
 
+|`domain-validation-rules/`
+|Published external architecture rule pack for the Architecture Validator plugin that checks the structure of the Domain Validation API pattern: independent validation slices, thin controllers on generated interfaces, and use cases that take a command and return a sealed result.
+
 |`geo-tracker-lens-pack/`
 |Published geography-inspired external lens pack for the Tracker Lens plugin.
 
@@ -65,6 +68,9 @@ include::sedr-library/README.adoc[tag=root,leveloffset=+1]
 == hexagonal-spring-rules
 include::hexagonal-spring-rules/README.adoc[tag=root,leveloffset=+1]
 
+== domain-validation-rules
+include::domain-validation-rules/README.adoc[tag=root,leveloffset=+1]
+
 == geo-tracker-lens-pack
 include::geo-tracker-lens-pack/README.adoc[tag=root,leveloffset=+1]
 
@@ -94,4 +100,4 @@ include::examples/sedr-library/jacoco-marker/README.adoc[tag=root,leveloffset=+1
 == License
 
 This repository is licensed under the terms in link:LICENSE[LICENSE].
-Published sub-projects (`sedr-library/`, `hexagonal-spring-rules/`, `api-detector-core/`) are part of the same repository and license.
+Published sub-projects (`sedr-library/`, `hexagonal-spring-rules/`, `domain-validation-rules/`, `api-detector-core/`) are part of the same repository and license.

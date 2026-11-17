@@ -1,0 +1,21 @@
+= Contributing to domain-validation-rules
+:toc: left
+:icons: font
+
+== Release and CI
+
+This project has independent workflows and release configuration.
+
+* `.github/workflows/domain-validation-rules-build.yml`
+* `.github/workflows/domain-validation-rules-release.yml`
+* `release.config.js`
+* `package.json`
+
+Build jobs use configuration cache where compatible.
+Publish jobs keep `--no-configuration-cache` for publishing tasks.
+
+== Tests
+
+Every rule has a self-test against a compliant bounded context and against a violating one, in `src/test`, with the bounded contexts in `src/testFixtures`.
+Each self-test makes one assertion, and says what it proves in its `@DisplayName`.
+A new rule comes with a violating bounded context of its own, and a test that fails without the rule.
