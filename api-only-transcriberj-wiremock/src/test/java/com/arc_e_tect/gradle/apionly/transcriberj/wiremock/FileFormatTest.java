@@ -79,7 +79,7 @@ class FileFormatTest {
             if (caseId.equals("fallback-valid")) members.addAll(List.of("enforces", "doesNotEnforce"));
             assertThat(metadata.propertyNames()).as(path).containsExactlyElementsOf(members);
             assertThat(metadata.get("contract").stringValue()).isEqualTo(contract.name());
-            assertThat(metadata.get("contractVersion").stringValue()).isEqualTo("1.0.0");
+            assertThat(metadata.get("contractVersion").stringValue()).isEqualTo(contract.version());
             assertThat(metadata.get("fallback").booleanValue()).as(path).isEqualTo(fallback);
             assertThat(mapping.get("name").stringValue()).as(path)
                     .isEqualTo(metadata.get("operation").stringValue() + "/" + caseId);

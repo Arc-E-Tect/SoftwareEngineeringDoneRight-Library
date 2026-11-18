@@ -47,6 +47,11 @@ final class Fixtures {
             }
         }
 
+        /** The contract's version, as its document's {@code info.version} says: what it is generated and locked at. */
+        String version() {
+            return Fixtures.version(document());
+        }
+
         /** The settings, with each emitter's options given; null for none. */
         Settings settings(Map<String, String> restdocs, Map<String, String> wiremock) {
             Map<String, Map<String, String>> options = new HashMap<>();
@@ -70,6 +75,7 @@ final class Fixtures {
     static final Contract NOT_FOUND = new Contract("not-found", "/contracts/cases/not-found.yaml", List.of());
     static final Contract NEGOTIATION = new Contract("negotiation", "/contracts/cases/negotiation.yaml", List.of());
     static final Contract COVERAGE = new Contract("coverage", "/contracts/cases/coverage.yaml", List.of());
+    static final Contract SELECTED = new Contract("selected", "/contracts/cases/selected.yaml", List.of());
     static final Contract PRECEDENCE = new Contract("precedence", "/contracts/precedence.yaml", List.of());
     static final Contract UNBUILDABLE = new Contract("unbuildable", "/contracts/unbuildable.yaml", List.of());
 
@@ -83,7 +89,7 @@ final class Fixtures {
 
     /** Every contract, each as it is written to be generated. */
     static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION, RESPONSES, SUCCESS,
-            NOT_FOUND, NEGOTIATION, COVERAGE, PRECEDENCE);
+            NOT_FOUND, NEGOTIATION, COVERAGE, SELECTED, PRECEDENCE);
 
     /**
      * One generation: where each emitter's output went, and the reports.
@@ -122,6 +128,17 @@ final class Fixtures {
     private Fixtures() {
     }
 
+    /** A contract document's version, as its {@code info.version} says. */
+    static String version(Path document) {
+        try {
+            Object root = new org.snakeyaml.engine.v2.api.Load(org.snakeyaml.engine.v2.api.LoadSettings.builder().build())
+                    .loadFromString(java.nio.file.Files.readString(document));
+            return String.valueOf(((Map<?, ?>) ((Map<?, ?>) root).get("info")).get("version"));
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
     /**
      * Generates a contract document: the core, the REST Docs emitter with the options given, and the
      * WireMock emitter twice -- with its options as files, and with them and {@code format = 'java'} as
@@ -140,7 +157,7 @@ final class Fixtures {
         files.remove(Options.FORMAT);
         Map<String, String> java = new HashMap<>(files);
         java.put(Options.FORMAT, "java");
-        Generation.Derivation derivation = Generation.derive(document, null, "1.0.0", "x",
+        Generation.Derivation derivation = Generation.derive(document, null, version(document), "x",
                 contract.settings(restdocs, files));
         Generation.writeCore(derivation, into.resolve("core"), into.resolve("resources"),
                 into.resolve("contract-endpoints.properties"));
@@ -150,7 +167,7 @@ final class Fixtures {
         }
         GenerationReport report = Generation.runEmitter(derivation, new WireMockEmitter(),
                 into.resolve("files-java"), into.resolve("files-resources"), into.resolve("files"));
-        Generation.Derivation javaDerivation = Generation.derive(document, null, "1.0.0", "x",
+        Generation.Derivation javaDerivation = Generation.derive(document, null, version(document), "x",
                 contract.settings(restdocs, java));
         Generation.runEmitter(javaDerivation, new WireMockEmitter(), into.resolve("java"),
                 into.resolve("java-resources"), into.resolve("java-files"));
