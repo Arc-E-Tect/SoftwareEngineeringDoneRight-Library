@@ -22,6 +22,9 @@ It is consumed by the Architecture Validator plugin as an external rule pack dep
 |Artifact ID    |`architecture-validator-domain-validation-rules`
 |===
 
+The pack is on Maven Central from 0.0.2.
+0.0.1 is on GitHub Packages only, published while Maven Central accepted no releases from the organisation; a build that uses it needs that repository, and a token with `read:packages`.
+
 == Requirements
 
 [cols="1,1",options="header"]
