@@ -140,6 +140,9 @@ publishing {
             }
         }
     }
+    // The release workflow publishes to one of these, as the repository variable MAVEN_OR_GITHUB
+    // says: MAVEN stages the publication in StagingDeploy, from where jReleaser deploys it to
+    // Maven Central; anything else publishes it to GitHub Packages.
     repositories {
         maven {
             name = 'GitHubPackages'
