@@ -17,7 +17,7 @@ It is consumed by the Architecture Validator plugin as an external rule pack dep
 
 [cols="1,1"]
 |===
-|Latest version |`0.0.1`
+|Latest version |`0.0.2`
 |Group ID       |`com.arc-e-tect.architecture-validator`
 |Artifact ID    |`architecture-validator-domain-validation-rules`
 |===
@@ -62,7 +62,7 @@ architectureValidator {
 }
 
 dependencies {
-    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-domain-validation-rules:0.0.1'
+    testArchitectureImplementation 'com.arc-e-tect.architecture-validator:architecture-validator-domain-validation-rules:0.0.2'
 }
 
 tasks.named('testArchitecture') {
