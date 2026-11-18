@@ -167,7 +167,7 @@ final class GeneratedSuite {
         this.settings = contract.settings(Fixtures.TESTS_ON, wiremock);
         this.directory = directory;
         this.generated = Fixtures.generate(document, contract, Fixtures.TESTS_ON, wiremock, directory);
-        this.report = Oracle.JSON.readTree(generated.report().renderValidValues(settings.contract(), "1.0.0"));
+        this.report = Oracle.JSON.readTree(generated.report().renderValidValues(settings.contract(), Fixtures.version(document)));
         this.oracle = new Oracle(document);
         for (JsonNode operation : report.get("contractCases")) {
             JsonNode list = operation.get("cases");

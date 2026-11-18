@@ -28,8 +28,11 @@ final class ConsumerBuild {
     /** The files directory, as the plugin places it by default. */
     static final String FILES = "build/generated/files/transcriberj/user-account/wiremock";
 
+    /** The version of the contract the build subscribes to, as its document says. */
+    static final String VERSION = Fixtures.USER_ACCOUNT.version();
+
     /** The archive, as the plugin names it. */
-    static final String ARCHIVE = "build/distributions/user-account-wiremock-1.0.0.zip";
+    static final String ARCHIVE = "build/distributions/user-account-wiremock-" + VERSION + ".zip";
 
     final Path dir;
 
@@ -81,7 +84,7 @@ final class ConsumerBuild {
                             directory = file('channel').path
                         }
                         subscribe('user-account') {
-                            apiContractVersion = '1.0.0'
+                            apiContractVersion = '%s'
                         }
                     }
 
@@ -95,7 +98,7 @@ final class ConsumerBuild {
                         }
                     }
                     %s
-                    """.formatted(version, System.getProperty("emitter.jar").replace('\\', '/'),
+                    """.formatted(version, System.getProperty("emitter.jar").replace('\\', '/'), VERSION,
                     emitterBlock.indent(16).stripTrailing(), extra));
             return this;
         } catch (IOException e) {
@@ -120,11 +123,11 @@ final class ConsumerBuild {
         Path stage = Files.createDirectories(dir.resolve("stage"));
         Files.copy(Fixtures.USER_ACCOUNT.document(), stage.resolve("openapi.yaml"));
         Files.writeString(stage.resolve("manifest.json"), """
-                {"schemaVersion":1,"target":"user-account","version":"1.0.0","files":[{"path":"openapi.yaml","sha256":"%s"}]}"""
-                .formatted(sha256(stage.resolve("openapi.yaml"))));
-        Path archives = Files.createDirectories(dir.resolve("channel/user-account/1.0.0"));
+                {"schemaVersion":1,"target":"user-account","version":"%s","files":[{"path":"openapi.yaml","sha256":"%s"}]}"""
+                .formatted(VERSION, sha256(stage.resolve("openapi.yaml"))));
+        Path archives = Files.createDirectories(dir.resolve("channel/user-account/" + VERSION));
         try {
-            Process tar = new ProcessBuilder("tar", "-czf", archives.resolve("user-account-1.0.0.tgz").toString(),
+            Process tar = new ProcessBuilder("tar", "-czf", archives.resolve("user-account-" + VERSION + ".tgz").toString(),
                     "manifest.json", "openapi.yaml").directory(stage.toFile()).inheritIO().start();
             if (tar.waitFor() != 0) throw new IllegalStateException("tar failed");
         } catch (InterruptedException e) {

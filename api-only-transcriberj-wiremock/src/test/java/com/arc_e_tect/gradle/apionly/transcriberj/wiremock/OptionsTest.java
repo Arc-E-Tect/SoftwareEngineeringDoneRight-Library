@@ -50,7 +50,7 @@ class OptionsTest {
                 new Mistake(Map.of("fallbacks", "no"), "'fallbacks' is 'no'; it must be 'true'"))) {
             Path into = directory.resolve("mistake" + m.hashCode());
             assertThatThrownBy(() -> Generation.runEmitter(Generation.derive(Fixtures.RESPONSES.document(), null,
-                            "1.0.0", "x", Fixtures.RESPONSES.settings(null, m.options())), new WireMockEmitter(),
+                            Fixtures.RESPONSES.version(), "x", Fixtures.RESPONSES.settings(null, m.options())), new WireMockEmitter(),
                     into.resolve("java"), into.resolve("resources"), into.resolve("files")))
                     .as(m.options().toString()).hasMessageContaining(m.message());
             assertThatThrownBy(() -> new WireMockEmitter().produces(m.options())).as(m.options().toString())
