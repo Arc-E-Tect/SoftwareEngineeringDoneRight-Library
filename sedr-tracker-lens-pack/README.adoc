@@ -14,7 +14,7 @@ page color; dark warm-ink text; brass/bronze borders; serif typography).
 
 [cols="1,1"]
 |===
-|Latest version |`1.0.0`
+|Latest version |`1.1.0`
 |Group ID       |`com.arc-e-tect`
 |Artifact ID    |`sedr-tracker-lens-pack`
 |===
@@ -57,7 +57,7 @@ Add it to `lensStyle` in a project that already applies the Tracker Lens plugin.
 [source,kotlin]
 ----
 dependencies {
-    lensStyle("com.arc-e-tect:sedr-tracker-lens-pack:1.0.0")
+    lensStyle("com.arc-e-tect:sedr-tracker-lens-pack:1.1.0")
 }
 ----
 
@@ -65,7 +65,7 @@ dependencies {
 [source,groovy]
 ----
 dependencies {
-    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.0.0'
+    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.1.0'
 }
 ----
 
@@ -91,7 +91,7 @@ trackerLens {
 }
 
 dependencies {
-    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.0.0'
+    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.1.0'
 }
 ----
 
