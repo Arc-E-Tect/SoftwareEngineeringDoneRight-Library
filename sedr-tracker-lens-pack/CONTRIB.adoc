@@ -1,0 +1,27 @@
+= Contributing to the SEDR Tracker Lens Pack
+:toc: left
+:toc-title: Contents
+
+The SEDR tracker lens pack follows the same release and CI conventions as the other published
+projects in the _Software Engineering Done Right_ repository.
+
+== Local build
+
+Run from this project directory:
+
+[source,bash]
+----
+./gradlew clean build
+----
+
+== Release flow
+
+The `sedr-tracker-lens-pack-release.yml` workflow publishes the pack to Maven Central through
+JReleaser after the semantic version has been calculated and applied.
+
+Up to and including 1.0.0, the pack lived in the Code repository and was released from there.
+
+== Documentation
+
+The tutorial that explains how to write a Tracker Lens pack from scratch lives in the
+Tracker Lens plugin documentation in the Gradle repository.

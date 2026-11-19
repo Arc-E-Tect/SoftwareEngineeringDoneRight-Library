@@ -1,0 +1,665 @@
+/*
+ * "sedr-lens" - a proposed lens for the Tracker Lens dashboard, styled after the cover and
+ * interior of "Software Engineering Done Right" (steam-engine cover photography, warm cream/parchment
+ * page color, dark serif ink, brass/sepia accents).
+ *
+ * Palette is deliberately restricted to grayscale + amber/sepia/cream, sampled from the book's own
+ * pages - no greens, reds, or blues anywhere in this file, including the forecast confidence
+ * indicator (which the bundled lenses render in green/blue/amber; here it's distinguished by border
+ * weight and dash-style as well as a single amber-to-sepia gradient, so it never needs a fourth hue).
+ *
+ * Everything below is pure CSS against the existing content contract (see ContractRule /
+ * DASHBOARD-THEMING.adoc) - no template/markup changes required. The gauge-dial look on each metric
+ * card is a conic-gradient read from the same --percent custom property the bundled lenses already
+ * use for their border fill-bar; the cog motifs are conic-gradient rings, not image assets, so this
+ * file stays fully self-contained for distribution as a lens pack.
+ */
+
+:root {
+    --dashboard-bg: #f9edd2;
+    --dashboard-surface: #fff8e9;
+    --dashboard-border: #b99a5b;
+    --dashboard-border-strong: #7c5c33;
+    --dashboard-text: #2e2a24;
+    --dashboard-muted: #8a7f68;
+    --dashboard-accent: #a8681f;
+
+    /* Iron / brass / oxidized copper - shared positionally across both trackers' bars and pies:
+       bdd-scenarios uses them for listed/defined/implemented; api-contracts uses them for its first
+       three gap states, undeclared/unimplemented/unverified, in that order (compliant, the derived
+       fourth state, gets its own brighter tone below rather than reusing any of these three). */
+    --dashboard-stage-1: #6b6255;
+    --dashboard-stage-2: #b8791e;
+    --dashboard-stage-3: #6e3b22;
+
+    /* A brighter tone for the Compliant state (declared, really implemented, and verified) - where
+       the other stage colors would leave the "good" outcome no more visually distinct than any of
+       the problems - polished brass, deliberately the lightest tone in the palette so "compliant"
+       reads as finished/shined rather than just another dark segment. */
+    --dashboard-compliant: #d9b76a;
+
+    /* Used as api-stub-coverage's "stub available" color - a muted, in-between warm grey-brown,
+       deliberately not one of the three gap-severity tones above (stub coverage is a separate,
+       non-gap question from api-contracts, so it gets its own visual identity rather than
+       borrowing a color that would wrongly associate it with a problem). */
+    --dashboard-stubbed: #8a7355;
+
+    /* Every forecast box's border color, fixed, the same for all three trackers regardless of
+       confidence tier - previously this varied per tier (--confidence-low/medium/high, now removed),
+       but the boxes looking inconsistent with each other read worse than the variation was worth. */
+    --dashboard-forecast-border: #b8791e;
+
+    /* Forecast bars (dates beyond the last real scan) are deliberately never a stage color - reusing
+       stage-1/2/3 there would claim more certainty than a linear projection deserves. Translucent,
+       desaturated greys instead: lighter/more transparent for "still remaining", darker/more opaque
+       for "projected complete" - readable as provisional at a glance, never mistaken for real data. */
+    --dashboard-projected-remaining: rgba(120, 115, 105, 0.45);
+    --dashboard-projected-done: rgba(70, 66, 58, 0.7);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--dashboard-bg);
+    /* A very faint tiled cog-ring watermark, echoing the barely-visible texture on the book's own
+       pages - conic-gradient teeth on a radial-gradient hub, both nearly transparent, no image
+       asset required. */
+    background-image:
+        radial-gradient(circle at 8% 12%, rgba(124, 92, 51, 0.05) 0 3%, transparent 3.2%),
+        repeating-conic-gradient(from 0deg at 8% 12%, rgba(124, 92, 51, 0.04) 0deg 9deg, transparent 9deg 20deg),
+        radial-gradient(circle at 92% 82%, rgba(124, 92, 51, 0.05) 0 3%, transparent 3.2%),
+        repeating-conic-gradient(from 12deg at 92% 82%, rgba(124, 92, 51, 0.04) 0deg 9deg, transparent 9deg 20deg);
+    background-attachment: fixed;
+    color: var(--dashboard-text);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "URW Palladio", Georgia, serif;
+    margin: 0;
+    padding: 2rem;
+}
+
+.dashboard {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Riveted brass nameplate header, the way a locomotive's builder's plate reads. */
+.dashboard header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--dashboard-border-strong);
+    border: 1px solid #5a4325;
+    border-radius: 0.3rem;
+    padding: 1rem 1.5rem;
+    position: relative;
+}
+
+.dashboard header::before,
+.dashboard header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e8d9ae, #7c5c33 75%);
+    transform: translateY(-50%);
+}
+
+.dashboard header::before {
+    left: 0.6rem;
+}
+
+.dashboard header::after {
+    right: 0.6rem;
+}
+
+.dashboard header h1 {
+    margin: 0;
+    color: #f9edd2;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.dashboard-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.dashboard-version {
+    margin: 0;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #d9c48f;
+}
+
+.lens-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lens-switcher label {
+    color: #f0e2bd;
+    font-size: 0.85rem;
+}
+
+.lens-switcher select {
+    background: var(--dashboard-surface);
+    color: var(--dashboard-text);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.3rem;
+    padding: 0.35rem 0.6rem;
+    font-family: inherit;
+}
+
+/* The show-forecast control - one per tracker, so scenario and API forecasting can be toggled
+   independently rather than sharing one dashboard-wide switch. Sits in the tracker's own upper-right
+   corner, level with its title (see .tracker-header above), not as a standalone row of its own - a
+   small enough control that it no longer needs its own instrument-panel framing to read as a
+   distinct piece of the tracker. The working-week choice used to live beside it, but it only ever
+   affects the forecast segment itself - see .forecast__week-mode below, where it now lives instead,
+   hidden together with the rest of the box when forecast is off rather than dangling here with
+   nothing left to affect. */
+.forecast-controls {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--dashboard-muted);
+}
+
+.forecast-controls label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* A brass-and-parchment toggle switch standing in for a bare checkbox - "Show forecast" reads as an
+   on/off state, not a form field, so it gets a switch rather than a checkbox's own native look. The
+   checkbox itself stays in the markup and keeps driving the underlying state (a lens only ever
+   restyles what's there, never changes behavior) - just visually hidden (not display:none, so it
+   stays reachable by keyboard and screen readers) in favor of the track/thumb pair built from its
+   own :checked state via the adjacent-sibling selector. */
+.forecast-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.forecast-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.forecast-toggle__track {
+    position: relative;
+    display: inline-block;
+    width: 2.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+    background: var(--dashboard-border);
+    border-radius: 999px;
+    transition: background-color 0.15s ease;
+}
+
+.forecast-toggle__track::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1rem;
+    height: 1rem;
+    background: var(--dashboard-surface);
+    border-radius: 50%;
+    transition: transform 0.15s ease;
+}
+
+.forecast-toggle input:checked + .forecast-toggle__track {
+    background: var(--dashboard-accent);
+}
+
+.forecast-toggle input:checked + .forecast-toggle__track::before {
+    transform: translateX(1rem);
+}
+
+.forecast-toggle input:focus-visible + .forecast-toggle__track {
+    outline: 2px solid var(--dashboard-accent);
+    outline-offset: 2px;
+}
+
+/* The working-week choice, now living inside the forecast box itself (see .forecast-controls above)
+   rather than beside the show-forecast switch - a small top-right row so it doesn't compete with the
+   forecast date for the reader's first glance. */
+.forecast__week-mode {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: var(--dashboard-muted);
+}
+
+.forecast__week-mode label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.forecast__week-mode select {
+    background: var(--dashboard-surface);
+    color: var(--dashboard-text);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.3rem;
+    padding: 0.15rem 0.4rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+}
+
+/* Boiler-plate tracker panel: parchment surface, double bronze border, rivets at each corner. */
+.tracker {
+    background: var(--dashboard-surface);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.4rem;
+    box-shadow: inset 0 0 0 4px var(--dashboard-bg), inset 0 0 0 5px var(--dashboard-border);
+    padding: 2rem 1.75rem 1.75rem;
+    position: relative;
+}
+
+.tracker::before,
+.tracker::after {
+    content: "";
+    position: absolute;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #efe1bb, var(--dashboard-border-strong) 75%);
+}
+
+.tracker::before {
+    top: 0.6rem;
+    left: 0.6rem;
+}
+
+.tracker::after {
+    top: 0.6rem;
+    right: 0.6rem;
+}
+
+/* Title and the show-forecast switch share one row - flex-start (not center) is deliberate: it lines
+   the switch up with the title's own text line, not with the title element's full height once its
+   practice-label subtitle (see h2::after below) is included, which would otherwise sit the switch
+   noticeably lower than the heading text itself. */
+.tracker-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.tracker-header h2 {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tracker-header .forecast-controls {
+    flex: 0 0 auto;
+}
+
+.tracker h2 {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dashboard-border-strong);
+}
+
+/* A practice label under each tracker's heading, keyed off which stage vocabulary is present rather
+   than the tracker's own (user-chosen) id - :has() is what makes this general across anyone's
+   project rather than hardcoding this sample's "bdd-scenarios"/"api-contracts" names. Degrades
+   gracefully (no subtitle, nothing broken) on the small remaining share of browsers without :has()
+   support. */
+.tracker h2::after {
+    display: block;
+    margin: 0.2rem 0 0.75rem;
+    font-size: 0.75rem;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--dashboard-muted);
+}
+
+.tracker:has(.metric-card[data-stage="listed"]) h2::after {
+    content: "Practice: Behavior-Driven Development — “Implemented” means matching glue code exists for every step, nothing more; even a stub that only throws NotImplementedException counts.";
+}
+
+.tracker:has(.metric-card[data-stage="undeclared"]) h2::after {
+    content: "Practice: Contract-First API Design — no positive count here, only the gaps this plugin's own detectors are named for: Shadow, Mirage, Doppelganger — plus Compliant, once none of the three apply.";
+}
+
+.tracker:has(.metric-card[data-stage="stubbed"]) h2::after {
+    content: "Practice: Consumer-Driven Early Access — stub coverage is answering a different question than api-contracts above: not “is it correct,” but “can someone start building against it yet.”";
+}
+
+.tracker-header + .metrics {
+    border-top: 1px dashed var(--dashboard-border);
+    padding-top: 1rem;
+}
+
+.metrics {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.metrics-note {
+    margin: 0 0 1rem;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--dashboard-muted);
+}
+
+/* Rounded-rectangle card, matching the original bundled lenses' shape rather than the circular
+   gauge dial tried in an earlier iteration - a fixed-diameter circle can't hold a 3-digit total
+   ("34 / 171") without the text spilling out of it, and a rectangle has no such ceiling. Percentage
+   fills the card's whole frame (the original technique, and the preferred one after comparison) via
+   the same border-box gradient trick the bundled light-lens/dark-lens cards already use. The earlier
+   version of this used a 5px border against a 0.4rem radius, which ate almost the entire radius and
+   made the inner corner look sharp no matter what the radius value said - a thinner 3px border here
+   against a comfortably larger 0.8rem radius leaves the inner corner genuinely rounded (roughly
+   0.8rem minus 3px of remaining curve, plainly visible) rather than fighting the border width for
+   the same few pixels. */
+.metric-card {
+    flex: 1 1 9rem;
+    border-radius: 0.8rem;
+    padding: 0.85rem 1rem 0.8rem;
+    background:
+        linear-gradient(var(--dashboard-bg), var(--dashboard-bg)) padding-box,
+        linear-gradient(90deg, var(--dashboard-accent) calc(var(--percent, 0) * 1%), var(--dashboard-border) 0) border-box;
+    border: 3px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    text-align: center;
+}
+
+.metric-card__stage {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dashboard-muted);
+}
+
+/* Stage vocabulary is stable per TrackerSourceKind (listed/defined/implemented vs
+   declared/implemented/verified) even though the tracker's own id is whatever the user named it -
+   keying these on [data-stage] rather than [data-tracker="..."] is what makes this portable across
+   any project's tracker names, not just this sample's "bdd-scenarios"/"api-contracts". "implemented"
+   deliberately reads the same in both trackers - it is the same underlying claim either way: code
+   exists, which is output, not yet proof of outcome. */
+.metric-card__stage::after {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.68rem;
+    font-style: italic;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--dashboard-muted);
+    opacity: 0.85;
+}
+
+.metric-card[data-stage="listed"] .metric-card__stage::after { content: "not yet specified"; }
+.metric-card[data-stage="defined"] .metric-card__stage::after { content: "specified, not yet built"; }
+.metric-card[data-stage="implemented"] .metric-card__stage::after { content: "glue code exists — nothing more"; }
+.metric-card[data-stage="undeclared"] .metric-card__stage::after { content: "built, but not on the record"; }
+.metric-card[data-stage="unimplemented"] .metric-card__stage::after { content: "on the record, nothing backs it"; }
+.metric-card[data-stage="stubbed"] .metric-card__stage::after { content: "a deliberate stand-in, not a gap"; }
+.metric-card[data-stage="notYetStubbed"] .metric-card__stage::after { content: "no early access yet"; }
+.metric-card[data-stage="unverified"] .metric-card__stage::after { content: "really built and declared, not proven"; }
+.metric-card[data-stage="compliant"] .metric-card__stage::after { content: "declared, really built, and proven"; }
+.metric-card[data-stage="descoped"] .metric-card__stage::after { content: "Obsolete, redundant, irrelevant"; }
+
+.metric-card__count {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--dashboard-text);
+    margin-top: 0.2rem;
+}
+
+.metric-card__percent {
+    font-size: 0.8rem;
+    color: var(--dashboard-muted);
+}
+
+.info-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    margin-left: 0.35rem;
+    border-radius: 50%;
+    border: 1px solid var(--dashboard-muted);
+    color: var(--dashboard-muted);
+    font-size: 0.65rem;
+    line-height: 1;
+    cursor: help;
+    vertical-align: middle;
+}
+
+/* Every forecast box looks identical regardless of data-status (confidence tier) - the
+   bdd-scenarios box is the standard every tracker's forecast box matches: 4px solid
+   --dashboard-accent, full stop. Confidence used to be shown by varying border color, width, and
+   (briefly) dash style by tier, but that made the boxes visibly inconsistent with each other, which
+   read worse than the inconsistency was worth conveying - if confidence needs surfacing again later,
+   it should be through the forecast text itself (see the disclaimer copy, which already varies by
+   tier), not through the box's own styling. */
+.forecast, .forecast-unavailable {
+    padding: 0.85rem 1.1rem;
+    margin: 1.25rem 0 0;
+    background: var(--dashboard-bg);
+    border-radius: 0 0.3rem 0.3rem 0;
+    border-left: 4px solid var(--dashboard-forecast-border);
+}
+
+.forecast__date {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+    color: var(--dashboard-border-strong);
+}
+
+.forecast__progress {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+}
+
+.forecast__disclaimer {
+    margin: 0;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--dashboard-muted);
+}
+
+/* No overrides of its own - the shared .forecast, .forecast-unavailable rule above already gives
+   this box the same padding, background, border-radius, and border-left color as the real forecast
+   box; a dimmer border or italicized text here would read as "this tracker's forecast is somehow
+   less real," when the actual reason is just "not enough history yet," the same as any other
+   tracker briefly is before its own first week of data. */
+
+/* Faint amber blueprint grid behind the chart, in the book's own palette rather than literal
+   engineering blue. */
+.charts-row {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.charts-row .chart {
+    margin-top: 0;
+    width: 100%;
+}
+
+.chart-extra {
+    align-self: center;
+}
+
+.chart-extra__label {
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--dashboard-muted);
+    text-align: center;
+}
+
+/* Pie plus the explanatory prose beside it - the pie stays a fixed width (set by the base template's
+   own .chart-extra rule), the prose takes whatever's left. align-items: center (rather than
+   flex-start) is what actually puts the prose level with the pie itself rather than with the small
+   "As of <date>" caption sitting above it - flex-start was aligning both to that caption's top edge,
+   which read as the text sitting above-right of the pie rather than beside it. This is free text per
+   the content contract: nothing here is data-bound, so any lens is free to hide, resize, or restyle
+   it. */
+.chart-extra-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.chart-explainer {
+    flex: 1 1 auto;
+    min-width: 16rem;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--dashboard-text);
+}
+
+.chart-explainer p {
+    margin: 0 0 0.75rem;
+}
+
+.chart-explainer strong {
+    color: var(--dashboard-border-strong);
+}
+
+.chart-explainer code {
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    font-size: 0.85em;
+    background: var(--dashboard-bg);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.2rem;
+    padding: 0.05rem 0.3rem;
+}
+
+.chart {
+    height: 220px;
+    margin-top: 1.25rem;
+    background-color: var(--dashboard-bg);
+    background-image:
+        repeating-linear-gradient(0deg, rgba(184, 121, 30, 0.08) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(90deg, rgba(184, 121, 30, 0.08) 0 1px, transparent 1px 24px);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.3rem;
+    padding: 0.5rem;
+}
+
+/* The response-coverage grid: response codes as columns (small, bounded), endpoints as rows (the
+   dimension that explodes - narrowed by the filter input above the table). Three states only, no
+   color gradient by test count - see the script below for why. Colors are lens-driven, not fixed:
+   covered/uncovered reuse api-stub-coverage's own --dashboard-border/--dashboard-stubbed pair (set
+   inline by the script), the same "can a consumer start building against this today" convention
+   already established for that tracker, rather than a separate green/red pair this palette
+   otherwise avoids entirely (see the file header comment). */
+.response-coverage-grid {
+    margin-top: 1rem;
+}
+
+.response-coverage-grid__filter {
+    width: 100%;
+    max-width: 24rem;
+    margin-bottom: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    box-sizing: border-box;
+    font: inherit;
+    background: var(--dashboard-surface);
+    color: var(--dashboard-text);
+    border: 1px solid var(--dashboard-border);
+    border-radius: 0.3rem;
+}
+
+.response-coverage-grid__table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.response-coverage-grid__table th,
+.response-coverage-grid__table td {
+    border: 1px solid var(--dashboard-border);
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+}
+
+.response-coverage-grid__table thead th:first-child,
+.response-coverage-grid__table tbody th {
+    text-align: left;
+    white-space: nowrap;
+    color: var(--dashboard-border-strong);
+}
+
+/* Background color itself is set inline by the script (the same --dashboard-border/--dashboard-
+   stubbed pair api-stub-coverage's own cards use, lens-aware custom properties CSS alone can't
+   reach here); this only fixes text legibility against either. */
+.response-coverage-grid__cell {
+    color: var(--dashboard-surface);
+    font-weight: 600;
+}
+
+.response-coverage-grid__cell--not-applicable {
+    opacity: 0.35;
+}
+
+.stale-items__table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--dashboard-surface);
+}
+
+.stale-items__table th {
+    text-align: left;
+    padding: 0.55rem 0.8rem;
+    background: var(--dashboard-border-strong);
+    color: #f9edd2;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stale-items__table td {
+    text-align: left;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--dashboard-border);
+}
+
+.stale-items__table tr:nth-child(even) td {
+    background: rgba(184, 121, 30, 0.06);
+}

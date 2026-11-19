@@ -1,0 +1,62 @@
+/**
+ * @type {import('semantic-release').GlobalConfig}
+ */
+
+module.exports = {
+    branches: ["main"],
+    // Scoped to this module's own tag namespace, so its version history is independent of the
+    // other modules in this repo. The pack moved here from the Code repository after 1.0.0 had
+    // been published to Maven Central from there; a "sedr-tracker-lens-pack-v1.0.0" tag is seeded
+    // on the Library commit before the move, so numbering continues from 1.0.0 instead of
+    // restarting at a version Maven Central already holds.
+    tagFormat: "sedr-tracker-lens-pack-v${version}",
+    plugins: [
+        ["../release/component-commit-analyzer", {
+            preset: 'angular',
+            releaseRules: [
+                { type: 'feat', release: 'minor' },
+                { type: 'fix', release: 'patch' },
+                { type: 'refactor', release: 'patch' },
+                { type: 'improvement', release: 'minor' },
+                { type: 'scenario', release: 'patch' },
+                { type: 'maintenance', release: 'patch' },
+                { breaking: true, release: 'major' }
+            ],
+            parserOpts: {
+                noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],
+                breakingHeaderPattern: /^(\w*)(?:\((.*)\))?!: (.*)$/
+            }
+        }],
+        ["@semantic-release/exec", {
+            prepareCmd: "sed -i.bak 's/^version=.*/version=${nextRelease.version}/' gradle.properties && rm -f gradle.properties.bak"
+        }],
+        ["@semantic-release/changelog", {
+            "changelogFile": "CHANGELOG.md",
+            "changelogTitle": "# Changelog\n\nAll notable changes to this project will be documented in this file.",
+            preset: 'angular',
+            presetConfig: {
+                types: [
+                    { type: 'feat', section: '✨ Features', hidden: false },
+                    { type: 'fix', section: '🐛 Bug Fixes', hidden: false },
+                    { type: 'refactor', section: '♻️  Refactoring', hidden: false },
+                    { type: 'improvement', section: '⬆️  Improvements', hidden: false },
+                    { type: 'scenario', section: '📋 Scenarios', hidden: false },
+                    { type: 'maintenance', section: '🔧 Misc', hidden: false },
+                    { type: 'docs', section: '📝 Documentation', hidden: false },
+                    { type: 'style', section: '💄 Styling', hidden: false },
+                    { type: 'perf', section: '⚡ Performance', hidden: false },
+                    { type: 'test', section: '✅ Tests', hidden: false },
+                    { type: 'build', section: '🔨 Build System', hidden: true },
+                    { type: 'ci', section: '👷 CI/CD', hidden: true },
+                    { type: 'chore', section: '🔧 Misc', hidden: true },
+                    { type: 'revert', section: '⏪ Reverts', hidden: false }
+                ]
+            }
+        }],
+        ["@semantic-release/git", {
+            "assets": ["!**/node_modules/**", "!**/build/**", "!**/bin/**", "./CHANGELOG.md", "./gradle.properties"],
+            "message": "chore(release): release <%= nextRelease.version %> - <%= new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }) %> [skip ci]\n\n<%= nextRelease.notes %>"
+        }],
+        "@semantic-release/github",
+    ],
+};

@@ -28,6 +28,9 @@ Run `./gradlew` from *within* a project's directory, not from the repository roo
 |`geo-tracker-lens-pack/`
 |Published geography-inspired external lens pack for the Tracker Lens plugin.
 
+|`sedr-tracker-lens-pack/`
+|Published book-branded external lens pack for the Tracker Lens plugin, styled after the cover and interior of _Software Engineering Done Right_.
+
 |`api-detector-core/`
 |Published shared domain model and scanning logic for the SEDR API detector Gradle plugins (Shadow, Mirage, Doppelganger API Detector).
 
@@ -73,6 +76,9 @@ include::domain-validation-rules/README.adoc[tag=root,leveloffset=+1]
 
 == geo-tracker-lens-pack
 include::geo-tracker-lens-pack/README.adoc[tag=root,leveloffset=+1]
+
+== sedr-tracker-lens-pack
+include::sedr-tracker-lens-pack/README.adoc[tag=root,leveloffset=+1]
 
 == api-detector-core
 include::api-detector-core/README.adoc[tag=root,leveloffset=+1]
