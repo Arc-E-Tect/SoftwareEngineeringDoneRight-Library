@@ -1,3 +1,20 @@
+## [0.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.2.0...api-only-transcriberj-wiremock-v0.2.1) (2026-11-19)
+
+
+### ✅ Tests
+
+* **api-only-transcriberj-wiremock:** test the stubs of responses a request header selects ([#123](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/123)) ([58f5398](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/58f53984e6f182db27e2dbac1230fe7d83be3b6d)), closes [#123](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/123) [Arc-E-Tect/SoftwareEngineeringDoneRight-API#130](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/issues/130) [#128](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/128)
+
+
+### 📝 Documentation
+
+* **api-only-transcriberj-wiremock:** update README version to 0.2.0 [skip ci] ([2373a81](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2373a81afb95758e3ca5e77489e5089b42c98c61))
+
+
+### 🔧 Misc
+
+* dependency updates for Library projects ([#124](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/124)) ([fc0e8b5](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/fc0e8b58a4d4170ba104ee590b41f50f62588995)), closes [#124](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/124)
+
 # [0.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.1.1...api-only-transcriberj-wiremock-v0.2.0) (2026-11-01)
 
 
