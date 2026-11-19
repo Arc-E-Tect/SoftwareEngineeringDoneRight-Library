@@ -90,7 +90,8 @@ jobs:
   Publish:
     name: Publish Geo Tracker Lens Pack
     needs: [Calculate-Version, Release-Geo-Tracker-Lens-Pack]
-    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
+    # Only what the Apply job really tagged; see released_version in semantic-version-apply.yml.
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' && needs.Release-Geo-Tracker-Lens-Pack.outputs.released_version == needs.Calculate-Version.outputs.next_version }}
     environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 60

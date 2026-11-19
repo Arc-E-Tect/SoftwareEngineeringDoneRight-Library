@@ -90,7 +90,8 @@ jobs:
   Publish:
     name: Publish Architecture Validator Domain Validation Rules
     needs: [Calculate-Version, Release-Domain-Validation-Rules]
-    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
+    # Only what the Apply job really tagged; see released_version in semantic-version-apply.yml.
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' && needs.Release-Domain-Validation-Rules.outputs.released_version == needs.Calculate-Version.outputs.next_version }}
     environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 60

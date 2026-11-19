@@ -116,7 +116,8 @@ jobs:
   Publish:
     name: Publish SEDR Library
     needs: [Calculate-Version, Release-sedr-library]
-    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
+    # Only what the Apply job really tagged; see released_version in semantic-version-apply.yml.
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' && needs.Release-sedr-library.outputs.released_version == needs.Calculate-Version.outputs.next_version }}
     permissions:
       contents: read
 
