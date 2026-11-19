@@ -115,7 +115,8 @@ jobs:
   Publish:
     name: Publish API Detector Core
     needs: [Calculate-Version, Release-api-detector-core]
-    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' }}
+    # Only what the Apply job really tagged; see released_version in semantic-version-apply.yml.
+    if: ${{ needs.Calculate-Version.outputs.next_version_empty == 'false' && needs.Release-api-detector-core.outputs.released_version == needs.Calculate-Version.outputs.next_version }}
     permissions:
       contents: read
 
