@@ -25,7 +25,7 @@ page color; dark warm-ink text; brass/bronze borders; serif typography).
 |===
 |Requirement |Version
 |Java |21+
-|Gradle |9.7.0
+|Gradle |9.9.1
 |===
 
 == Build
