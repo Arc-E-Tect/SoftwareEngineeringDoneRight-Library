@@ -1,0 +1,119 @@
+= SEDR Tracker Lens Pack
+:toc: left
+:toc-title: Contents
+:toclevels: 2
+:icons: font
+:source-highlighter: rouge
+
+Book-branded external lens pack for the Tracker Lens Gradle plugin, styled after the cover and
+interior of _Software Engineering Done Right_ (steam-engine cover photography; warm cream/parchment
+page color; dark warm-ink text; brass/bronze borders; serif typography).
+
+// tag::root[]
+== Artifact Coordinates
+
+[cols="1,1"]
+|===
+|Latest version |`1.0.0`
+|Group ID       |`com.arc-e-tect`
+|Artifact ID    |`sedr-tracker-lens-pack`
+|===
+
+== Requirements
+
+[cols="1,1",options="header"]
+|===
+|Requirement |Version
+|Java |21+
+|Gradle |9.9.1
+|===
+
+== Build
+
+Run from this project directory.
+
+[source,bash]
+----
+./gradlew clean build
+----
+
+== Publishing
+
+This project publishes to Maven Central through JReleaser.
+The staged repository is written to `build/staging-deploy` before deployment.
+
+[source,bash]
+----
+./gradlew publishMavenJavaPublicationToStagingDeployRepository
+./gradlew jreleaserDeploy
+----
+
+== Adding the Dependency
+
+The pack is published to Maven Central, so no repository declaration or authentication is required.
+Add it to `lensStyle` in a project that already applies the Tracker Lens plugin.
+
+.Gradle (Kotlin DSL)
+[source,kotlin]
+----
+dependencies {
+    lensStyle("com.arc-e-tect:sedr-tracker-lens-pack:1.0.0")
+}
+----
+
+.Gradle (Groovy DSL)
+[source,groovy]
+----
+dependencies {
+    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.0.0'
+}
+----
+
+== Lenses Included
+
+[cols="1,3"]
+|===
+|Lens |Description
+
+|`sedr-lens`
+|Grayscale plus amber/sepia/cream palette sampled from the book's own pages, no greens, reds, or blues anywhere.
+Whole-frame percentage-fill metric cards, a riveted brass nameplate header, a boiler-plate tracker panel with corner rivets, a faint tiled cog-ring watermark, a brass-and-parchment toggle switch for each tracker's forecast, and a locomotive favicon, all pure CSS (plus a companion template, see below) against the plugin's existing content contract.
+|===
+
+== Templates Included
+
+This pack also ships a Mustache dashboard template under the same `sedr-lens` id, selectable independently of the CSS lens via `trackerLens.templateId`.
+
+[source,groovy]
+----
+trackerLens {
+    templateId = 'sedr-lens'
+}
+
+dependencies {
+    lensStyle 'com.arc-e-tect:sedr-tracker-lens-pack:1.0.0'
+}
+----
+
+Each tracker gets a stacked bar chart (one dataset per category, converging toward "done" over time) beside a pie that snaps to whichever date the reader hovers on the bar, plus a per-tracker forecast: a toggle switch in the tracker's upper-right corner, aligned with its title and off by default, reveals a forecast box with its own working-week choice (5-day or 7-day) that only ever affects that one tracker's projection.
+
+For an `API_CONTRACT` tracker, it recomputes the classic Shadow / Mirage / Doppelganger / Compliant partition from the plugin's own `declared`/`implemented`/`verified` counts (see the Tracker Lens plugin's `DASHBOARD-THEMING.adoc`, "Shadow / Mirage / Doppelganger / Compliant math"), evaluated at every date in the tracker's history so the bar and pie can never disagree with each other.
+`Stubbed` is deliberately never folded into that partition - it is an independent fact (a consumer-facing stub can exist regardless of whether the endpoint is a Shadow, Mirage, or Doppelganger API, or already Compliant) - so the template synthesizes a wholly separate "stub coverage" tracker section instead, scoped to declared endpoints only, with its own metric cards, chart, and forecast.
+
+For a `RESPONSE_COVERAGE` tracker, the template departs from the stacked-bar-plus-forecast-segment mechanism above: response codes are grouped by class (2xx/4xx/5xx/...), and the bar shows each class's share of *all currently-declared* codes on a given date, so the stack sums to 100% only once every declared response code is covered - a snapshot pie beside it breaks the same date down into absolute counts (Uncovered, plus one covered count per class). A per-tracker forecast still applies (the plugin computes a real one - "when will every currently-declared response code be covered" - the same way it does for any other dependency-chain tracker), but it drives only the forecast text box, not an extra bar segment, since the bar is already a full composition with no "remaining" room to project into. Beneath that, a second, independent tracker section - Coverage in Depth - lists every declared response code for every endpoint from the most recent scan only (`testCount` carries no history to plot a trend from): a filterable grid, endpoints as rows and response codes as columns, colored with the same covered/uncovered pair api-stub-coverage's own cards use, with the backing test count shown as the cell's own visible text rather than a color gradient or a hover-only tooltip - more tests behind a response isn't "more covered" than fewer.
+Selecting `templateId = 'sedr-lens'` without also selecting the `sedr-lens` CSS lens (or vice versa) is fully supported - the two are independent choices, the same as any other lens pack's template and CSS.
+
+== Related Documentation
+
+* link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle/blob/main/tracker-lens/README.adoc[Tracker Lens plugin documentation]
+* link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Gradle/blob/main/tracker-lens/LENS_TUTORIAL.adoc[Writing your first external lens pack]
+
+== Contributing
+
+See link:CONTRIB.adoc[CONTRIB.adoc] for this project's release and CI workflow details.
+// end::root[]
+
+== License
+
+This project is part of the _Software Engineering Done Right_ Library repository.
+It is licensed under the link:https://opensource.org/licenses/MIT[MIT License].

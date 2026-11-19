@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tracker Lens Dashboard</title>
+<!-- A small brass-on-black locomotive badge, matching this lens's own steam-engine cover-art theme
+     - inlined as a self-contained SVG data URI (same reasoning as the CSS's own conic-gradient cog
+     motifs: no image asset needed for a pack that ships as a plain resource jar) rather than a
+     separate .ico/.png file this pack would otherwise have to bundle and reference by path. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KIDxyZWN0IHg9Ii0xMi44IiB5PSItMTIuOCIgd2lkdGg9IjE1My42IiBoZWlnaHQ9IjE1My42Ii8+CiA8cGF0aCBkPSJtNTcuMjYyIDM2LjI5M2MxLjc4OTEgMCAzLjI1LTEuMTYwMiAzLjI1LTIuNTkzOCAwLTEuNDMzNi0xLjQ2MDktMi41OTM4LTMuMjUtMi41OTM4LTEuNzg5MSAwLTMuMjUgMS4xNjAyLTMuMjUgMi41OTM4IDAgMS40MzM2IDEuNDYwOSAyLjU5MzggMy4yNSAyLjU5Mzh6bTAtMy43ODUyYzEgMCAxLjg0NzcgMC41NDY4OCAxLjg0NzcgMS4xOTE0cy0wLjg0NzY2IDEuMTkxNC0xLjg0NzcgMS4xOTE0LTEuODQ3Ny0wLjU0Njg4LTEuODQ3Ny0xLjE5MTQgMC44NDc2Ni0xLjE5MTQgMS44NDc3LTEuMTkxNHptMS4wNTQ3IDQuMjkzYy0xLjMyODEgMC0yLjM3MTEgMC44NTU0Ny0yLjM3MTEgMS45NDE0IDAgMS4wODk4IDEuMDM5MSAxLjk0MTQgMi4zNzExIDEuOTQxNCAxLjMyODEgMCAyLjM3MTEtMC44NTU0NyAyLjM3MTEtMS45NDE0IDAtMS4wODU5LTEuMDM5MS0xLjk0MTQtMi4zNzExLTEuOTQxNHptMCAyLjQ5MjJjLTAuNTQ2ODggMC0wLjk3NjU2LTAuMjg5MDYtMC45NzY1Ni0wLjU0Njg4IDAtMC4yNTc4MSAwLjQzNzUtMC41NDI5NyAwLjk3NjU2LTAuNTQyOTcgMC41NDY4OCAwIDAuOTc2NTYgMC4yODkwNiAwLjk3NjU2IDAuNTQ2ODggMCAwLjI2MTcyLTAuNDI1NzggMC41NDI5Ny0wLjk3NjU2IDAuNTQyOTd6bS03LjU4NTkgMTQuNTI3aC05LjY4NzVjLTEuMDA3OCAwLTEuODI4MSAwLjgyMDMxLTEuODI4MSAxLjgyODF2Ni40MzM2YzAgMS4wMDc4IDAuODIwMzEgMS44MjgxIDEuODI4MSAxLjgyODFoOS42ODc1YzEuMDA3OCAwIDEuODI4MS0wLjgyMDMxIDEuODI4MS0xLjgyODF2LTYuNDMzNmMwLjAwMzkwNi0xLjAxNTYtMC44MjAzMS0xLjgyODEtMS44MjgxLTEuODI4MXptMC40Mzc1IDguMjUzOWMwIDAuMjM0MzgtMC4xOTUzMSAwLjQyNTc4LTAuNDI1NzggMC40MjU3OGgtOS42OTkyYy0wLjIzNDM4IDAtMC40MjU3OC0wLjE5NTMxLTAuNDI1NzgtMC40MjU3OHYtNi40MzM2YzAtMC4yMzQzOCAwLjE5NTMxLTAuNDI1NzggMC40MjU3OC0wLjQyNTc4aDkuNjg3NWMwLjIzNDM4IDAgMC40MjU3OCAwLjE5NTMxIDAuNDI1NzggMC40MjU3OGwwLjAwMzkwNiA2LjQzMzZ6bTQ1LjA0MyAyNy4yMjMtNi44OTA2LTEwLjIyM2MtMC4zNDc2Ni0wLjUxNTYyLTAuOTkyMTktMC44MjAzMS0xLjcwNy0wLjgyMDMxaC0yLjQyNTh2LTMuOTU3aDEuNWMxLjYyODkgMCAyLjk1Ny0xLjMyODEgMi45NTctMi45NTd2LTQuMjg5MWMwLTEuNjI4OS0xLjMyODEtMi45NTctMi45NTctMi45NTdoLTEuNXYtMS4yNzM0YzAtMS4zMjAzLTEuMDcwMy0yLjM5NDUtMi4zOTQ1LTIuMzk0NWgtMy4xOTE0di02LjMzNTljMS4yMzQ0LTAuMDk3NjU2IDIuMTk5Mi0xLjEyODkgMi4xOTkyLTIuMzg2N3YtMC43ODkwNmMwLTEuMzIwMy0xLjA3MDMtMi4zOTQ1LTIuMzk0NS0yLjM5NDVoLTEuMDgyYzAuMjEwOTQtMS4wOTc3IDAuMzI0MjItMi4yMjY2IDAuMzI0MjItMi43MTQ4IDAtMC4xODM1OSAwLTAuMzM5ODQtMC4wMDc4MTMtMC40NjA5NCAxLjE5MTQtMC42MjEwOSAxLjk1Ny0xLjc4MTIgMS45NTctMy4wMzkxIDAtMS45OTIyLTEuNjc1OC0zLjI3MzQtMy40MjU4LTMuNDgwNSAwLjEwNTQ3LTAuMjE4NzUgMC4yMTA5NC0wLjUyMzQ0IDAuMjEwOTQtMC45MjU3OCAwLTMuMDg1OS00LjAxNTYtMy45MTAyLTYuMzgyOC0zLjkxMDItMC4zMDQ2OSAwLTAuNjA1NDcgMC4wMDc4MTMtMC45MTAxNiAwLjAzMTI1LTAuODc4OTEtMC45MzM1OS0yLjMwNDctMS41LTMuODQzOC0xLjUtMi4wMTU2IDAtMy43NTc4IDAuOTMzNTktNC40NDE0IDIuMzc4OS0wLjQyNTc4IDAuOTAyMzQtMC4zNzEwOSAxLjg3MTEgMC4xNDQ1MyAyLjcyMjctMC4xNjc5NyAwLjM0NzY2LTAuMjU3ODEgMC43MTg3NS0wLjI1NzgxIDEuMDk3NyAwIDAuOTI1NzggMC40OTIxOSAxLjc1IDEuMzc4OSAyLjMyMDMgMS4xNzU4IDAuNzU3ODEgMi44MDQ3IDAuOTEwMTYgNC4xNjAyIDAuNDE3OTcgMC42MTMyOCAwLjI1IDEuMzIwMyAwLjMzOTg0IDIuMDA3OCAwLjI1NzgxIDAuODg2NzIgMC45MTAxNiAyLjI1NzggMS4xNzU4IDMuMTIxMSAxLjI1NzgtMC4yMzQzOCAwLjI1NzgxLTAuNDg0MzggMC42Mjg5MS0wLjQ4NDM4IDEuMzA0NyAwIDAuOTUzMTIgMC42NDQ1MyAxLjc3MzQgMS41NzgxIDIuMDg1OSAwLjA3NDIxOSAwLjYyMTA5IDAuMjQyMTkgMS40MDIzIDAuNDc2NTYgMi4xNTIzaC0wLjYxMzI4Yy0xLjMyMDMgMC0yLjM5NDUgMS4wNzAzLTIuMzk0NSAyLjM5NDV2MC43ODkwNmMwIDEuMjU3OCAwLjk2ODc1IDIuMjgxMiAyLjE5OTIgMi4zODY3djYuMzM1OWgtMy41NjI1di0yLjE3NThjMC0xLjE5MTQtMC45NzY1Ni0yLjE2OC0yLjE2OC0yLjE2OGgtMC45MDIzNGMtMS4xOTE0IDAtMi4xNjggMC45NzY1Ni0yLjE2OCAyLjE2OHYyLjE3NThoLTcuNTc0MnYtMTAuMTAyYzEuMjk2OS0wLjAzOTA2MiAyLjE5OTItMC45MjU3OCAyLjE5OTItMi4xNzU4di0wLjg0NzY2YzAtMS4zMjAzLTEuMDcwMy0yLjM5NDUtMi4zOTQ1LTIuMzk0NWgtMjEuMzI4Yy0xLjMyMDMgMC0yLjM5NDUgMS4wNzAzLTIuMzk0NSAyLjM5NDV2MC44NDc2NmMwIDEuMTYwMiAwLjkyNTc4IDIuMDU0NyAyLjE5OTIgMi4xNjh2MjcuOTM4aC0xLjE1MjNjLTEuMjg5MSAwLTIuMzQ3NyAxLjA3MDMtMi4zNDc3IDIuMzk0NXYwLjkwMjM0YzAgMS4zMjAzIDEuMDQ2OSAyLjM5NDUgMi4zNDc3IDIuMzk0NWgxLjA3MDNjMC4yNDIxOSAzLjc2NTYgMi40MTAyIDcuMDE5NSA1LjUzOTEgOC43Njk1aC02LjgzNTljLTAuNzY1NjMgMC0xLjM4NjcgMC42MjEwOS0xLjM4NjcgMS4zNzg5djEuNDI1OGMwIDAuNzU3ODEgMC42MjEwOSAxLjM3ODkgMS4zODY3IDEuMzc4OWg2MC43NzNjMC43NjU2MiAwIDEuMzg2Ny0wLjYyMTA5IDEuMzg2Ny0xLjM3ODl2LTEuNDI1OGMwLTAuNzU3ODEtMC42MjEwOS0xLjM3ODktMS4zODY3LTEuMzc4OWwtMTguMDc0IDAuMDAzOTA2YzMuMTIxMS0xLjc1IDUuMjk2OS01LjAwMzkgNS41MzkxLTguNzY5NWgxLjg5NDV2Ni4xNjAyYzAgMC45MTAxNiAwLjg2MzI4IDEuNjI4OSAxLjk1NyAxLjYyODloOC43NTM5YzAuNzg5MDYgMCAxLjQ4NDQtMC4zNzEwOSAxLjc5NjktMC45NjA5NCAwLjI2MTcyLTAuNDg4MjggMC4yMzA0Ny0xLjAyNzMtMC4wNzgxMjQtMS40NzY2em0tOS41MjczLTIzLjgxMmMwLjg2MzI4IDAgMS41NTQ3IDAuNzAzMTIgMS41NTQ3IDEuNTU0N3Y0LjI4OTFjMCAwLjg2MzI4LTAuNzAzMTIgMS41NTQ3LTEuNTU0NyAxLjU1NDdoLTEuNXYtNy4zOTg0em0tMi45MDIzLTIuNjc1OHYxNS40MzhsLTExLjUyLTAuMDAzOTA2di0xNi40MjZoMTAuNTI3YzAuNTUwNzggMCAwLjk5MjE5IDAuNDQxNDEgMC45OTIxOSAwLjk5MjE5em0tOC45NjQ4LTE3LjAyYzAtMC4zNjMyOC0wLjI3MzQ0LTAuNjY3OTctMC42MzY3Mi0wLjcwMzEyLTAuNTA3ODEtMC4wNDY4NzYtMC45MTAxNi0wLjQxMDE2LTAuOTEwMTYtMC44MjAzMSAwLTAuMjUgMC4wMzkwNjMtMC4yODkwNiAwLjIyNjU2LTAuNDg0MzggMC4xMjg5MS0wLjEyODkxIDAuMjgxMjUtMC4yODkwNiAwLjQxNzk3LTAuNTMxMjUgMC4yMDMxMy0wLjM0NzY2IDAuMjAzMTMtMC43NTc4MSAwLjAwNzgxMy0xLjEwNTUtMC4xOTUzMS0wLjMzOTg0LTAuNTYyNS0wLjU1NDY5LTAuOTYwOTQtMC41NTQ2OS0wLjk5MjE5LTAuMDA3ODEzLTIuMzM1OS0wLjI4MTI1LTIuODc4OS0xLjA0NjktMC4xNjAxNi0wLjIzNDM4LTAuNDUzMTItMC4zMzk4NC0wLjcyNjU2LTAuMjgxMjUtMC42MTMyOCAwLjEzNjcyLTEuMjgxMiAwLjA2NjQwNi0xLjc4OTEtMC4yMDMxMi0wLjE5NTMxLTAuMDk3NjU2LTAuNDE3OTctMC4xMDU0Ny0wLjYxMzI4LTAuMDE1NjI1LTAuOTc2NTYgMC40NDE0MS0yLjI1NzggMC4zNjMyOC0zLjEyODktMC4xOTUzMS0wLjMzOTg0LTAuMjE4NzUtMC43MzQzOC0wLjU4OTg0LTAuNzM0MzgtMS4xNDQ1IDAtMC4yNDIxOSAwLjA4OTg0NC0wLjQ3NjU2IDAuMjUtMC43MDMxMiAwLjE5NTMxLTAuMjU3ODEgMC4xODM1OS0wLjYxMzI4LTAuMDE1NjI1LTAuODcxMDktMC40MjU3OC0wLjUyMzQ0LTAuNTE1NjItMS4wOTc3LTAuMjUtMS42NTIzIDAuMzcxMDktMC43ODEyNSAxLjUtMS41NzAzIDMuMTc1OC0xLjU3MDMgMS4yNSAwIDIuNDE4IDAuNDkyMTkgMi45ODQ0IDEuMjQyMiAwLjE0NDUzIDAuMTk1MzEgMC4zODY3MiAwLjI5Njg3IDAuNjI4OTEgMC4yNzM0NCAwLjM3MTA5LTAuMDM5MDYzIDAuNzU3ODEtMC4wNTQ2ODcgMS4xMzY3LTAuMDU0Njg3IDEuMzg2NyAwIDQuOTgwNSAwLjQ1MzEyIDQuOTgwNSAyLjUwNzggMCAwLjIxMDk0LTAuMDY2NDA3IDAuMzI0MjItMC4xNTIzNCAwLjQ3NjU2LTAuMTI4OTEgMC4yMTg3NS0wLjQyNTc4IDAuNzM0MzgtMC4wMDc4MTMgMS4zMTI1IDAuMDk3NjU3IDAuMTM2NzIgMC4zNjMyOCAwLjUgMC45MTAxNiAwLjUwNzgxIDEuMjE4OCAwLjAyMzQzNyAyLjQ2NDggMC44MjAzMSAyLjQ2NDggMi4xMTMzIDAgMC44NjMyOC0wLjYyMTA5IDEuNjI4OS0xLjU3ODEgMS45NTctMC4zMzk4NCAwLjExMzI4LTAuNTM5MDYgMC40Njg3NS0wLjQ2MDk0IDAuODEyNSAwLjAyMzQzOCAwLjA5NzY1NiAwLjA0Njg3NSAwLjE2Nzk3IDAuMDc0MjE5IDAuMjI2NTYgMCAwLjA2NjQwNiAwLjAwNzgxMiAwLjIxMDk0IDAuMDA3ODEyIDAuNSAwIDAuNDEwMTYtMC4xMjEwOSAxLjYwNTUtMC4zNDc2NiAyLjcxNDhoLTEuNWMtMC4zMzk4NC0wLjk3MjY2LTAuNTgyMDMtMi4wOTM4LTAuNTc0MjItMi43MDd6bS0yLjQ5NjEgNS45MDIzdi0wLjc4OTA2YzAtMC41NDY4OCAwLjQ0MTQxLTAuOTkyMTkgMC45OTIxOS0wLjk5MjE5aDYuMDkzOGMwLjU0Njg4IDAgMC45OTIxOSAwLjQ0MTQxIDAuOTkyMTkgMC45OTIxOXYwLjc4OTA2YzAgMC41NDY4OC0wLjQ0MTQxIDAuOTkyMTktMC45OTIxOSAwLjk5MjE5aC02LjA5MzhjLTAuNTUwNzggMC4wMDc4MTItMC45OTIxOS0wLjQ0NTMxLTAuOTkyMTktMC45OTIxOXptMi4xOTkyIDIuMzk0NWgzLjY3NTh2Ni4zMjgxaC0zLjY3NTh6bS04LjgwMDggNC4xNTIzYzAtMC40MTc5NyAwLjM0NzY2LTAuNzY1NjIgMC43NjU2Mi0wLjc2NTYyaDAuOTAyMzRjMC40MTc5NyAwIDAuNzY1NjIgMC4zNDc2NiAwLjc2NTYyIDAuNzY1NjJ2Mi4xNzU4aC0yLjQzMzZ6bTUuMTQwNiAzLjU3ODF2MTYuNDNsLTE0LjExMy0wLjAwMzkwNnYtMTYuNDI2em0tMzQuNDMtMTEuNDk2aDE4LjkxdjE5LjA2MmwtMTguOTEgMC4wMDM5MDd6bS0yLjE5OTItMi4xODM2di0wLjg0NzY2YzAtMC41NDY4NyAwLjQ0MTQxLTAuOTkyMTkgMC45OTIxOS0wLjk5MjE5aDIxLjMyOGMwLjU0Njg4IDAgMC45OTIxOSAwLjQ0MTQxIDAuOTkyMTkgMC45OTIxOXYwLjg0NzY2YzAgMC42ODM1OS0wLjU2MjUgMC43ODEyNS0wLjkwMjM0IDAuNzgxMjVoLTIxLjMyYy0wLjQzNzUgMC4wMDc4MTItMS4wODk4LTAuMjAzMTItMS4wODk4LTAuNzgxMjV6bTIuMTk5MiAyMi42NTJoMTguOTF2Ny40NTdsLTE4LjkxLTAuMDAzOTA2em0tMC4wNzgxMjYgMTMuMTQ1aDQuMjY1NmMwLjM0NzY2IDIuNTQ2OSAyLjUzMTIgNC41MTU2IDUuMTY4IDQuNTE1NiAyLjYzNjcgMCA0LjgyMDMtMS45Njg4IDUuMTY4LTQuNTE1Nmg0LjI2NTZjLTAuMzYzMjggNC44ODY3LTQuNDQ5MiA4Ljc1MzktOS40Mjk3IDguNzUzOS00Ljk4ODMgMC05LjA4Mi0zLjg2NzItOS40Mzc1LTguNzUzOXptNS42NzU4IDBoNy40OTYxYy0wLjMzMjAzIDEuNzczNC0xLjg4NjcgMy4xMTMzLTMuNzUgMy4xMTMzLTEuODU5NCAwLTMuNDE4LTEuMzM5OC0zLjc0NjEtMy4xMTMzem01Mi4zNzkgMTEuNTYyaC02MC43NTR2LTEuMzg2N2g2MC43NTR6bS00My4zMzYtMi43ODkxYzMuMTIxMS0xLjc1IDUuMjk2OS01LjAwMzkgNS41MzkxLTguNzY5NWgzLjYyMTFjMC4yNDIxOSAzLjc2NTYgMi40MTAyIDcuMDE5NSA1LjUzOTEgOC43Njk1em0xOS45ODQtMC4wMTk1MzFjLTQuOTgwNSAwLTkuMDcwMy0zLjg3MTEtOS40Mjk3LTguNzUzOWg0LjI2NTZjMC4zNDc2NiAyLjU0NjkgMi41MzEyIDQuNTE1NiA1LjE2OCA0LjUxNTYgMi42MzY3IDAgNC44MjAzLTEuOTY4OCA1LjE2OC00LjUxNTZoNC4yNjU2Yy0wLjM3MTA5IDQuODg2Ny00LjQ1NyA4Ljc1MzktOS40Mzc1IDguNzUzOXptLTMuNzUtOC43NTM5aDcuNDk2MWMtMC4zMzIwMyAxLjc3MzQtMS44ODY3IDMuMTEzMy0zLjc1IDMuMTEzMy0xLjg1OTQgMC0zLjQxNDEtMS4zMzk4LTMuNzQ2MS0zLjExMzN6bS0zMy40My0xLjQwMjNjLTAuNTE1NjIgMC0wLjk0MTQxLTAuNDQxNDEtMC45NDE0MS0wLjk5MjE5di0wLjkwMjM0YzAtMC41NDY4OCAwLjQxNzk3LTAuOTkyMTkgMC45NDE0MS0wLjk5MjE5aDQ5LjkwNnYyLjg4Njd6bTUxLjMwOSA3LjU2MjV2LTEwLjQ0OWgwLjgzMjAzbDMuMTc1OCAxMC42NzJoLTMuNDQxNGMtMC4zNTU0NyAwLjAwMzkwNi0wLjU1ODU5LTAuMTY3OTctMC41NjY0MS0wLjIyMjY2em05LjMyMDMgMC4yMjY1NmgtMy44NTE2bC0zLjE3NTgtMTAuNjcyaDAuMTM2NzJjMC4zMDQ2OSAwIDAuNDg0MzggMC4xMTMyOCAwLjU0Njg4IDAuMjEwOTRsNi44OTA2IDEwLjIyM2MwLjAwNzgxMyAwLjAwNzgxMyAwLjAwNzgxMyAwLjAxNTYyNSAwLjAxNTYyNSAwLjAxNTYyNS0wLjAyMzQzNyAwLjA1MDc4Mi0wLjE5MTQxIDAuMjIyNjYtMC41NjI1IDAuMjIyNjZ6IiBmaWxsPSIjZmZiMjU4Ii8+Cjwvc3ZnPgo=">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" id="lens-stylesheet" href="{{defaultLensCssFile}}">
+<style>
+/* Layout for this template's own additions only - .chart itself stays governed by the lens the
+   visitor picks. */
+.charts-row {
+margin-top: 1rem;
+display: flex;
+flex-direction: column;
+gap: 1.5rem;
+}
+.charts-row .chart {
+margin-top: 0;
+width: 100%;
+}
+/* The scrollable inner viewport for the bar chart, and the sizer Chart.js actually measures for
+   responsive sizing (Chart.js sizes a canvas to match its DIRECT parent, so the sizer - not the
+   scrollable viewport around it - is what gets an explicit pixel width from the script below). */
+.chart-canvas-wrap {
+overflow-x: auto;
+height: 100%;
+}
+.chart-canvas-sizer {
+height: 100%;
+}
+.chart-extra {
+width: 260px;
+height: 260px;
+flex: 0 0 auto;
+}
+.chart-extra canvas,
+.chart-extra svg {
+width: 100%;
+height: 100%;
+}
+/* The hover-over "?" badge next to each api-contracts metric card label. */
+.info-badge {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 1rem;
+height: 1rem;
+margin-left: 0.35rem;
+border-radius: 50%;
+border: 1px solid currentColor;
+font-size: 0.65rem;
+line-height: 1;
+cursor: help;
+vertical-align: middle;
+}
+</style>
+</head>
+<body>
+<div class="dashboard">
+<header>
+<div class="dashboard-heading">
+<h1>Tracker Lens Dashboard</h1>
+<p class="dashboard-version">A companion to "Software Engineering Done Right &mdash; The practice of delivering useful and usable products".</p>
+</div>
+<div class="lens-switcher" data-lens-count="{{lensCount}}">
+<label for="lens-select">Lens</label>
+<select id="lens-select">
+{{#lenses}}
+<option value="{{id}}"{{#selected}} selected{{/selected}}>{{id}}</option>
+{{/lenses}}
+</select>
+</div>
+</header>
+{{#trackers}}
+<section class="tracker" data-tracker="{{id}}">
+<div class="tracker-header">
+<h2>{{id}}</h2>
+<div class="forecast-controls">
+<label class="forecast-toggle">
+Show forecast
+<input type="checkbox" class="show-forecast-toggle">
+<span class="forecast-toggle__track"></span>
+</label>
+</div>
+</div>
+<div class="metrics">
+{{#metrics}}
+<div class="metric-card" data-stage="{{stage}}" data-total="{{totalCount}}" style="--percent: {{percent}}">
+<span class="metric-card__stage">{{stage}}</span>
+<span class="metric-card__count">{{count}} / {{totalCount}}</span>
+<span class="metric-card__percent">{{percent}}%</span>
+</div>
+{{/metrics}}
+</div>
+{{#projection}}
+<div class="forecast" data-status="{{status}}">
+<div class="forecast__week-mode">
+<label>Working week:
+<select class="week-mode-toggle">
+<option value="5" selected>5 days (weekends off)</option>
+<option value="7">7 days (weekends count)</option>
+</select>
+</label>
+</div>
+<p class="forecast__date">Forecast completion: {{projectedDate}}</p>
+<p class="forecast__progress">{{currentCount}} of {{totalCount}} complete &middot; <span class="forecast__pace">&asymp;{{velocityPerDay}}/day</span> at current pace</p>
+<p class="forecast__disclaimer">{{disclaimer}}</p>
+</div>
+<!-- The mustache-rendered block above is prose for a reader; this is the same forecast as plain
+     numbers, for the script below to recompute against this tracker's own working-week toggle and
+     draw the grey forecast segment from. velocityPerDay is plain calendar-day pace, exactly as
+     ForecastCalculator computes it - no working-week assumption is baked in here at all; that
+     assumption is applied client-side, per this tracker's own controls above. -->
+<script type="application/json" class="forecast-data" data-tracker="{{id}}">{"forecastDate":"{{projectedDate}}","currentCount":{{currentCount}},"totalCount":{{totalCount}},"velocityPerDay":{{velocityPerDay}}}</script>
+{{/projection}}
+{{^projection}}
+<p class="forecast-unavailable">Not enough history yet - check back once at least a week of data has been captured.</p>
+{{/projection}}
+<div class="charts-row">
+<div class="chart"><div class="chart-canvas-wrap"><div class="chart-canvas-sizer"><canvas></canvas></div></div></div>
+<div class="chart-extra-row">
+<div class="chart-extra" data-extra-chart-for="{{id}}"></div>
+<div class="chart-explainer"></div>
+</div>
+</div>
+</section>
+{{/trackers}}
+{{#hasStaleItems}}
+<section class="stale-items">
+<h2>Stale Items</h2>
+<table class="stale-items__table">
+<thead><tr><th>Tracker</th><th>Item</th><th>Group</th><th>Last Seen</th></tr></thead>
+<tbody>
+{{#staleItems}}
+<tr><td>{{trackerId}}</td><td>{{label}}</td><td>{{group}}</td><td>{{lastSeen}}</td></tr>
+{{/staleItems}}
+</tbody>
+</table>
+</section>
+{{/hasStaleItems}}
+</div>
+{{{dashboardDataScript}}}
+{{{bootstrapScript}}}
+<script>
+(function () {
+  // Runs on the next macrotask (setTimeout 0): Chart.js measures its canvas's parent at creation
+  // time, and running this inline as the page finishes parsing can catch that parent before the
+  // surrounding flex layout has settled - the same timing bug already fought and fixed elsewhere in
+  // this design process. Explicitly sizing the canvas's sizer element ourselves (see sizeCanvas
+  // below) also sidesteps most of that problem on its own, since Chart.js then has a real,
+  // already-resolved pixel width to measure the moment it looks, rather than a percentage-based
+  // width still being laid out. This also runs after the fixed bootstrap script above, whose own
+  // line chart on each tracker's canvas this replaces (see destroyExistingChart below).
+  setTimeout(function () {
+  var dataElement = document.getElementById('dashboard-data');
+  var data = dataElement ? JSON.parse(dataElement.textContent) : { trackers: [] };
+  if (typeof Chart === 'undefined') {
+    return;
+  }
+
+  var rootStyle = getComputedStyle(document.documentElement);
+  function cssVar(name, fallback) {
+    return rootStyle.getPropertyValue(name).trim() || fallback;
+  }
+  function cssEscape(value) {
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  var STAGE_COLORS = [
+    cssVar('--dashboard-stage-1', '#6b6255'),
+    cssVar('--dashboard-stage-2', '#b8791e'),
+    cssVar('--dashboard-stage-3', '#6e3b22')
+  ];
+  var COMPLIANT_COLOR = cssVar('--dashboard-compliant', '#d9b76a');
+  var STUBBED_COLOR = cssVar('--dashboard-stubbed', '#8a7355');
+  var UNSTUBBED_COLOR = cssVar('--dashboard-border', '#b99a5b');
+  var PROJECTED_REMAINING = cssVar('--dashboard-projected-remaining', 'rgba(120,115,105,0.45)');
+  var PROJECTED_DONE = cssVar('--dashboard-projected-done', 'rgba(70,66,58,0.7)');
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MIN_BAR_PX = 14;
+  var MAX_BAR_PX = MIN_BAR_PX * 1.5;
+
+  var GHERKIN_STAGES = ['listed', 'defined', 'implemented'];
+  var CONTRACT_STAGES = ['declared', 'implemented', 'stubbed', 'verified'];
+
+  function hasAllStages(stages, required) {
+    return required.every(function (stage) { return stages.indexOf(stage) !== -1; });
+  }
+
+  function shortDate(iso) {
+    var parts = iso.split('-');
+    return MONTHS[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10);
+  }
+  function longDate(date) {
+    return MONTHS[date.getUTCMonth()] + ' ' + date.getUTCDate() + ', ' + date.getUTCFullYear();
+  }
+  function isoDate(date) {
+    return date.toISOString().slice(0, 10);
+  }
+
+  // "How long does one of these take", not "how many per day" - a day is 8 working hours, so a
+  // velocity of 2/day is 4 hours each, 3/day is 8/3 = 2.667, rounded to the nearest half hour (2.5).
+  // Below one working day, expressed in hours; at or above, in working days (same half-unit rounding).
+  function formatPace(velocityPerDay, itemNoun) {
+    if (!velocityPerDay || velocityPerDay <= 0) {
+      return 'pace unknown';
+    }
+    var daysPerItem = 1 / velocityPerDay;
+    var hoursPerItem = daysPerItem * 8;
+    if (hoursPerItem <= 8) {
+      var h = Math.round(hoursPerItem * 2) / 2;
+      return '\u2248' + h + ' working hour' + (h === 1 ? '' : 's') + ' per ' + itemNoun;
+    }
+    var d = Math.round(daysPerItem * 2) / 2;
+    return '\u2248' + d + ' working day' + (d === 1 ? '' : 's') + ' per ' + itemNoun;
+  }
+
+  // Maps "N days' worth of progress still needed" onto an actual calendar date. In 7-day mode every
+  // calendar day counts; in 5-day mode weekends are skipped, so the same amount of needed progress
+  // lands on a later calendar date. velocityPerDay itself is untouched either way - a plain
+  // historical calendar-day average, exactly as ForecastCalculator computes it server-side.
+  function computeTargetDate(lastRealDateISO, remaining, velocityPerDay, weekMode) {
+    if (!velocityPerDay || velocityPerDay <= 0 || remaining <= 0) {
+      return null;
+    }
+    var daysNeeded = Math.ceil(remaining / velocityPerDay);
+    var date = new Date(lastRealDateISO + 'T00:00:00Z');
+    if (weekMode === '7') {
+      date.setUTCDate(date.getUTCDate() + daysNeeded);
+      return date;
+    }
+    var left = daysNeeded;
+    while (left > 0) {
+      date.setUTCDate(date.getUTCDate() + 1);
+      var day = date.getUTCDay();
+      if (day !== 0 && day !== 6) {
+        left--;
+      }
+    }
+    return date;
+  }
+
+  function readForecastData(trackerId) {
+    var el = document.querySelector('.forecast-data[data-tracker="' + cssEscape(trackerId) + '"]');
+    return el ? JSON.parse(el.textContent) : null;
+  }
+
+  // dates/series/breakdownByDate extend past a tracker's last real data point purely for the fixed
+  // bootstrap chart's width (see TrackerViewFactory#chartDates) - every stage reads 0 there, not a
+  // forecast (see TrackerViewFactory#hasDataOn). The arrays themselves are left alone - the bar chart
+  // still needs their full padded width - but "the array's last entry" can no longer be read as "the
+  // tracker's actual latest data" the way it always could before the plugin started padding with
+  // zeros, so every place that needs a snapshot-as-of-now value (the pie's default slice, the
+  // forecast's anchor date, stub coverage's declaredNow/stubbedNow and its own trailing-window
+  // velocity) must use this index instead of dates.length - 1 / series.length - 1.
+  function lastRealIndex(tracker) {
+    var index = tracker.dates.length - 1;
+    outer: for (; index > 0; index--) {
+      for (var stage in tracker.series) {
+        if ((tracker.series[stage][index] || 0) > 0) {
+          break outer;
+        }
+      }
+    }
+    return index;
+  }
+
+  // Bars stay a fixed, readable width regardless of how many there are: the sizer (canvas's direct
+  // parent, which is what Chart.js's responsive mode actually measures) gets an explicit pixel width
+  // of barCount * targetPerBarWidth, clamped to [MIN_BAR_PX, MAX_BAR_PX] - few bars don't stretch
+  // absurdly wide to fill the card, many bars don't get squeezed illegibly thin, they scroll instead
+  // (.chart-canvas-wrap, the sizer's own parent, is the overflow-x:auto viewport).
+  function sizeCanvas(sizer, wrap, barCount) {
+    var viewportWidth = wrap.clientWidth || 1;
+    var natural = viewportWidth / barCount;
+    var perBar = natural < MIN_BAR_PX ? MIN_BAR_PX : (natural > MAX_BAR_PX ? MAX_BAR_PX : natural);
+    var targetWidth = Math.max(viewportWidth, Math.round(barCount * perBar));
+    sizer.style.width = targetWidth + 'px';
+  }
+
+  function attachBadge(labelEl, title) {
+    if (!labelEl) {
+      return;
+    }
+    var badge = document.createElement('span');
+    badge.className = 'info-badge';
+    badge.textContent = '?';
+    badge.title = title;
+    labelEl.appendChild(badge);
+  }
+
+  // -------- the generic stacked-bar-plus-hover-synced-pie-plus-forecast mechanism --------
+  //
+  // Shared by every tracker section on the page, real or synthesized: a Gherkin-shaped tracker
+  // feeds it breakdownByDate directly (see below), an API_CONTRACT-shaped tracker feeds it the
+  // Shadow/Mirage/Doppelganger/Compliant quadrant recomputed at every date (see quadrantAt), and the
+  // synthesized Stub Coverage section feeds it a stubbed/notYetStubbed split off that same
+  // tracker's own declared/stubbed series - all three end up drawn by exactly this one function, so
+  // none of them can drift out of sync with each other's mechanics.
+  function renderChartSection(config) {
+    var section = config.section;
+    var dates = config.dates;
+    var categories = config.categories;
+    var breakdownRows = config.breakdownRows;
+    var finalKey = config.finalKey;
+    var itemNoun = config.itemNoun;
+    var velocityPerDay = config.velocityPerDay;
+    var realIndex = config.lastRealIndex;
+
+    var barCanvas = section.querySelector('.chart canvas');
+    var sizer = section.querySelector('.chart-canvas-sizer');
+    var wrap = section.querySelector('.chart-canvas-wrap');
+    var extra = section.querySelector('.chart-extra');
+    var showForecastEl = section.querySelector('.show-forecast-toggle');
+    var weekModeEl = section.querySelector('.week-mode-toggle');
+    var dateEl = section.querySelector('.forecast__date');
+    var paceEl = section.querySelector('.forecast__pace');
+    var forecastEl = section.querySelector('.forecast');
+    if (!barCanvas || !sizer || !wrap || !extra || !dates.length) {
+      return;
+    }
+
+    var existingChart = Chart.getChart(barCanvas);
+    if (existingChart) {
+      existingChart.destroy();
+    }
+
+    // The chart's own x-axis (labels/barDatasets below) keeps the tracker's full dates/
+    // breakdownRows width - including any trailing padding TrackerViewFactory added purely for
+    // chart-width readability - so the bar chart stays at least the usual 30-day-minimum wide
+    // regardless of how little real data there is. Only the pie's default slice and the
+    // forecast's anchor point below need the tracker's actual last real date, not the padded
+    // array's own last entry.
+    var lastRealRow = breakdownRows[realIndex];
+    var lastRealDate = dates[realIndex];
+    var totalCount = Object.keys(lastRealRow).reduce(function (sum, k) { return sum + lastRealRow[k]; }, 0);
+    var lastRealDone = lastRealRow[finalKey] || 0;
+
+    extra.innerHTML = '';
+    var label = document.createElement('p');
+    label.className = 'chart-extra__label';
+    extra.appendChild(label);
+    var pieCanvas = document.createElement('canvas');
+    extra.appendChild(pieCanvas);
+
+    var pieChart = null;
+    function setPieToIndex(index) {
+      var row = breakdownRows[index];
+      // Zero-value entries are omitted entirely (legend and slices both), not just visually hidden -
+      // early history in particular is mostly one non-zero category, and listing the others at "0"
+      // just clutters the legend for no reason.
+      var present = categories.filter(function (c) { return (row[c.key] || 0) > 0; });
+      var values = present.map(function (c) { return row[c.key]; });
+      var labels = present.map(function (c) { return c.label; });
+      var colors = present.map(function (c) { return c.color; });
+      label.textContent = 'As of ' + shortDate(dates[index]);
+      if (pieChart) {
+        pieChart.data.labels = labels;
+        pieChart.data.datasets[0].data = values;
+        pieChart.data.datasets[0].backgroundColor = colors;
+        pieChart.update('none');
+        return;
+      }
+      pieChart = new Chart(pieCanvas.getContext('2d'), {
+        type: 'pie',
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: colors }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'left' } } }
+      });
+    }
+    setPieToIndex(realIndex);
+    barCanvas.addEventListener('mouseleave', function () {
+      setPieToIndex(realIndex);
+    });
+
+    var barChart = null;
+    function render() {
+      var weekMode = weekModeEl ? weekModeEl.value : '5';
+      var showForecast = showForecastEl ? showForecastEl.checked : true;
+      var targetDate = computeTargetDate(lastRealDate, totalCount - lastRealDone, velocityPerDay, weekMode);
+
+      var labels = dates.slice();
+      var barDatasets = categories.map(function (category) {
+        return {
+          label: category.label,
+          data: breakdownRows.map(function (row) { return row[category.key] || 0; }),
+          backgroundColor: category.color,
+          stack: 'total'
+        };
+      });
+
+      if (targetDate) {
+        // Every calendar day from the one right after the tracker's actual last real data point
+        // through targetDate needs a forecast value - including any day that already has an
+        // array slot from TrackerViewFactory's own width padding (dates/breakdownRows all read 0
+        // there; see the comment above render()). The ramp must start there too, not after that
+        // padding's own tail: anchoring it past the padding (as this used to) either strands the
+        // ramp behind a dead gap of zero bars when targetDate lands beyond the padding window, or
+        // suppresses it outright when targetDate lands inside that window - the padding's tail is
+        // later than targetDate, so the "while cur <= targetDate" loop never runs at all.
+        var rampDates = [];
+        var cur = new Date(lastRealDate + 'T00:00:00Z');
+        cur.setUTCDate(cur.getUTCDate() + 1);
+        while (cur.getTime() <= targetDate.getTime()) {
+          rampDates.push(isoDate(cur));
+          cur.setUTCDate(cur.getUTCDate() + 1);
+        }
+
+        // Only a rampDate past labels' own current tail is a genuinely new column; earlier ones
+        // already have a padding slot to fill in place.
+        var newDates = rampDates.filter(function (d) { return d > labels[labels.length - 1]; });
+        labels = labels.concat(newDates);
+        barDatasets.forEach(function (ds) {
+          ds.data = ds.data.concat(newDates.map(function () { return null; }));
+        });
+
+        var remainingSeries = labels.map(function () { return null; });
+        var doneSeries = labels.map(function () { return null; });
+        if (showForecast) {
+          var span = rampDates.length;
+          rampDates.forEach(function (d, i) {
+            var progress = (i + 1) / span;
+            var done = Math.round(lastRealDone + (totalCount - lastRealDone) * progress);
+            var index = labels.indexOf(d);
+            remainingSeries[index] = totalCount - done;
+            doneSeries[index] = done;
+          });
+        }
+        var finalLabel = categories.filter(function (c) { return c.key === finalKey; })[0];
+        barDatasets.push({ label: 'Remaining (forecast)', data: remainingSeries, backgroundColor: PROJECTED_REMAINING, stack: 'total' });
+        barDatasets.push({
+          label: 'Forecast ' + (finalLabel ? finalLabel.label.toLowerCase() : finalKey),
+          data: doneSeries, backgroundColor: PROJECTED_DONE, stack: 'total'
+        });
+      }
+
+      // Forecast off: hide the whole box, not just dim it or reword its text - a hidden forecast
+      // date can't be half-shown without contradicting the "off" state it's supposed to represent.
+      if (forecastEl) {
+        forecastEl.style.display = showForecast ? '' : 'none';
+      }
+      if (showForecast) {
+        if (dateEl) {
+          // computeTargetDate returns null for two different reasons that "not enough data" used
+          // to conflate: remaining <= 0 (already there - nothing left to project) and
+          // velocityPerDay <= 0 (a full week-plus of real history, just no forward progress in it,
+          // e.g. stub coverage after several stubs were removed) - neither is a lack of history, so
+          // neither should be worded as one.
+          var remaining = totalCount - lastRealDone;
+          dateEl.textContent = targetDate ? 'Forecast completion: ' + longDate(targetDate)
+              : remaining <= 0 ? 'Forecast completion: already complete'
+              : 'Forecast completion: not currently trending toward completion';
+        }
+        if (paceEl) {
+          paceEl.textContent = formatPace(velocityPerDay, itemNoun);
+        }
+      }
+
+      sizeCanvas(sizer, wrap, labels.length);
+
+      if (barChart) {
+        barChart.data.labels = labels;
+        barChart.data.datasets = barDatasets;
+        barChart.update();
+        return;
+      }
+      barChart = new Chart(barCanvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: labels, datasets: barDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { stacked: true, ticks: { maxTicksLimit: 12 } },
+            y: { stacked: true, beginAtZero: true }
+          },
+          plugins: {
+            // align: 'start' anchors the legend to the canvas's left edge rather than centering it
+            // across the canvas's full width - which matters specifically because the canvas can be
+            // much wider than the visible scrollable viewport (see sizeCanvas above).
+            legend: { display: true, align: 'start' },
+            // Same "omit anything at zero" rule as the pie's legend/slices - a stacked-bar tooltip
+            // in index mode otherwise lists every dataset present at that date regardless of value.
+            tooltip: {
+              filter: function (item) {
+                return item.parsed && item.parsed.y !== null && item.parsed.y !== 0;
+              }
+            }
+          },
+          onHover: function (event, elements, chart) {
+            var index = elements && elements.length ? elements[0].index
+                : chart.scales.x.getValueForPixel(event.x);
+            var clamped = Math.max(0, Math.min(breakdownRows.length - 1, Math.round(index)));
+            setPieToIndex(clamped);
+          }
+        }
+      });
+    }
+
+    render();
+    if (showForecastEl) { showForecastEl.addEventListener('change', render); }
+    if (weekModeEl) { weekModeEl.addEventListener('change', render); }
+  }
+
+  // -------- Gherkin-shaped trackers: breakdownByDate is already the right, mutually-exclusive
+  //          per-date partition (see TrackerViewFactory#computeStageBreakdown) - read directly. --------
+
+  var GHERKIN_LABELS = { listed: 'Listed', defined: 'Defined', implemented: 'Implemented' };
+
+  var SCENARIO_EXPLAINER =
+      '<p><strong>Listed</strong> is a claim of usefulness: the team has agreed this behavior belongs '
+      + 'in the release. <strong>Defined</strong> means its acceptance criteria are written precisely '
+      + 'enough to build against. <strong>Implemented</strong> means glue code exists for every '
+      + 'Given/When/Then in the scenario \u2014 one step-definition method per step, matched by name. '
+      + 'Nothing more: it says nothing about whether those methods do anything correct, or anything '
+      + 'at all. A step definition that only throws <code>NotImplementedException</code> still counts '
+      + 'as implemented.</p>'
+      + '<p>Together these three stages <em>are</em> the release\u2019s scope, when that scope is '
+      + 'expressed as scenarios: this pie is how much of the promised value has matching glue code '
+      + 'today and can therefore potentially be validated for its usefulness through automated '
+      + 'acceptance tests \u2014 output in its rawest form, not remotely proof of outcome.</p>';
+
+  // The plugin renders a generic, lowercase "removed" card after every tracker's own stage cards
+  // (declared/implemented/... - a scenario's is /listed/defined/implemented) - its count and
+  // percent are already correct as rendered, so this only relabels it in place: title "Descoped"
+  // and, via the same data-stage-keyed ::after subtitle every other card here already uses (see
+  // sedr-lens.css), "Obsolete, redundant, irrelevant" underneath. Scoped to bdd-scenarios only -
+  // "Descoped" is scenario-specific language; api-contracts' own removed endpoints get no special
+  // treatment here, left as the plugin's generic card.
+  function relabelRemovedCardAsDescoped(section) {
+    var removedCard = section.querySelector('.metric-card[data-stage="removed"]');
+    if (!removedCard) {
+      return;
+    }
+    removedCard.setAttribute('data-stage', 'descoped');
+    var stageLabel = removedCard.querySelector('.metric-card__stage');
+    if (stageLabel) {
+      stageLabel.textContent = 'Descoped';
+    }
+  }
+
+  function renderGherkinTracker(tracker, section, realIndex) {
+    relabelRemovedCardAsDescoped(section);
+    var explainer = section.querySelector('.chart-explainer');
+    if (explainer) {
+      explainer.innerHTML = SCENARIO_EXPLAINER;
+    }
+    renderChartSection({
+      section: section,
+      dates: tracker.dates,
+      categories: tracker.stages.map(function (stage, index) {
+        return { key: stage, label: GHERKIN_LABELS[stage] || stage, color: STAGE_COLORS[index % STAGE_COLORS.length] };
+      }),
+      breakdownRows: tracker.breakdownByDate,
+      finalKey: tracker.stages[tracker.stages.length - 1],
+      itemNoun: 'scenario',
+      velocityPerDay: (readForecastData(tracker.id) || {}).velocityPerDay,
+      lastRealIndex: realIndex
+    });
+  }
+
+  // -------- API-contract-shaped trackers: the Shadow/Mirage/Doppelganger/Compliant partition --------
+  //
+  // Deliberately NOT built from breakdownByDate directly - declared/implemented/stubbed/verified are
+  // independent conditions an endpoint may satisfy in any combination (see TrackerSourceKind's own
+  // javadoc), so "furthest raw stage in list order" is a category error here, not an approximation:
+  // an endpoint that is declared, really implemented, AND stubbed, but not yet verified, would be
+  // misreported as merely "stubbed", when "really implemented but unverified" (Doppelganger) is the
+  // far more significant fact. This instead uses the officially documented, marginal-count-only
+  // derivation from DASHBOARD-THEMING.adoc's "Shadow / Mirage / Doppelganger / Compliant math" -
+  // which needs only declaredCount, implementedCount, verifiedCount, and totalCount, all already
+  // exposed via #dashboard-data's `series`. Evaluated at every date (not just the latest) is what
+  // makes this new, correct, scrubbable bar-plus-pie possible - series alone only ever exposed
+  // "right now"; breakdownByDate's own per-date totalCount (every category in a date's row summed)
+  // is reused here as the quadrant's own totalCount denominator, since both describe "how many
+  // endpoints were known to exist as of this date" the same way.
+  function quadrantAt(tracker, index) {
+    var row = tracker.breakdownByDate[index] || {};
+    var totalCount = Object.keys(row).reduce(function (sum, k) { return sum + row[k]; }, 0);
+    var declared = (tracker.series.declared || [])[index] || 0;
+    var implemented = (tracker.series.implemented || [])[index] || 0;
+    var verified = (tracker.series.verified || [])[index] || 0;
+    var overlap = declared + implemented - totalCount;
+    return {
+      shadow: totalCount - declared,
+      mirage: totalCount - implemented,
+      compliant: verified,
+      doppelganger: overlap - verified,
+      totalCount: totalCount
+    };
+  }
+
+  var CHECK_DEFINITIONS = {
+    shadow: 'Endpoint is implemented, but there is no OpenAPI description for it \u2014 a Shadow API.',
+    mirage: 'An OpenAPI description exists, but no implementation of the API exists \u2014 in this '
+        + 'context, that means no real code exists yet; whether a stub exists is a separate question, '
+        + 'see api-stub-coverage below.',
+    doppelganger: 'Declared and really implemented, but no test confirms the two still agree \u2014 a '
+        + 'Doppelganger API: looks right, might not be.',
+    compliant: 'Declared, really implemented, and confirmed by a passing test \u2014 the derived '
+        + 'fourth state where none of the three gaps apply.',
+    stubbed: 'At least one WireMock stub exists for this declared endpoint \u2014 a consumer developer '
+        + 'can build against it today, regardless of whether the real implementation exists yet.',
+    notYetStubbed: 'Declared, but no WireMock stub exists yet for this endpoint \u2014 a consumer '
+        + 'developer cannot build against it without waiting for the real implementation.'
+  };
+
+  var CONTRACT_EXPLAINER =
+      '<p>There is no positive "declared" or "implemented" count here \u2014 only the three gaps this '
+      + 'plugin\u2019s own detectors check for, named the same as the detectors themselves. '
+      + '<strong>Shadow API</strong>: implemented, but not documented in the contract \u2014 code no '
+      + 'one declared, and the Shadow API Detector itself only ever looks for real implementations, '
+      + 'never stubs. <strong>Mirage API</strong>: documented, but no implementation of the API '
+      + 'exists. In this context, that means no real code exists yet \u2014 an alternate reading could '
+      + 'take "no implementation" to mean no stub exists either, but that\u2019s answered separately; '
+      + 'see api-stub-coverage below. <strong>Doppelganger API</strong>: documented and really '
+      + 'implemented, but no test proves the two still agree \u2014 looks right, might not be.</p>'
+      + '<p><strong>Compliant</strong> is the fourth, derived state: none of the three gaps apply. '
+      + 'This pie is how much of the release\u2019s API surface can actually be trusted, not just how '
+      + 'much exists \u2014 usability, not usefulness. It intentionally says nothing about stub '
+      + 'coverage \u2014 a Mirage API can still have a consumer-facing stub sitting behind it; see '
+      + 'api-stub-coverage below, a separate question entirely.</p>';
+
+  var STUB_EXPLAINER =
+      '<p>Stubs exist for a different reason than the api-contracts gaps above: not to prove '
+      + 'correctness, but to give API consumer developers early access \u2014 a way to start building '
+      + 'and testing against a contract before the real implementation is ready. A single endpoint '
+      + 'often has several stub mappings behind it, one per request/response scenario, much like '
+      + 'separate contract-test cases for the same operation \u2014 this tracker deliberately counts '
+      + '<strong>endpoints with at least one stub</strong>, not raw stub-file count, since "can I '
+      + 'start building against this at all" is the question that matters here, not how many '
+      + 'scenarios that stub collection happens to cover.</p>'
+      + '<p><strong>Stubbed</strong> status and real implementation status are completely independent: '
+      + 'an endpoint can be Stubbed whether it\u2019s a Mirage API, a Doppelganger API, or already '
+      + 'Compliant. This chart will never agree or disagree with api-contracts above \u2014 it isn\u2019t '
+      + 'answering the same question.</p>';
+
+  function relabelCard(card, key, label, count, totalCount, definitionText) {
+    var percent = totalCount ? Math.round((100 * count) / totalCount) : 0;
+    card.setAttribute('data-stage', key);
+    card.style.setProperty('--percent', percent);
+    var stageLabel = card.querySelector('.metric-card__stage');
+    stageLabel.textContent = label;
+    attachBadge(stageLabel, definitionText);
+    card.querySelector('.metric-card__count').textContent = count + ' / ' + totalCount;
+    card.querySelector('.metric-card__percent').textContent = percent + '%';
+  }
+
+  function newMetricCard(key, label, count, totalCount, definitionText) {
+    var card = document.createElement('div');
+    card.className = 'metric-card';
+    card.setAttribute('data-total', totalCount);
+    card.innerHTML =
+        '<span class="metric-card__stage"></span>'
+        + '<span class="metric-card__count"></span>'
+        + '<span class="metric-card__percent"></span>';
+    relabelCard(card, key, label, count, totalCount, definitionText);
+    return card;
+  }
+
+  // Rewrites the declared/implemented/verified cards in place as Shadow/Mirage/Doppelganger, appends
+  // a fourth card for Compliant (there's no native fifth stage to relabel it from), and removes the
+  // native "stubbed" card entirely - its own tracker section (see buildStubCoverageSection) now owns
+  // that data with its own denominator and its own forecast, so leaving a fifth raw card here would
+  // just repeat it out of context.
+  function relabelContractCards(tracker, section, quadrant) {
+    var totalCount = quadrant.totalCount;
+    var relabels = [
+      { stageKey: 'declared', key: 'undeclared', label: 'Shadow API', count: quadrant.shadow, def: CHECK_DEFINITIONS.shadow },
+      { stageKey: 'implemented', key: 'unimplemented', label: 'Mirage API', count: quadrant.mirage, def: CHECK_DEFINITIONS.mirage },
+      { stageKey: 'verified', key: 'unverified', label: 'Doppelganger API', count: quadrant.doppelganger, def: CHECK_DEFINITIONS.doppelganger }
+    ];
+    relabels.forEach(function (entry) {
+      var card = section.querySelector('.metric-card[data-stage="' + entry.stageKey + '"]');
+      if (card) {
+        relabelCard(card, entry.key, entry.label, entry.count, totalCount, entry.def);
+      }
+    });
+    var metricsEl = section.querySelector('.metrics');
+    if (metricsEl) {
+      metricsEl.appendChild(newMetricCard('compliant', 'Compliant', quadrant.compliant, totalCount, CHECK_DEFINITIONS.compliant));
+    }
+    var stubbedCard = section.querySelector('.metric-card[data-stage="stubbed"]');
+    if (stubbedCard) {
+      stubbedCard.remove();
+    }
+  }
+
+  // A trailing-window average daily rate, the same technique this repository's own
+  // dashboard-extra-charts example already uses for its own client-side trend extrapolation - stub
+  // coverage has no server-computed ProgressProjector velocity of its own (that class only ever
+  // projects a tracker's single final stage, "verified" for API_CONTRACT), so this is the
+  // self-contained equivalent for "declared endpoints gaining a stub" instead.
+  function estimateVelocity(series, realIndex) {
+    var window = Math.min(14, realIndex);
+    if (window <= 0) {
+      return 0;
+    }
+    var last = series[realIndex] || 0;
+    var earlier = series[realIndex - window] || 0;
+    return Math.max(0, (last - earlier) / window);
+  }
+
+  // Synthesizes a third, independent .tracker section for stub coverage, scoped to declared
+  // endpoints only - entirely derived client-side from this same api-contracts tracker's own
+  // declared/stubbed series, no separate registered tracker or plugin change needed. Inserted right
+  // after the api-contracts section itself so sedr-lens.css's :has(.metric-card[data-stage=
+  // "stubbed"]) practice-label selector matches a section with its own <h2>, not a stray leftover
+  // card inside api-contracts (which no longer has one - see relabelContractCards above).
+  function buildStubCoverageSection(tracker, afterSection, contractTotalCount, realIndex) {
+    var declaredSeries = tracker.series.declared || [];
+    var stubbedSeries = tracker.series.stubbed || [];
+    if (!declaredSeries.length) {
+      return;
+    }
+
+    var id = tracker.id + '-stub-coverage';
+    var declaredNow = declaredSeries[realIndex] || 0;
+    var stubbedNow = stubbedSeries[realIndex] || 0;
+    var unstubbedNow = Math.max(0, declaredNow - stubbedNow);
+    var stubbedPercent = declaredNow ? Math.round((100 * stubbedNow) / declaredNow) : 0;
+    var unstubbedPercent = declaredNow ? 100 - stubbedPercent : 0;
+
+    var parentForecast = afterSection.querySelector('.forecast');
+    var forecastHtml;
+    if (parentForecast) {
+      var parentDisclaimer = parentForecast.querySelector('.forecast__disclaimer');
+      forecastHtml =
+          '<div class="forecast" data-status="' + parentForecast.getAttribute('data-status') + '">'
+          + '<div class="forecast__week-mode">'
+          + '<label>Working week:'
+          + '<select class="week-mode-toggle">'
+          + '<option value="5" selected>5 days (weekends off)</option>'
+          + '<option value="7">7 days (weekends count)</option>'
+          + '</select>'
+          + '</label>'
+          + '</div>'
+          + '<p class="forecast__date"></p>'
+          + '<p class="forecast__progress">' + stubbedNow + ' of ' + declaredNow + ' complete &middot; '
+          + '<span class="forecast__pace"></span> at current pace</p>'
+          + '<p class="forecast__disclaimer">' + (parentDisclaimer ? parentDisclaimer.textContent : '') + '</p>'
+          + '</div>';
+    } else {
+      forecastHtml = '<p class="forecast-unavailable">Not enough history yet - check back once at '
+          + 'least a week of data has been captured.</p>';
+    }
+
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML =
+        '<section class="tracker" data-tracker="' + id + '">'
+        + '<div class="tracker-header">'
+        + '<h2>' + id + '</h2>'
+        + '<div class="forecast-controls">'
+        + '<label class="forecast-toggle">'
+        + 'Show forecast'
+        + '<input type="checkbox" class="show-forecast-toggle">'
+        + '<span class="forecast-toggle__track"></span>'
+        + '</label>'
+        + '</div>'
+        + '</div>'
+        + '<div class="metrics">'
+        + '<div class="metric-card" data-stage="stubbed" data-total="' + declaredNow + '" style="--percent: ' + stubbedPercent + '">'
+        + '<span class="metric-card__stage">Stubbed</span>'
+        + '<span class="metric-card__count">' + stubbedNow + ' / ' + declaredNow + '</span>'
+        + '<span class="metric-card__percent">' + stubbedPercent + '%</span>'
+        + '</div>'
+        + '<div class="metric-card" data-stage="notYetStubbed" data-total="' + declaredNow + '" style="--percent: ' + unstubbedPercent + '">'
+        + '<span class="metric-card__stage">Unstubbed</span>'
+        + '<span class="metric-card__count">' + unstubbedNow + ' / ' + declaredNow + '</span>'
+        + '<span class="metric-card__percent">' + unstubbedPercent + '%</span>'
+        + '</div>'
+        + '</div>'
+        + '<p class="metrics-note">Scoped to declared endpoints only (' + declaredNow + ' of ' + contractTotalCount + ') '
+        + '- this tracker asks nothing about real implementation or verification, only "can a consumer '
+        + 'developer start building against this today." It is independent of api-contracts above: a '
+        + 'Mirage API can be Stubbed, and a Compliant one can still be Unstubbed if nobody ever needed '
+        + 'early access to it.</p>'
+        + forecastHtml
+        + '<div class="charts-row">'
+        + '<div class="chart"><div class="chart-canvas-wrap"><div class="chart-canvas-sizer"><canvas></canvas></div></div></div>'
+        + '<div class="chart-extra-row">'
+        + '<div class="chart-extra"></div>'
+        + '<div class="chart-explainer">' + STUB_EXPLAINER + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</section>';
+    var section = wrapper.firstElementChild;
+    afterSection.parentNode.insertBefore(section, afterSection.nextSibling);
+
+    attachBadge(section.querySelector('.metric-card[data-stage="stubbed"] .metric-card__stage'), CHECK_DEFINITIONS.stubbed);
+    attachBadge(section.querySelector('.metric-card[data-stage="notYetStubbed"] .metric-card__stage'), CHECK_DEFINITIONS.notYetStubbed);
+
+    var breakdownRows = tracker.dates.map(function (d, i) {
+      var declared = declaredSeries[i] || 0;
+      var stubbed = stubbedSeries[i] || 0;
+      return { stubbed: stubbed, notYetStubbed: Math.max(0, declared - stubbed) };
+    });
+
+    renderChartSection({
+      section: section,
+      dates: tracker.dates,
+      categories: [
+        { key: 'stubbed', label: 'Stubbed', color: STUBBED_COLOR },
+        { key: 'notYetStubbed', label: 'Unstubbed', color: UNSTUBBED_COLOR }
+      ],
+      breakdownRows: breakdownRows,
+      finalKey: 'stubbed',
+      itemNoun: 'endpoint',
+      velocityPerDay: estimateVelocity(stubbedSeries, realIndex),
+      lastRealIndex: realIndex
+    });
+  }
+
+  function renderContractTracker(tracker, section, realIndex) {
+    var quadrant = quadrantAt(tracker, realIndex);
+    relabelContractCards(tracker, section, quadrant);
+
+    var explainer = section.querySelector('.chart-explainer');
+    if (explainer) {
+      explainer.innerHTML = CONTRACT_EXPLAINER;
+    }
+
+    var quadrantRows = tracker.dates.map(function (d, i) {
+      var q = quadrantAt(tracker, i);
+      return { shadow: q.shadow, mirage: q.mirage, doppelganger: q.doppelganger, compliant: q.compliant };
+    });
+
+    renderChartSection({
+      section: section,
+      dates: tracker.dates,
+      categories: [
+        { key: 'shadow', label: 'Shadow API', color: STAGE_COLORS[0] },
+        { key: 'mirage', label: 'Mirage API', color: STAGE_COLORS[1] },
+        { key: 'doppelganger', label: 'Doppelganger API', color: STAGE_COLORS[2] },
+        { key: 'compliant', label: 'Compliant', color: COMPLIANT_COLOR }
+      ],
+      breakdownRows: quadrantRows,
+      finalKey: 'compliant',
+      itemNoun: 'endpoint',
+      velocityPerDay: (readForecastData(tracker.id) || {}).velocityPerDay,
+      lastRealIndex: realIndex
+    });
+
+    buildStubCoverageSection(tracker, section, quadrant.totalCount, realIndex);
+  }
+
+  // -------- response-coverage: a 0-100% stacked bar, a snapshot pie, and a coverage-depth grid --------
+  //
+  // The bar/pie are deliberately not routed through renderChartSection above: that mechanism stacks
+  // *absolute* mutually-exclusive counts (every scenario/endpoint is in exactly one category, so the
+  // stack sums to totalCount) and always pairs that same bar with a "Remaining (forecast)" segment
+  // extrapolated from one trend line. Response coverage's bar has neither property - 2xx/4xx/5xx are
+  // three *independent* denominators (a response code's own class, not a shared "current stage"),
+  // and it's already a full 0-100% composition with no room to project a "remaining" segment into.
+  // This tracker still gets a real forecast, though - see wireResponseCoverageForecast below, which
+  // wires the toggle to the plugin's own server-computed "all currently-declared codes eventually
+  // covered" projection text, just without an extra bar segment. seriesByGroup (not breakdownRows)
+  // drives the bar itself; testCount's complete lack of preserved history (see the plugin's own
+  // README) is why the coverage-depth grid below is a most-recent-scan snapshot with no forecast or
+  // history slider of its own.
+  //
+  // Unlike bdd-scenarios/api-contracts/api-stub-coverage above, this tracker's metric cards are left
+  // exactly as the plugin renders them (declared/covered, generic --percent gauge border) rather than
+  // relabeled or given a severity treatment of their own - this pack has no severity-band convention
+  // at all (see the file header comment on this palette's restricted hue range), so introducing one
+  // just for this tracker would be a new visual language, not a port of an existing one.
+
+  var RESPONSE_COVERAGE_STAGES = ['declared', 'covered'];
+
+  // The exact same four-color palette api-contracts' own bar/pie uses (STAGE_COLORS for the first
+  // three slots, COMPLIANT_COLOR for the fourth) - not a fixed green/amber/red convention of its
+  // own, so this tracker's colors read as "the same dashboard," not a clashing fourth palette.
+  // Uncovered takes the fourth slot (index === groups.length, i.e. right after the real classes),
+  // the same position Compliant occupies in the contract chart, even though the two segments mean
+  // opposite things (Compliant is the good outcome there; Uncovered is the gap here) - this is
+  // purely "reuse the same four colors in the same order," not a claim that Uncovered is "good."
+  var GROUP_PALETTE = STAGE_COLORS.concat([COMPLIANT_COLOR]);
+  function groupColor(index) {
+    return GROUP_PALETTE[index % GROUP_PALETTE.length];
+  }
+
+  // Per date: every response-code class's share of *all declared* response codes that date - so
+  // 2xx + 4xx + 5xx + Uncovered sums to 100%, and 100% only when every declared code is covered -
+  // plus, independently, each class's *own* coverage ratio (declared vs. covered within just that
+  // class) - the number actually worth reading, surfaced only in the tooltip since it does not
+  // drive the bar's height.
+  function computeResponseCoverageSeries(tracker) {
+    var groups = Object.keys(tracker.seriesByGroup).sort();
+    var shareOfDeclared = {};
+    var ownCoverageRatio = {};
+    groups.forEach(function (group) {
+      shareOfDeclared[group] = [];
+      ownCoverageRatio[group] = [];
+    });
+    var uncoveredShare = [];
+    tracker.dates.forEach(function (date, i) {
+      var totalDeclaredThisDate = groups.reduce(function (sum, group) {
+        return sum + (tracker.seriesByGroup[group].declared[i] || 0);
+      }, 0);
+      var totalCoveredThisDate = groups.reduce(function (sum, group) {
+        return sum + (tracker.seriesByGroup[group].covered[i] || 0);
+      }, 0);
+      groups.forEach(function (group) {
+        var declared = tracker.seriesByGroup[group].declared[i] || 0;
+        var covered = tracker.seriesByGroup[group].covered[i] || 0;
+        shareOfDeclared[group].push(totalDeclaredThisDate > 0 ? Math.round((100 * covered) / totalDeclaredThisDate) : 0);
+        ownCoverageRatio[group].push(declared > 0 ? Math.round((100 * covered) / declared) : 0);
+      });
+      uncoveredShare.push(totalDeclaredThisDate > 0
+          ? Math.round((100 * (totalDeclaredThisDate - totalCoveredThisDate)) / totalDeclaredThisDate) : 0);
+    });
+    return { groups: groups, shareOfDeclared: shareOfDeclared, ownCoverageRatio: ownCoverageRatio, uncoveredShare: uncoveredShare };
+  }
+
+  function renderResponseCoverageStackedBar(tracker, section) {
+    var canvas = section.querySelector('.chart canvas');
+    var sizer = section.querySelector('.chart-canvas-sizer');
+    var wrap = section.querySelector('.chart-canvas-wrap');
+    if (!canvas || !sizer || !wrap || typeof Chart === 'undefined') {
+      return;
+    }
+
+    var existingChart = Chart.getChart(canvas);
+    if (existingChart) {
+      existingChart.destroy();
+    }
+    sizeCanvas(sizer, wrap, tracker.dates.length);
+
+    var computed = computeResponseCoverageSeries(tracker);
+    var datasets = computed.groups.map(function (group, index) {
+      return {
+        label: group,
+        data: computed.shareOfDeclared[group],
+        backgroundColor: groupColor(index),
+        stack: 'coverage'
+      };
+    });
+    datasets.push({
+      label: 'Uncovered',
+      data: computed.uncoveredShare,
+      backgroundColor: groupColor(computed.groups.length),
+      stack: 'coverage'
+    });
+
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: { labels: tracker.dates.map(shortDate), datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, min: 0, max: 100, ticks: { callback: function (value) { return value + '%'; } } }
+        },
+        plugins: {
+          legend: { display: true },
+          tooltip: {
+            mode: 'index',
+            callbacks: {
+              label: function (context) {
+                var group = context.dataset.label;
+                if (group === 'Uncovered') {
+                  return 'Uncovered: ' + computed.uncoveredShare[context.dataIndex] + '% of all declared codes';
+                }
+                var ownPercent = computed.ownCoverageRatio[group][context.dataIndex];
+                return group + ' covered: ' + ownPercent + '% (of ' + group + ' declared)';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Snapshot pie, latest real date only - absolute counts, four slices: every declared-but-uncovered
+  // response code (all classes combined), then one covered-count slice per response-code class. The
+  // tooltip reports each slice as a fraction of the whole (e.g. "2xx covered: 74 / 1023"), matching
+  // this dashboard's own established pie-tooltip convention elsewhere (see setPieToIndex above).
+  function renderResponseCoveragePie(tracker, section, realIndex) {
+    var extra = section.querySelector('.chart-extra');
+    if (!extra || typeof Chart === 'undefined') {
+      return;
+    }
+    var groups = Object.keys(tracker.seriesByGroup).sort();
+    var uncovered = 0;
+    var coveredByGroup = {};
+    groups.forEach(function (group) {
+      var declared = tracker.seriesByGroup[group].declared[realIndex] || 0;
+      var covered = tracker.seriesByGroup[group].covered[realIndex] || 0;
+      coveredByGroup[group] = covered;
+      uncovered += declared - covered;
+    });
+
+    var labels = ['Uncovered'].concat(groups.map(function (group) { return group + ' covered'; }));
+    var values = [uncovered].concat(groups.map(function (group) { return coveredByGroup[group]; }));
+    var colors = [groupColor(groups.length)]
+        .concat(groups.map(function (group, index) { return groupColor(index); }));
+    var totalCount = values.reduce(function (sum, value) { return sum + value; }, 0);
+
+    extra.innerHTML = '';
+    var label = document.createElement('p');
+    label.className = 'chart-extra__label';
+    label.textContent = 'Coverage as of ' + shortDate(tracker.dates[realIndex]);
+    extra.appendChild(label);
+    var canvas = document.createElement('canvas');
+    extra.appendChild(canvas);
+
+    new Chart(canvas.getContext('2d'), {
+      type: 'pie',
+      data: { labels: labels, datasets: [{ data: values, backgroundColor: colors }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'left' },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return labels[context.dataIndex] + ': ' + values[context.dataIndex] + ' / ' + totalCount;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // The coverage-depth grid: response codes as columns (small, bounded), endpoints as rows (the
+  // dimension that explodes - narrowed by the filter input, live on every keystroke). Three states
+  // only, no color *gradient* by test count: more tests covering a response code isn't "more
+  // covered" than fewer, so testCount never drives a cell's color or size - it's shown as the
+  // cell's own visible text instead, so the number is readable at a glance rather than hidden
+  // behind a hover. Colors reuse api-stub-coverage's own palette rather than a new green/red pair:
+  // covered gets --dashboard-border, uncovered gets --dashboard-stubbed - the same two-color
+  // convention "can a consumer start building against this today" already uses, just relabeled for
+  // "is this response actually tested". Most-recent-scan only - matrix is a current-state snapshot
+  // with no preserved history to slide through. Takes the container to render into directly (its
+  // own synthesized section, not the bar/pie tracker's own .charts-row - see
+  // buildResponseCoverageDepthSection) since this is a fundamentally different view, not another
+  // chart alongside the other two.
+  function renderResponseCoverageGrid(tracker, container) {
+    var matrix = tracker.matrix || [];
+    if (!matrix.length || container.querySelector('.response-coverage-grid')) {
+      return;
+    }
+
+    var endpoints = [];
+    var seenEndpoints = {};
+    var codes = [];
+    var seenCodes = {};
+    var cellByEndpointAndCode = {};
+    matrix.forEach(function (cell) {
+      var endpointKey = cell.verb + ' ' + cell.path;
+      if (!seenEndpoints[endpointKey]) {
+        seenEndpoints[endpointKey] = true;
+        endpoints.push(endpointKey);
+      }
+      if (!seenCodes[cell.responseCode]) {
+        seenCodes[cell.responseCode] = true;
+        codes.push(cell.responseCode);
+      }
+      cellByEndpointAndCode[endpointKey + '|' + cell.responseCode] = cell;
+    });
+    codes.sort();
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'response-coverage-grid';
+
+    var filterInput = document.createElement('input');
+    filterInput.type = 'text';
+    filterInput.placeholder = 'Filter by endpoint path...';
+    filterInput.className = 'response-coverage-grid__filter';
+    wrapper.appendChild(filterInput);
+
+    var table = document.createElement('table');
+    table.className = 'response-coverage-grid__table';
+
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    headRow.appendChild(document.createElement('th'));
+    codes.forEach(function (code) {
+      var th = document.createElement('th');
+      th.textContent = code;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    endpoints.forEach(function (endpointKey) {
+      var row = document.createElement('tr');
+      row.dataset.endpoint = endpointKey.toLowerCase();
+      var rowHeader = document.createElement('th');
+      rowHeader.textContent = endpointKey;
+      row.appendChild(rowHeader);
+      codes.forEach(function (code) {
+        var td = document.createElement('td');
+        var cell = cellByEndpointAndCode[endpointKey + '|' + code];
+        if (cell) {
+          td.className = 'response-coverage-grid__cell';
+          // covered = --dashboard-border, uncovered = --dashboard-stubbed - reusing api-stub-
+          // coverage's own two-color pair (see the comment above this function) instead of a new
+          // green/red one.
+          td.style.background = cell.covered ? UNSTUBBED_COLOR : STUBBED_COLOR;
+          td.textContent = cell.testCount;
+          td.title = cell.testCount + (cell.testCount === 1 ? ' test' : ' tests');
+        } else {
+          td.className = 'response-coverage-grid__cell--not-applicable';
+        }
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+
+    filterInput.addEventListener('input', function () {
+      var query = filterInput.value.trim().toLowerCase();
+      Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (row) {
+        row.style.display = row.dataset.endpoint.indexOf(query) === -1 ? 'none' : '';
+      });
+    });
+
+    container.appendChild(wrapper);
+  }
+
+  // A fourth, independent .tracker section for the coverage-depth grid, synthesized the same way
+  // buildStubCoverageSection synthesizes its own section - the grid is a current-state snapshot
+  // table, not a time-series chart, so it doesn't belong crammed into the bar/pie section above it.
+  // No metric cards, chart, or forecast box of its own: unlike api-stub-coverage, this view has no
+  // single summary percentage to lead with (it's a per-endpoint x per-code detail table), and
+  // testCount has no preserved history to project a forecast from at all, so there's nothing here
+  // for a forecast toggle to control - no forecast-controls markup is emitted, rather than emitted
+  // and then hidden.
+  function buildResponseCoverageDepthSection(tracker, afterSection) {
+    if (!(tracker.matrix || []).length) {
+      return;
+    }
+    var id = tracker.id + '-coverage-depth';
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML =
+        '<section class="tracker" data-tracker="' + id + '">'
+        + '<div class="tracker-header">'
+        + '<h2>' + id + '</h2>'
+        + '</div>'
+        + '<p class="metrics-note">Every declared response code for every endpoint, most recent scan '
+        + 'only - color matches api-stub-coverage\'s own covered/uncovered pair, and the number in '
+        + 'each cell is the test count backing that response, shown as text rather than a color '
+        + 'gradient: more tests covering a response code isn\'t "more covered" than fewer. No '
+        + 'forecast applies to a snapshot table like this one.</p>'
+        + '</section>';
+    var section = wrapper.firstElementChild;
+    afterSection.parentNode.insertBefore(section, afterSection.nextSibling);
+    renderResponseCoverageGrid(tracker, section);
+  }
+
+  // A real forecast, same as every other tracker: the plugin's own ProgressProjector already
+  // computes one for RESPONSE_COVERAGE server-side (the aggregate "all currently-declared response
+  // codes eventually covered" trend - see GenerateTrackerLensTask, which runs ProgressProjector for
+  // every stagesFormADependencyChain tracker, RESPONSE_COVERAGE included), so the toggle stays on
+  // permanently for every other tracker; this just wires it up rather than hiding it. Not routed
+  // through renderChartSection because that function also injects a "Remaining (forecast)" segment
+  // onto the SAME bar it draws, which only makes sense for an absolute-count bar with room left to
+  // fill - response coverage's own bar is already a full 0-100% composition (see
+  // computeResponseCoverageSeries above), so only the forecast text box (date/pace, or the
+  // insufficient-history fallback) is wired here, not an extra bar segment.
+  function wireResponseCoverageForecast(tracker, section, realIndex) {
+    var showForecastEl = section.querySelector('.show-forecast-toggle');
+    var weekModeEl = section.querySelector('.week-mode-toggle');
+    var forecastEl = section.querySelector('.forecast');
+    var forecastUnavailableEl = section.querySelector('.forecast-unavailable');
+    var dateEl = section.querySelector('.forecast__date');
+    var paceEl = section.querySelector('.forecast__pace');
+    var forecastData = readForecastData(tracker.id);
+
+    function render() {
+      var showForecast = showForecastEl ? showForecastEl.checked : true;
+      // Same "hide the whole box, not just dim it" rule renderChartSection uses - applies to
+      // whichever of the two the server rendered (a real forecast box, or the "not enough history
+      // yet" fallback), since only one of the two ever exists for a given tracker at a time.
+      if (forecastEl) {
+        forecastEl.style.display = showForecast ? '' : 'none';
+      }
+      if (forecastUnavailableEl) {
+        forecastUnavailableEl.style.display = showForecast ? '' : 'none';
+      }
+      if (showForecast && forecastEl && forecastData) {
+        var weekMode = weekModeEl ? weekModeEl.value : '5';
+        var lastRealDate = tracker.dates[realIndex];
+        var remaining = forecastData.totalCount - forecastData.currentCount;
+        var targetDate = computeTargetDate(lastRealDate, remaining, forecastData.velocityPerDay, weekMode);
+        if (dateEl) {
+          dateEl.textContent = targetDate ? 'Forecast completion: ' + longDate(targetDate)
+              : remaining <= 0 ? 'Forecast completion: already complete'
+              : 'Forecast completion: not currently trending toward completion';
+        }
+        if (paceEl) {
+          paceEl.textContent = formatPace(forecastData.velocityPerDay, 'response code');
+        }
+      }
+    }
+    render();
+    if (showForecastEl) { showForecastEl.addEventListener('change', render); }
+    if (weekModeEl) { weekModeEl.addEventListener('change', render); }
+  }
+
+  function renderResponseCoverageTracker(tracker, section, realIndex) {
+    wireResponseCoverageForecast(tracker, section, realIndex);
+    renderResponseCoverageStackedBar(tracker, section);
+    renderResponseCoveragePie(tracker, section, realIndex);
+    buildResponseCoverageDepthSection(tracker, section);
+    var explainer = section.querySelector('.chart-explainer');
+    if (explainer) {
+      explainer.textContent = 'Bar segment height is each class\'s share of codes covered on that '
+          + 'date (sums to 100%); hover a bar for each class\'s own coverage ratio instead. See the '
+          + 'Coverage in Depth section below for the per-endpoint, per-response-code detail.';
+    }
+  }
+
+  // -------- drive every tracker on the page --------
+
+  (data.trackers || []).forEach(function (tracker) {
+    var section = document.querySelector('.tracker[data-tracker="' + cssEscape(tracker.id) + '"]');
+    if (!section) {
+      return;
+    }
+    var realIndex = lastRealIndex(tracker);
+    if (hasAllStages(tracker.stages, GHERKIN_STAGES)) {
+      renderGherkinTracker(tracker, section, realIndex);
+    } else if (hasAllStages(tracker.stages, CONTRACT_STAGES)) {
+      renderContractTracker(tracker, section, realIndex);
+    } else if (hasAllStages(tracker.stages, RESPONSE_COVERAGE_STAGES)) {
+      renderResponseCoverageTracker(tracker, section, realIndex);
+    }
+  });
+  }, 0);
+})();
+</script>
+</body>
+</html>
