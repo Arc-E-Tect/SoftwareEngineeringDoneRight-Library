@@ -2,7 +2,7 @@
 
 [versions]
 
-microcks-testcontainers = "0.5.0"
+microcks-testcontainers = "0.5.1"
 testcontainers = "2.0.5"
 kafka = "4.4.0"
 junit-jupiter = "6.1.3"
