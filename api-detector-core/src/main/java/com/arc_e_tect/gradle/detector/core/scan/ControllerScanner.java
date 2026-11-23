@@ -8,7 +8,6 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.AnnotationExpr;
@@ -19,8 +18,13 @@ import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +40,19 @@ import java.util.stream.Collectors;
  * <p>Annotations are matched by simple name, so both the standard
  * {@code org.springframework.web.bind.annotation} imports and any fully-qualified usage are
  * recognised without requiring Spring on the scanner's own classpath.</p>
+ *
+ * <p>Like Spring MVC, a controller also serves the mappings it inherits from the interfaces it
+ * implements and the classes it extends, which is how a controller implementing an interface
+ * generated from an OpenAPI contract is written. {@link #scan(Collection)} parses every given file
+ * first, so a supertype declared in another scanned file is found; the controller's own
+ * annotations win over inherited ones, and otherwise the first supertype that carries one does,
+ * interfaces before the superclass. An inherited endpoint is reported on the controller class, at
+ * the controller's overriding method or, when there is none, at the inherited method itself.</p>
+ *
+ * <p>A path given as another scanned type's string constant ({@code BooksApi.PATH_GET_BOOK})
+ * resolves to that constant's literal. A {@code ${key:default}} placeholder resolves to the
+ * property {@code key} from the scanner's {@link PropertyResolutionContext}, else to its default;
+ * with neither, the value contributes no path, like any other value that cannot be resolved.</p>
  */
 public class ControllerScanner {
 
@@ -46,51 +63,105 @@ public class ControllerScanner {
             "DeleteMapping", HttpVerb.DELETE,
             "PatchMapping", HttpVerb.PATCH);
 
-    /** Creates a new {@code ControllerScanner}. */
-    public ControllerScanner() {}
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{([^:}]+)(?::([^}]*))?}");
+
+    private final PropertyResolutionContext context;
+
+    /** Creates a new {@code ControllerScanner} without any out-of-band property knowledge. */
+    public ControllerScanner() {
+        this(PropertyResolutionContext.empty());
+    }
+
+    /**
+     * Creates a new {@code ControllerScanner} that resolves {@code ${key}} placeholders and
+     * qualified constants in mapping paths through {@code context}.
+     *
+     * @param context out-of-band property knowledge; its properties win over the string constants
+     *                found in the scanned files
+     */
+    public ControllerScanner(PropertyResolutionContext context) {
+        this.context = context;
+    }
 
     /**
      * Scans one {@code .java} source file and returns every endpoint exposed by every
-     * {@code @RestController} class it declares.
+     * {@code @RestController} class it declares. Equivalent to {@code scan(List.of(sourceFile))}:
+     * mappings inherited from a supertype declared in another file are not found.
      *
      * @param sourceFile the file to parse
      * @return possibly-empty list of endpoints, never {@code null}
      * @throws IOException if the file cannot be read
      */
     public List<Endpoint> scan(File sourceFile) throws IOException {
-        List<Endpoint> endpoints = new ArrayList<>();
+        return scan(List.of(sourceFile));
+    }
 
-        ParseResult<CompilationUnit> parseResult = new JavaParser(
-                new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21))
-                .parse(sourceFile);
-        if (!parseResult.isSuccessful() || parseResult.getResult().isEmpty()) {
-            return endpoints;
+    /**
+     * Scans {@code .java} source files together and returns every endpoint exposed by every
+     * {@code @RestController} class they declare, including the mappings each controller inherits
+     * from supertypes declared in any of the files. A file that is not valid Java is skipped.
+     *
+     * @param sourceFiles the files to parse, typically every file of the main source set, generated
+     *                    sources included
+     * @return possibly-empty list of endpoints, in file order, never {@code null}
+     * @throws IOException if a file cannot be read
+     */
+    public List<Endpoint> scan(Collection<File> sourceFiles) throws IOException {
+        JavaParser parser = new JavaParser(
+                new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21));
+        List<TypeIndex.ParsedSource> sources = new ArrayList<>();
+        for (File sourceFile : sourceFiles) {
+            ParseResult<CompilationUnit> parseResult = parser.parse(sourceFile);
+            if (parseResult.isSuccessful()) {
+                sources.add(new TypeIndex.ParsedSource(sourceFile.getName(), parseResult.getResult().orElseThrow()));
+            }
         }
 
-        CompilationUnit cu = parseResult.getResult().get();
-        String fileName = sourceFile.getName();
-
-        cu.findAll(ClassOrInterfaceDeclaration.class).forEach(cls -> {
-            if (!hasAnnotation(cls, "RestController")) {
-                return;
+        TypeIndex index = new TypeIndex(sources);
+        PropertyResolutionContext resolution = context.withFallbacks(index.stringConstants());
+        List<Endpoint> endpoints = new ArrayList<>();
+        for (TypeIndex.IndexedType type : index.types()) {
+            if (hasAnnotation(type.declaration(), "RestController")) {
+                endpoints.addAll(endpointsForController(type, index.hierarchy(type), resolution));
             }
-            String declaringClass = buildFqcn(cu, cls);
-            List<String> basePaths = classBasePaths(cls);
+        }
+        return endpoints;
+    }
 
-            cls.getMethods().forEach(method ->
-                    endpoints.addAll(endpointsForMethod(method, declaringClass, fileName, basePaths)));
-        });
+    private List<Endpoint> endpointsForController(
+            TypeIndex.IndexedType controller, List<TypeIndex.IndexedType> hierarchy,
+            PropertyResolutionContext resolution) {
+        List<String> basePaths = classBasePaths(hierarchy, resolution);
 
+        // One entry per method (by name and parameter count, which tolerates a generic supertype's
+        // type parameters): the most specific declaration, and the first mapping in the hierarchy.
+        Map<String, InheritedMethod> methods = new LinkedHashMap<>();
+        for (TypeIndex.IndexedType type : hierarchy) {
+            for (MethodDeclaration method : type.declaration().getMethods()) {
+                String key = method.getNameAsString() + "/" + method.getParameters().size();
+                MappingInfo mapping = findMapping(method, resolution);
+                InheritedMethod known = methods.get(key);
+                if (known == null) {
+                    methods.put(key, new InheritedMethod(method, type.fileName(), mapping));
+                } else if (known.mapping() == null && mapping != null) {
+                    methods.put(key, new InheritedMethod(known.method(), known.fileName(), mapping));
+                }
+            }
+        }
+
+        List<Endpoint> endpoints = new ArrayList<>();
+        for (InheritedMethod method : methods.values()) {
+            if (method.mapping() != null) {
+                endpoints.addAll(endpointsForMethod(
+                        method.method(), method.mapping(), controller.fqcn(), method.fileName(), basePaths));
+            }
+        }
         return endpoints;
     }
 
     private List<Endpoint> endpointsForMethod(
-            MethodDeclaration method, String declaringClass, String fileName, List<String> basePaths) {
-        MappingInfo mapping = findMapping(method);
-        if (mapping == null) {
-            return List.of();
-        }
-
+            MethodDeclaration method, MappingInfo mapping, String declaringClass, String fileName,
+            List<String> basePaths) {
         List<String> methodPaths = mapping.paths().isEmpty() ? List.of("") : mapping.paths();
         List<HttpVerb> verbs = mapping.verbs().isEmpty() ? List.of(HttpVerb.ANY) : mapping.verbs();
         String signature = method.getNameAsString() + "(" + buildParams(method.getParameters()) + ")";
@@ -108,11 +179,13 @@ public class ControllerScanner {
         return results;
     }
 
-    private List<String> classBasePaths(ClassOrInterfaceDeclaration cls) {
-        for (AnnotationExpr ann : cls.getAnnotations()) {
-            if (simpleAnnotationName(ann).equals("RequestMapping")) {
-                List<String> paths = pathValues(ann);
-                return paths.isEmpty() ? List.of("") : paths;
+    private List<String> classBasePaths(List<TypeIndex.IndexedType> hierarchy, PropertyResolutionContext resolution) {
+        for (TypeIndex.IndexedType type : hierarchy) {
+            for (AnnotationExpr ann : type.declaration().getAnnotations()) {
+                if (simpleAnnotationName(ann).equals("RequestMapping")) {
+                    List<String> paths = pathValues(ann, resolution);
+                    return paths.isEmpty() ? List.of("") : paths;
+                }
             }
         }
         return List.of("");
@@ -122,29 +195,29 @@ public class ControllerScanner {
      * Finds the mapping annotation (if any) on {@code node}, resolving its paths and, for
      * {@code @RequestMapping}, its restricted verbs.
      */
-    private MappingInfo findMapping(NodeWithAnnotations<?> node) {
+    private MappingInfo findMapping(NodeWithAnnotations<?> node, PropertyResolutionContext resolution) {
         for (AnnotationExpr ann : node.getAnnotations()) {
             String simpleName = simpleAnnotationName(ann);
             if (simpleName.equals("RequestMapping")) {
-                return new MappingInfo(pathValues(ann), verbValues(ann));
+                return new MappingInfo(pathValues(ann, resolution), verbValues(ann));
             }
             HttpVerb fixedVerb = SHORTCUT_MAPPING_VERBS.get(simpleName);
             if (fixedVerb != null) {
-                return new MappingInfo(pathValues(ann), List.of(fixedVerb));
+                return new MappingInfo(pathValues(ann, resolution), List.of(fixedVerb));
             }
         }
         return null;
     }
 
-    private List<String> pathValues(AnnotationExpr ann) {
+    private List<String> pathValues(AnnotationExpr ann, PropertyResolutionContext resolution) {
         if (ann.isSingleMemberAnnotationExpr()) {
-            return extractStringValues(ann.asSingleMemberAnnotationExpr().getMemberValue());
+            return extractStringValues(ann.asSingleMemberAnnotationExpr().getMemberValue(), resolution);
         }
         if (ann.isNormalAnnotationExpr()) {
             for (MemberValuePair pair : ann.asNormalAnnotationExpr().getPairs()) {
                 String name = pair.getNameAsString();
                 if (name.equals("value") || name.equals("path")) {
-                    return extractStringValues(pair.getValue());
+                    return extractStringValues(pair.getValue(), resolution);
                 }
             }
         }
@@ -162,17 +235,34 @@ public class ControllerScanner {
         return List.of();
     }
 
-    private List<String> extractStringValues(Expression expr) {
+    private List<String> extractStringValues(Expression expr, PropertyResolutionContext resolution) {
         List<String> values = new ArrayList<>();
         if (expr.isArrayInitializerExpr()) {
-            expr.asArrayInitializerExpr().getValues().forEach(e -> values.addAll(extractStringValues(e)));
+            expr.asArrayInitializerExpr().getValues().forEach(e -> values.addAll(extractStringValues(e, resolution)));
         } else {
-            LiteralPathResolver.resolve(expr).ifPresent(values::add);
+            LiteralPathResolver.resolve(expr, resolution)
+                    .flatMap(value -> resolvePlaceholders(value, resolution))
+                    .ifPresent(values::add);
         }
-        // Anything LiteralPathResolver can't resolve either (e.g. a value computed at runtime, or
-        // a constant declared in a different compilation unit) is silently ignored - the
-        // annotation contributes no path in that case.
+        // Anything that can't be resolved (e.g. a value computed at runtime, a constant declared
+        // in a type that was not scanned, or a placeholder without a property and without a
+        // default) is silently ignored - the annotation contributes no path in that case.
         return values;
+    }
+
+    private Optional<String> resolvePlaceholders(String value, PropertyResolutionContext resolution) {
+        Matcher matcher = PLACEHOLDER.matcher(value);
+        StringBuilder resolved = new StringBuilder();
+        while (matcher.find()) {
+            Optional<String> replacement = resolution.lookup(matcher.group(1))
+                    .or(() -> Optional.ofNullable(matcher.group(2)));
+            if (replacement.isEmpty()) {
+                return Optional.empty();
+            }
+            matcher.appendReplacement(resolved, Matcher.quoteReplacement(replacement.get()));
+        }
+        matcher.appendTail(resolved);
+        return Optional.of(resolved.toString());
     }
 
     private List<HttpVerb> extractVerbs(Expression expr) {
@@ -197,24 +287,13 @@ public class ControllerScanner {
         return lastDot >= 0 ? name.substring(lastDot + 1) : name;
     }
 
-    private String buildFqcn(CompilationUnit cu, ClassOrInterfaceDeclaration cls) {
-        String pkg = cu.getPackageDeclaration().map(pd -> pd.getNameAsString()).orElse("");
-        String nestedName = buildNestedName(cls);
-        return pkg.isEmpty() ? nestedName : pkg + "." + nestedName;
-    }
-
-    private String buildNestedName(ClassOrInterfaceDeclaration cls) {
-        if (cls.getParentNode().isPresent()
-                && cls.getParentNode().get() instanceof ClassOrInterfaceDeclaration parent) {
-            return buildNestedName(parent) + "." + cls.getNameAsString();
-        }
-        return cls.getNameAsString();
-    }
-
     private String buildParams(NodeList<Parameter> params) {
         return params.stream().map(p -> p.getType().asString()).collect(Collectors.joining(", "));
     }
 
     /** Paths and restricted verbs resolved from a single mapping annotation. */
     private record MappingInfo(List<String> paths, List<HttpVerb> verbs) {}
+
+    /** A method a controller serves: its most specific declaration and the mapping it inherits. */
+    private record InheritedMethod(MethodDeclaration method, String fileName, MappingInfo mapping) {}
 }

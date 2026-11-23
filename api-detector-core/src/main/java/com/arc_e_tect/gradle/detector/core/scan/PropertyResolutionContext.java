@@ -54,6 +54,16 @@ public final class PropertyResolutionContext {
     }
 
     /**
+     * @return a context with this context's helper methods and its properties added to
+     *         {@code fallbacks}, so a key present in both keeps this context's value
+     */
+    PropertyResolutionContext withFallbacks(Map<String, String> fallbacks) {
+        Map<String, String> merged = new HashMap<>(fallbacks);
+        merged.putAll(properties);
+        return new PropertyResolutionContext(merged, helperMethods);
+    }
+
+    /**
      * @return the value for {@code key}, if present in the merged property map.
      */
     public Optional<String> lookup(String key) {

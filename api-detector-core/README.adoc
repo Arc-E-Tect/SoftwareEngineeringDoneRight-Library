@@ -4,6 +4,14 @@
 :icons: font
 :source-highlighter: rouge
 
+[NOTE]
+.About this documentation
+====
+This documentation was partially authored by Claude, an AI assistant.
+Documentation is part of the product, and is held to the same standard as the code it describes.
+If something here seems wrong, please file a bug report: link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/new[open an issue in this repository ↗].
+====
+
 Shared domain model and scanning logic for the SEDR API detector Gradle plugins - Shadow API
 Detector, Mirage API Detector, and Doppelganger API Detector.
 
@@ -50,7 +58,7 @@ The library uses `io.swagger.parser.v3:swagger-parser-v3` only.
 
 |`scan`
 |`com.arc_e_tect.gradle.detector.core.scan`
-|`ControllerScanner` - scans Spring `@RestController` classes for the endpoints they implement.
+|`ControllerScanner` - scans Spring `@RestController` classes for the endpoints they implement, including the mappings they inherit from interfaces and superclasses (see <<scanning-controllers,Scanning Controllers, in this document>>).
 
 |`detect`
 |`com.arc_e_tect.gradle.detector.core.detect`
@@ -60,6 +68,48 @@ The library uses `io.swagger.parser.v3:swagger-parser-v3` only.
 |`com.arc_e_tect.gradle.detector.core`
 |Interface implemented by both `Endpoint` and `DescribedEndpoint` so scanning/collection code can operate on either uniformly.
 |===
+
+[[scanning-controllers]]
+== Scanning Controllers
+
+`ControllerScanner.scan(Collection<File>)` parses every given file first, so a controller's endpoints include the mappings it inherits from the interfaces it implements and the classes it extends, as Spring MVC serves them.
+This is how a controller implementing an interface generated from an OpenAPI contract is written, for example by OpenAPI Generator's Spring generator with `interfaceOnly`:
+
+[source,java]
+----
+// Generated from the contract, under build/generated/...
+@RequestMapping("${openapi.books.base-path:}")
+public interface BooksApi {
+
+    String PATH_GET_BOOK = "/v1/books/{id}";
+
+    @RequestMapping(method = RequestMethod.GET, value = BooksApi.PATH_GET_BOOK, produces = { "application/json" })
+    ResponseEntity<BookV1> getBook(@PathVariable("id") String id);
+}
+
+// Written by hand, under src/main/java/...
+@RestController
+public class BookController implements BooksApi {
+
+    @Override
+    public ResponseEntity<BookV1> getBook(String id) { ... }
+}
+----
+
+Scanning both files together finds `GET /v1/books/{id}` on `BookController`, at its `getBook` method:
+
+[source,java]
+----
+List<Endpoint> endpoints = new ControllerScanner().scan(List.of(booksApiFile, bookControllerFile));
+----
+
+* A supertype is found among the scanned files through the controller file's imports, its own package, or a fully qualified name; one that is not scanned contributes nothing.
+* The controller's own mapping annotations win over inherited ones; otherwise the first supertype that carries one wins, interfaces before the superclass.
+* A method the controller does not override, such as an inherited `default` method, is reported at the supertype's file and line.
+* A path given as a scanned type's string constant, such as `BooksApi.PATH_GET_BOOK`, resolves to its literal.
+* A `${key:default}` placeholder resolves to the property `key` from the `PropertyResolutionContext` passed to `new ControllerScanner(context)`, else to its default; with neither, the value contributes no path.
+
+`scan(File)` scans a single file, and therefore finds no mappings inherited from a supertype declared in another file.
 
 == Adding the Dependency
 
