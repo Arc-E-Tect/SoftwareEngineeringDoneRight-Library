@@ -19,10 +19,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -127,13 +131,52 @@ public class ControllerScanner {
      * @throws IOException if a file cannot be read
      */
     public List<Endpoint> scan(Collection<File> sourceFiles, Consumer<File> onFileParsed) throws IOException {
+        return scan(sourceFiles, sourceFiles, onFileParsed);
+    }
+
+    /**
+     * Scans {@code .java} source files together, as {@link #scan(Collection, Consumer)} does, but
+     * reports only the {@code @RestController} classes declared in {@code controllerFiles}.
+     *
+     * <p>For a scan of one controller, or a few, whose supertypes may be declared anywhere among
+     * the project's sources: every file of both collections is parsed, once, so the supertypes
+     * are found, and only the controllers in {@code controllerFiles} have their endpoints
+     * reported. A controller file need not be among {@code sourceFiles}.</p>
+     *
+     * @param sourceFiles     the files to find supertypes and constants in, typically every file
+     *                        of the main source set, generated sources included
+     * @param controllerFiles the files whose controllers are reported
+     * @param onFileParsed    invoked once per distinct file, after it is parsed: {@code sourceFiles}
+     *                        first, in order, then any controller file not among them; never
+     *                        {@code null}
+     * @return possibly-empty list of endpoints, in file order, never {@code null}
+     * @throws IOException if a file cannot be read
+     */
+    public List<Endpoint> scan(Collection<File> sourceFiles, Collection<File> controllerFiles,
+                               Consumer<File> onFileParsed) throws IOException {
+        Set<File> reported = new HashSet<>();
+        controllerFiles.forEach(file -> reported.add(file.getAbsoluteFile()));
+        Set<File> seen = new HashSet<>();
+        List<File> files = new ArrayList<>();
+        for (File file : sourceFiles) {
+            if (seen.add(file.getAbsoluteFile())) files.add(file);
+        }
+        for (File file : controllerFiles) {
+            if (seen.add(file.getAbsoluteFile())) files.add(file);
+        }
+
         JavaParser parser = new JavaParser(
                 new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21));
         List<TypeIndex.ParsedSource> sources = new ArrayList<>();
-        for (File sourceFile : sourceFiles) {
+        Set<CompilationUnit> reportedUnits = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (File sourceFile : files) {
             ParseResult<CompilationUnit> parseResult = parser.parse(sourceFile);
             if (parseResult.isSuccessful()) {
-                sources.add(new TypeIndex.ParsedSource(sourceFile.getName(), parseResult.getResult().orElseThrow()));
+                CompilationUnit cu = parseResult.getResult().orElseThrow();
+                sources.add(new TypeIndex.ParsedSource(sourceFile.getName(), cu));
+                if (reported.contains(sourceFile.getAbsoluteFile())) {
+                    reportedUnits.add(cu);
+                }
             }
             onFileParsed.accept(sourceFile);
         }
@@ -142,7 +185,7 @@ public class ControllerScanner {
         PropertyResolutionContext resolution = context.withFallbacks(index.stringConstants());
         List<Endpoint> endpoints = new ArrayList<>();
         for (TypeIndex.IndexedType type : index.types()) {
-            if (hasAnnotation(type.declaration(), "RestController")) {
+            if (reportedUnits.contains(type.compilationUnit()) && hasAnnotation(type.declaration(), "RestController")) {
                 endpoints.addAll(endpointsForController(type, index.hierarchy(type), resolution));
             }
         }

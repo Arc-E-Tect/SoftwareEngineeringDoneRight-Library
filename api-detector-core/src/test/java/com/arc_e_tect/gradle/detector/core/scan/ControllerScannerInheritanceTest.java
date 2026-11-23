@@ -263,6 +263,41 @@ class ControllerScannerInheritanceTest {
     }
 
     @Test
+    @DisplayName("reports only the controllers declared in the given controller files, their supertypes found among all files")
+    void reportsOnlyTheGivenControllerFiles() throws Exception {
+        List<File> all = inheritedFixtures();
+        File bookController = fixtureNamed(all, "BookController.java");
+
+        List<Endpoint> endpoints = new ControllerScanner().scan(all, List.of(bookController), file -> { });
+
+        assertThat(endpoints)
+                .extracting(Endpoint::declaringClass, Endpoint::verb, Endpoint::path)
+                .containsExactlyInAnyOrder(
+                        tuple("com.example.inherited.web.BookController", HttpVerb.GET, "/v1/books/{id}"),
+                        tuple("com.example.inherited.web.BookController", HttpVerb.POST, "/v1/books"),
+                        tuple("com.example.inherited.web.BookController", HttpVerb.GET, "/v1/books"));
+    }
+
+    @Test
+    @DisplayName("parses a controller file that is not among the source files too, and each file once, even when given twice")
+    void parsesControllerFilesOutsideTheSourceFilesOnce() throws Exception {
+        List<File> all = inheritedFixtures();
+        File bookController = fixtureNamed(all, "BookController.java");
+        File booksApi = fixtureNamed(all, "BooksApi.java");
+        List<File> parsed = new ArrayList<>();
+
+        List<Endpoint> endpoints = new ControllerScanner()
+                .scan(List.of(booksApi, bookController, booksApi), List.of(bookController), parsed::add);
+
+        assertThat(parsed).containsExactly(booksApi, bookController);
+        assertThat(endpoints).extracting(Endpoint::path)
+                .containsExactlyInAnyOrder("/v1/books/{id}", "/v1/books", "/v1/books");
+        assertThat(new ControllerScanner().scan(List.of(booksApi), List.of(bookController), file -> { }))
+                .extracting(Endpoint::path)
+                .containsExactlyInAnyOrder("/v1/books/{id}", "/v1/books", "/v1/books");
+    }
+
+    @Test
     @DisplayName("finds nothing inherited when the supertype's file is not among the scanned files")
     void findsNothingWhenSupertypeIsNotScanned() throws Exception {
         File controller = inheritedFixtures().stream()
@@ -270,6 +305,12 @@ class ControllerScannerInheritanceTest {
                 .findFirst().orElseThrow();
 
         assertThat(new ControllerScanner().scan(controller)).isEmpty();
+    }
+
+    private static File fixtureNamed(List<File> files, String name) {
+        return files.stream().filter(f -> f.getName().equals(name)
+                        && f.getParentFile().getName().equals(name.endsWith("Api.java") ? "api" : "web"))
+                .findFirst().orElseThrow();
     }
 
     private static List<File> inheritedFixtures() throws IOException, URISyntaxException {
