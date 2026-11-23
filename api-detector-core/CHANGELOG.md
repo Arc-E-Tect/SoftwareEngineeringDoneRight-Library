@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v2.0.0...api-detector-core-v2.1.0) (2026-11-23)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** include mappings a controller inherits from interfaces and superclasses ([#129](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/129)) ([319bfae](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/319bfae30ba4eb397fcce5a5d528407d25f9ea89)), closes [#129](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/129) [#128](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/128)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 2.0.0 [skip ci] ([2c1042a](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/2c1042aa647a1a2c8ccb19dea04a985497b94660))
+
 # [1.8.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v1.7.0...api-detector-core-v1.8.0) (2026-09-17)
 
 
