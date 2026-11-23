@@ -1,3 +1,15 @@
+# [2.2.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v2.1.0...api-detector-core-v2.2.0) (2026-11-23)
+
+
+### ✨ New and updated features
+
+* **api-detector-core:** tell the caller about each file the controller scan parses ([#131](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/131)) ([228ea08](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/228ea08d3629e9df11427102935f147bdb971b03)), closes [#131](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/131) [#130](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/130)
+
+
+### 📝 Documentation
+
+* **api-detector-core:** update README version to 2.1.0 [skip ci] ([b5892e6](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/b5892e657146bc73cfa8da28da48e8544b1282cf))
+
 # [2.1.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-detector-core-v2.0.0...api-detector-core-v2.1.0) (2026-11-23)
 
 
