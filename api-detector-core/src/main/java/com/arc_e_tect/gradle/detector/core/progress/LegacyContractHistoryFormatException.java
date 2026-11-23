@@ -18,6 +18,7 @@ import java.io.File;
  */
 public class LegacyContractHistoryFormatException extends RuntimeException {
 
+    /** The legacy-format contract history file that could not be loaded. */
     private final File file;
 
     /**
