@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -107,6 +108,25 @@ public class ControllerScanner {
      * @throws IOException if a file cannot be read
      */
     public List<Endpoint> scan(Collection<File> sourceFiles) throws IOException {
+        return scan(sourceFiles, file -> { });
+    }
+
+    /**
+     * Scans {@code .java} source files together, as {@link #scan(Collection)} does, and tells
+     * {@code onFileParsed} about each file once it is parsed.
+     *
+     * <p>Parsing every file is most of the work, and it all happens inside this one call, before
+     * any endpoint can be resolved; the callback lets a caller drive a determinate progress
+     * indicator through it. It is invoked once per file, in the order given, for a file that is not
+     * valid Java too, and before any endpoint is resolved.</p>
+     *
+     * @param sourceFiles  the files to parse, typically every file of the main source set,
+     *                     generated sources included
+     * @param onFileParsed invoked once per file, after it is parsed; never {@code null}
+     * @return possibly-empty list of endpoints, in file order, never {@code null}
+     * @throws IOException if a file cannot be read
+     */
+    public List<Endpoint> scan(Collection<File> sourceFiles, Consumer<File> onFileParsed) throws IOException {
         JavaParser parser = new JavaParser(
                 new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21));
         List<TypeIndex.ParsedSource> sources = new ArrayList<>();
@@ -115,6 +135,7 @@ public class ControllerScanner {
             if (parseResult.isSuccessful()) {
                 sources.add(new TypeIndex.ParsedSource(sourceFile.getName(), parseResult.getResult().orElseThrow()));
             }
+            onFileParsed.accept(sourceFile);
         }
 
         TypeIndex index = new TypeIndex(sources);

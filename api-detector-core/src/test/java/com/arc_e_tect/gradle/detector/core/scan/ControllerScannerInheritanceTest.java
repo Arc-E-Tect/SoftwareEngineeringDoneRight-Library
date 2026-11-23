@@ -248,6 +248,21 @@ class ControllerScannerInheritanceTest {
     }
 
     @Test
+    @DisplayName("tells the caller about every file once it is parsed, in the order given, an unparsable one included")
+    void reportsEveryParsedFile(@TempDir Path tempDir) throws Exception {
+        File garbage = new File(tempDir.toFile(), "NotJava.java");
+        Files.writeString(garbage.toPath(), "this is not java { {{ }}}}}");
+        List<File> files = new ArrayList<>(inheritedFixtures());
+        files.add(1, garbage);
+        List<File> parsed = new ArrayList<>();
+
+        List<Endpoint> endpoints = new ControllerScanner().scan(files, parsed::add);
+
+        assertThat(parsed).containsExactlyElementsOf(files);
+        assertThat(endpoints).isEqualTo(new ControllerScanner().scan(files));
+    }
+
+    @Test
     @DisplayName("finds nothing inherited when the supertype's file is not among the scanned files")
     void findsNothingWhenSupertypeIsNotScanned() throws Exception {
         File controller = inheritedFixtures().stream()

@@ -111,6 +111,8 @@ List<Endpoint> endpoints = new ControllerScanner().scan(List.of(booksApiFile, bo
 
 `scan(File)` scans a single file, and therefore finds no mappings inherited from a supertype declared in another file.
 
+`scan(Collection<File>, Consumer<File> onFileParsed)` scans the same way, and calls `onFileParsed` once per file, in the order given, as soon as that file is parsed, so a caller can drive a determinate progress indicator through what is otherwise one call.
+
 == Adding the Dependency
 
 The library is published to https://central.sonatype.com/artifact/com.arc-e-tect/api-detector-core[Maven Central].
