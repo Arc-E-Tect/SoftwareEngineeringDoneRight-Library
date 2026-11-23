@@ -10,7 +10,29 @@ package com.arc_e_tect.gradle.detector.core.model;
  */
 public enum HttpVerb {
 
-    GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE,
+    /** HTTP {@code GET}. */
+    GET,
+
+    /** HTTP {@code HEAD}. */
+    HEAD,
+
+    /** HTTP {@code POST}. */
+    POST,
+
+    /** HTTP {@code PUT}. */
+    PUT,
+
+    /** HTTP {@code PATCH}. */
+    PATCH,
+
+    /** HTTP {@code DELETE}. */
+    DELETE,
+
+    /** HTTP {@code OPTIONS}. */
+    OPTIONS,
+
+    /** HTTP {@code TRACE}. */
+    TRACE,
 
     /** Matches any concrete verb; used for Spring mappings that do not restrict the verb. */
     ANY;
