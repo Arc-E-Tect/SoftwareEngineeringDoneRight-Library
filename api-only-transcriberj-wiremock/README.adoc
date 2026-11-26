@@ -4,6 +4,14 @@
 :icons: font
 :source-highlighter: rouge
 
+[NOTE]
+.About this documentation
+====
+This documentation was partially authored by Claude, an AI assistant.
+Documentation is part of the product, and is held to the same standard as the code it describes.
+If something here seems wrong, please file a bug report: link:https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/new[open an issue in this repository ↗].
+====
+
 The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-API/tree/main/api-only-transcriberj[API-Only TranscriberJ ↗]: WireMock stubs that answer as the API contract says -- an early, specification-compliant draft of the API, packaged for the developers of its consumers, and the reference double for contract tests in any language.
 
 // tag::root[]
@@ -23,7 +31,7 @@ The WireMock emitter of the https://github.com/Arc-E-Tect/SoftwareEngineeringDon
 |Requirement |Version
 |Java |21+
 |Gradle |9.x
-|API-Only TranscriberJ |`0.13.0` or newer: the first version that gives emitters the text of each response body.
+|API-Only TranscriberJ |`0.21.0` or newer: the first version that gives emitters a response's named examples.
 Until the TranscriberJ's `1.0.0`, a release may change the emitter interface; its changelog says when.
 |WireMock |The stubs are written for WireMock `3.13.2`: its mapping files, its `wiremock/wiremock:3.13.2` Docker image, and, in the `java` format, `org.wiremock:wiremock-jetty12` `3.13.2` in the project's test source sets. See <<java-dependency,The `java` format's dependencies §>>.
 |===
@@ -125,6 +133,8 @@ mappings/
 __files/
   <contract>/
     <BodyClass>.json               one body, shared by every stub that answers with it
+    <operationId>/
+      <status>-<Example>.json      the default named example a response's stubs answer with
 ----
 
 An operation without an `operationId` is named after its generated class stem, such as `GetThingsById`.
@@ -165,6 +175,13 @@ Every value is taken from the case at run time.
 |`static List<MappingBuilder> all()`
 |Every case's exact stub, and every fallback.
 
+|`static MappingBuilder example(String operation, String name)`, `example(String operation, int status, String name)`
+|A stub that answers any valid request of an operation with one of the named examples its responses declare, for a test to choose an outcome (<<choosing-an-outcome,Choosing an outcome §>>).
+The status is needed only where two of the operation's responses declare an example of the same name.
+
+|`static List<Example> examples(String operation)`
+|The named examples an operation's responses declare, in declaration order: each with its status, name, content type, body and whether it is the default.
+
 |`static final List<Operation> OPERATIONS`
 |A row per operation: its name, method and path template, the patterns its fallbacks match, its request body's schema, and what each fallback answers with.
 
@@ -176,7 +193,7 @@ Choose `java` when the stubs are registered from Java rather than loaded from fi
 
 *The class is written to be read, copied and changed.*
 It uses only the public classes of the generated tree -- `ContractCase`, `ContractRequest`, `CaseKind`, the response classes' `fullBody()` -- so a copy in a source set and package of your own keeps compiling against the generated tree.
-Change first what you came to change: replace a `fullBody()` in `body(String)` with a literal, change an operation's row in `OPERATIONS`, or a matcher in `mappingFor` or `valid`.
+Change first what you came to change: replace a `fullBody()` in `body(String)` with a literal, change an operation's row in `OPERATIONS` -- its answers or its examples -- or a matcher in `mappingFor` or `valid`.
 The tests copy the class into a package of its own, change one response body to a literal, and serve the changed response from the copy.
 
 == The stubs
@@ -226,7 +243,10 @@ What a stub matches of the request:
 
 Headers the operation does not declare -- `User-Agent`, `Authorization`, whatever defaults a consumer's client adds -- are not matched, so they never stop a stub from matching.
 
-Each stub answers with the case's status; where the declared response has content, its first content type, and the body its generated class's `fullBody()` gives; where it has none, the status alone.
+Each stub answers with the case's status; where the declared response has content, with its body; where it has none, the status alone.
+The body is the response's default named example, in the content type it is declared under, where the response declares named examples: the one its `x-transcriberj-examples` names as `default`, else the first.
+Otherwise it is the body its generated class's `fullBody()` gives, in the response's first content type.
+A body written as an example reads as the contract's authors wrote it; a generated one takes each value from the first schema example it finds, which for a body that combines shared and operation-specific schemas need not read as any real answer would.
 
 === Fallbacks, for every other request
 
@@ -247,11 +267,11 @@ For each operation, stubs of lower priority than every exact stub answer those a
 
 |`fallback-valid`
 |The path template, each path parameter matched by the pattern its schema allows; every required query parameter and header present, and each parameter sent matching its pattern; `Accept` absent or acceptable; the request body's first declared media type; and the body by `matchesJsonSchema` against the TranscriberJ's own request body schema -- strict as `strictRequests` makes it, and its formats checked as <<fallback-limits,below>>.
-|The first `2xx` the operation declares, with its `fullBody()`
+|The first `2xx` the operation declares, with its default example, else its `fullBody()`
 
 |`fallback-invalid`
 |Where the operation declares the invalid-request status: the method and path template alone.
-|That status, with its `fullBody()`
+|That status, with its default example, else its `fullBody()`
 |===
 
 [#fallback-limits]
@@ -355,9 +375,50 @@ So the files keep the stub of the case the contract lists first, leave out the o
 Against the files, the other case's contract test fails, expecting its status and receiving the first one; with the `java` format, each test's hook registers its own case's stub just before its request, and both pass.
 WireMock's scenarios could hold such state, and are out of scope.
 * *Answer with a body the TranscriberJ cannot build.*
-Where a response's body has no valid value -- constraints nothing satisfies, a construct no rule represents -- the files leave out every stub that would answer with it, and the report says why; in the `java` format, making such a stub throws the TranscriberJ's own exception, naming the class and the reason.
-* Keep state across requests, template a response from the request, or answer with the contract's `examples`.
+Where a response's body has no valid value -- constraints nothing satisfies, a construct no rule represents -- and it declares no named example, the files leave out every stub that would answer with it, and the report says why; in the `java` format, making such a stub throws the TranscriberJ's own exception, naming the class and the reason.
+* *Choose an outcome by the request alone.*
+Two valid requests of the same shape -- an order for an item in stock, and one for an item that is not -- get the same answer from the files: the default example.
+With the `java` format a test registers the outcome it needs (<<choosing-an-outcome,Choosing an outcome §>>).
+* Keep state across requests, or template a response from the request.
 * Answer `401`, `403`, `409`, `422`, `429`, a `3xx` or a `5xx`: those stay hand-written.
+
+[#choosing-an-outcome]
+=== Choosing an outcome
+
+An operation often has several outcomes for requests of the same shape, and the contract documents each as a named example:
+
+[source,yaml]
+----
+responses:
+  '200':
+    content:
+      application/json:
+        schema: {$ref: '#/components/schemas/OrderCheckV1'}
+        examples:
+          Accepted: {value: {outcome: accepted, findings: []}}
+          OutOfStock: {$ref: '#/components/examples/OutOfStockCheckV1'}
+  '422':
+    content:
+      application/problem+json:
+        schema: {$ref: '#/components/schemas/ProblemV1'}
+        examples:
+          Closed: {value: {title: The shop is closed.}}
+----
+
+A consumer's test that needs one of them registers the `java` format's stub for it, before its request:
+
+[source,java]
+----
+wireMock.register(ContractStubs.example("CheckOrder", "OutOfStock"));
+----
+
+* The stub matches any valid request of the operation, exactly as its valid fallback does, at the priority of the exact stubs: it answers in the fallbacks' place, and a case's own exact stub registered at the same priority still competes with it, the one registered last winning.
+* It answers with the example's response status, its content type and its body: `example("CheckOrder", "Closed")` answers `422`.
+* It is named `<operationId>/example-<status>-<name>`, and its `metadata` has the `kind` `EXAMPLE`.
+* Where two of an operation's responses declare an example of the same name, `example(operation, name)` throws and says so; `example(operation, status, name)` names the one meant.
+* An unknown operation or example throws, naming what exists; `ContractStubs.examples(operation)` lists an operation's examples.
+
+The `files` format writes no stub per example: a static double answers a request in one way only.
 
 [#double-in-contract-tests]
 == The double in contract tests
@@ -547,6 +608,16 @@ The `files` format has no source set, and so no dependency.
 A project that puts version 2 or later on the same classpath -- for its own schema validation -- breaks it with `NoClassDefFoundError: com/networknt/schema/SchemaValidatorsConfig`; `org.wiremock:wiremock-standalone`, which shades its dependencies, avoids that, and is what this emitter's own tests use.
 * `wiremock-jetty12` 3.13.2 imports the Jetty 12.0 BOM, while `wiremock-spring-boot` 4.4.1 asks for Jetty 12.1: keep WireMock's Jetty on one version in every source set the stubs are compiled into, with `enforcedPlatform('org.eclipse.jetty:jetty-bom:<version>')`.
 * `spring-cloud-contract-wiremock` brings `wiremock-standalone`, which holds the same classes shaded: settle on one of the two per classpath.
+
+== Upgrading from 0.2
+
+0.3.0 needs the API-Only TranscriberJ `0.21.0` or newer.
+
+* *A response that declares named examples is answered with its default example*, not its class's `fullBody()`, by every stub of its status, in both formats, and in the example's content type.
+A consumer's test that asserted a generated body asserts the example instead.
+* *The `files` format writes a body file per default example*, under `__files/<contract>/<operationId>/<status>-<Example>.json`.
+* *The `java` format's `Operation` has a last component, `examples`*: a copy of `ContractStubs` made from 0.2 adds it, or keeps generating its own rows.
+`example(...)` and `examples(...)` are new.
 
 == Upgrading from 0.0.1
 

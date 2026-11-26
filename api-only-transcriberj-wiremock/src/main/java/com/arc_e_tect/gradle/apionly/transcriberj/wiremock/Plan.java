@@ -8,6 +8,7 @@ import com.arc_e_tect.gradle.apionly.transcriberj.spi.ContractCase;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.EmitterContext;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.GeneratedClass;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.ResponseBody;
+import com.arc_e_tect.gradle.apionly.transcriberj.spi.ResponseExample;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -104,11 +105,19 @@ record Plan(String contract, String contractVersion, int priority, boolean fallb
      *                      check by shape
      * @param answers       what each fallback it has answers with
      * @param cases         its contract cases
+     * @param examples      the named examples of each response that declares any, by status, in
+     *                      declaration order
      */
     record Op(String location, String name, String casesClass, String method, String pathTemplate, int rank,
               String acceptable, String supported, List<Patterns.Parameter> parameters, String bodyMediaType,
               String bodySchema, boolean bodyRequired, List<String> uncheckedFormats, Map<Fallback, Answer> answers,
-              List<ContractCase> cases) {
+              List<ContractCase> cases, Map<Integer, List<ResponseExample>> examples) {
+
+        /** The example a stub of this status answers with, or {@code null} where the response declares none. */
+        ResponseExample defaultExample(int status) {
+            return examples.getOrDefault(status, List.of()).stream().filter(ResponseExample::isDefault).findFirst()
+                    .orElse(null);
+        }
 
         /**
          * The priority of one of its fallbacks: below every exact stub, the operations of more
@@ -210,9 +219,17 @@ record Plan(String contract, String contractVersion, int priority, boolean fallb
                     .ifPresent(a -> answers.put(Fallback.INVALID, a));
         }
         if (cases.isEmpty() && answers.isEmpty()) return null;
+        Map<Integer, List<ResponseExample>> examples = new java.util.LinkedHashMap<>();
+        if (operation.responses() != null) {
+            for (Response r : operation.responses()) {
+                if (!r.status().matches("[1-5][0-9][0-9]")) continue;
+                List<ResponseExample> named = context.responseExamples(location, r.status());
+                if (!named.isEmpty()) examples.put(Integer.parseInt(r.status()), named);
+            }
+        }
         return new Op(location, name, casesClass, operation.method().key().toUpperCase(Locale.ROOT), operation.path(),
                 0, acceptable, supported, List.copyOf(parameters), bodyMediaType, bodySchema, bodyRequired,
-                List.copyOf(unchecked), answers, cases);
+                List.copyOf(unchecked), answers, cases, java.util.Collections.unmodifiableMap(examples));
     }
 
     /** The response an operation declares for a status, as a stub answers with it. */
@@ -275,7 +292,7 @@ record Plan(String contract, String contractVersion, int priority, boolean fallb
             int rank = new ArrayList<>(templates.get(op.method())).indexOf(op.pathTemplate());
             out.add(new Op(op.location(), op.name(), op.casesClass(), op.method(), op.pathTemplate(), rank,
                     op.acceptable(), op.supported(), op.parameters(), op.bodyMediaType(), op.bodySchema(),
-                    op.bodyRequired(), op.uncheckedFormats(), op.answers(), op.cases()));
+                    op.bodyRequired(), op.uncheckedFormats(), op.answers(), op.cases(), op.examples()));
         }
         return List.copyOf(out);
     }
