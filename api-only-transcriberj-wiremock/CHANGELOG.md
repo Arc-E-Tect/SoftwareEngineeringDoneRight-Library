@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.2.1...api-only-transcriberj-wiremock-v0.3.0) (2026-11-26)
+
+
+### ✨ New and updated features
+
+* **api-only-transcriberj-wiremock:** answer with named response examples, and a stub per example ([#133](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/133)) ([86bc8b2](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/commit/86bc8b263aa5c985d9cfa26700774f96d85e33bd)), closes [#133](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/133) [#147](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/147) [#132](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/issues/132)
+
 ## [0.2.1](https://github.com/Arc-E-Tect/SoftwareEngineeringDoneRight-Library/compare/api-only-transcriberj-wiremock-v0.2.0...api-only-transcriberj-wiremock-v0.2.1) (2026-11-19)
 
 
