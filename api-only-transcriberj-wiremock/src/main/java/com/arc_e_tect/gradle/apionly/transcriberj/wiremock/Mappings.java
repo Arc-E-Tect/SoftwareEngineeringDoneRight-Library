@@ -26,12 +26,15 @@ final class Mappings {
     interface Bodies {
 
         /**
-         * How a mapping refers to a body class's full body.
+         * How a mapping refers to the body it answers a status with: the response's default named
+         * example where it declares any, else the body class's full body.
          *
+         * @param status    the status
          * @param bodyClass the class
-         * @return the response members that give the body, such as {@code bodyFileName}
+         * @return the response members that give the body, such as {@code bodyFileName}, and the
+         *         {@code headers} where an example's content type sets them
          */
-        Map<String, Object> body(String bodyClass);
+        Map<String, Object> body(int status, String bodyClass);
     }
 
     private Mappings() {
@@ -163,7 +166,7 @@ final class Mappings {
         response.put("status", status);
         if (contentType != null) {
             response.put("headers", Map.of("Content-Type", contentType));
-            if (bodyClass != null) response.putAll(bodies.body(bodyClass));
+            if (bodyClass != null) response.putAll(bodies.body(status, bodyClass));
         }
         return response;
     }

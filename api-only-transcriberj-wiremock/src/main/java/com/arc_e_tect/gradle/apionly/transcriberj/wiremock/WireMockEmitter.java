@@ -3,6 +3,7 @@ package com.arc_e_tect.gradle.apionly.transcriberj.wiremock;
 import com.arc_e_tect.gradle.apionly.transcriberj.model.Construct;
 import com.arc_e_tect.gradle.apionly.transcriberj.model.Finding;
 import com.arc_e_tect.gradle.apionly.transcriberj.model.Treatment;
+import com.arc_e_tect.gradle.apionly.transcriberj.spi.ResponseExample;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.ContractCase;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.Emitter;
 import com.arc_e_tect.gradle.apionly.transcriberj.spi.EmitterContext;
@@ -90,14 +91,22 @@ public final class WireMockEmitter implements Emitter {
     }
 
     /**
-     * The mapping files, one per stub, and the body files, one per body: a stub whose body the core
-     * cannot build is left out, and reported.
+     * The mapping files, one per stub, and the body files: one per body class, and one per default
+     * example a stub answers with, under its operation's name and its status. A stub whose body the
+     * core cannot build is left out, and reported; one that answers with an example has its body.
      */
     private static void files(EmitterContext context, Plan plan) {
         Map<String, String> bodies = new LinkedHashMap<>();
         String bodyDirectory = Plan.fileName(plan.contract());
-        Mappings.Bodies files = bodyClass -> Map.of("bodyFileName", bodyDirectory + "/" + bodyClass + ".json");
         for (Plan.Op op : plan.operations()) {
+            Mappings.Bodies files = (status, bodyClass) -> {
+                ResponseExample example = op.defaultExample(status);
+                if (example == null) return Map.of("bodyFileName", bodyDirectory + "/" + bodyClass + ".json");
+                String file = bodyDirectory + "/" + Plan.fileName(op.name()) + "/" + status + "-"
+                        + Plan.fileName(example.name()) + ".json";
+                bodies.putIfAbsent(file, example.text());
+                return Map.of("headers", Map.of("Content-Type", example.contentType()), "bodyFileName", file);
+            };
             String directory = MAPPINGS + "/" + Plan.fileName(op.name()) + "/";
             Map<String, String> requests = new LinkedHashMap<>();
             for (ContractCase c : op.cases()) {
@@ -111,16 +120,17 @@ public final class WireMockEmitter implements Emitter {
                     sameRequest(context, op.location(), path, c, earlier);
                     continue;
                 }
-                if (!available(context, path, body, bodies)) continue;
+                if (op.defaultExample(c.expectedStatus()) == null && !available(context, path, body, bodies)) continue;
                 context.writeFile(path, Json.write(mapping));
             }
             for (Map.Entry<Plan.Fallback, Plan.Answer> answer : op.answers().entrySet()) {
                 String path = directory + answer.getKey().caseId() + ".json";
-                if (!available(context, path, answer.getValue().body(), bodies)) continue;
+                if (op.defaultExample(answer.getValue().status()) == null
+                        && !available(context, path, answer.getValue().body(), bodies)) continue;
                 context.writeFile(path, Json.write(Mappings.fallback(plan, op, answer.getKey(), files)));
             }
         }
-        bodies.forEach((bodyClass, text) -> context.writeFile(FILES + "/" + bodyDirectory + "/" + bodyClass + ".json", text));
+        bodies.forEach((file, text) -> context.writeFile(FILES + "/" + file, text));
     }
 
     /**
@@ -145,7 +155,7 @@ public final class WireMockEmitter implements Emitter {
     private static boolean available(EmitterContext context, String path, ResponseBody body, Map<String, String> bodies) {
         if (body == null) return true;
         if (body.full().available()) {
-            bodies.putIfAbsent(body.bodyClass(), body.full().text());
+            bodies.putIfAbsent(Plan.fileName(context.settings().contract()) + "/" + body.bodyClass() + ".json", body.full().text());
             return true;
         }
         context.degraded(path, "response body", new Finding(body.full().location(), Construct.UNMODELLED_KEYWORD,

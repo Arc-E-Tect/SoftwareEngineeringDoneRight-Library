@@ -78,6 +78,7 @@ final class Fixtures {
     static final Contract SELECTED = new Contract("selected", "/contracts/cases/selected.yaml", List.of());
     static final Contract PRECEDENCE = new Contract("precedence", "/contracts/precedence.yaml", List.of());
     static final Contract UNBUILDABLE = new Contract("unbuildable", "/contracts/unbuildable.yaml", List.of());
+    static final Contract EXAMPLES = new Contract("examples", "/contracts/examples.yaml", List.of());
 
     /** The keyword corpus with no format named in {@code validateFormats}. */
     static final Contract KEYWORDS_UNCHECKED_FORMATS = new Contract("keywords", "/contracts/corpus/keywords.yaml",
@@ -89,7 +90,7 @@ final class Fixtures {
 
     /** Every contract, each as it is written to be generated. */
     static final List<Contract> ALL = List.of(USER_ACCOUNT, KEYWORDS, DEGRADED, TRANSMISSION, RESPONSES, SUCCESS,
-            NOT_FOUND, NEGOTIATION, COVERAGE, SELECTED, PRECEDENCE);
+            NOT_FOUND, NEGOTIATION, COVERAGE, SELECTED, PRECEDENCE, EXAMPLES);
 
     /**
      * One generation: where each emitter's output went, and the reports.

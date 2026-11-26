@@ -1,0 +1,92 @@
+# Named response examples. The 200's stubs answer with its first example, Accepted, which no
+# extension overrides; the 422 names its default, Closed. Both declare an example named
+# OutOfStock, so that one name, alone, does not tell which is meant. Listing orders declares no
+# example, and its stubs answer with the generated fullBody(), as before.
+openapi: 3.1.0
+info:
+  title: Order checks
+  version: 1.0.0
+paths:
+  /orders/checks:
+    post:
+      operationId: CheckOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OrderV1'}
+      responses:
+        '200':
+          description: The check's verdict.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderCheckV1'}
+              examples:
+                Accepted:
+                  value: {outcome: accepted, findings: []}
+                OutOfStock:
+                  $ref: '#/components/examples/OutOfStockCheckV1'
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+        '422':
+          description: The order cannot be checked.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ProblemV1'}
+              examples:
+                OutOfStock:
+                  value: {title: The item is out of stock.}
+                Closed:
+                  value: {title: The shop is closed.}
+              x-transcriberj-examples:
+                default: Closed
+  /orders:
+    get:
+      operationId: ListOrders
+      responses:
+        '200':
+          description: The orders.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderListV1'}
+components:
+  schemas:
+    OrderV1:
+      x-fragment-path: schemas/OrderV1.yaml
+      type: object
+      additionalProperties: false
+      required: [item]
+      properties:
+        item: {type: string, minLength: 1, examples: [book]}
+    OrderCheckV1:
+      x-fragment-path: schemas/OrderCheckV1.yaml
+      type: object
+      required: [outcome]
+      properties:
+        outcome: {type: string, enum: [accepted, rejected]}
+        findings:
+          type: array
+          items:
+            type: object
+            required: [rule]
+            properties: {rule: {type: string}, message: {type: string}}
+    OrderListV1:
+      x-fragment-path: schemas/OrderListV1.yaml
+      type: object
+      required: [orders]
+      properties:
+        orders: {type: array, items: {$ref: '#/components/schemas/OrderV1'}}
+    ProblemV1:
+      x-fragment-path: schemas/ProblemV1.yaml
+      type: object
+      required: [title]
+      properties: {title: {type: string}}
+  examples:
+    OutOfStockCheckV1:
+      value:
+        outcome: rejected
+        findings:
+          - {rule: OUT_OF_STOCK, message: The item is out of stock.}

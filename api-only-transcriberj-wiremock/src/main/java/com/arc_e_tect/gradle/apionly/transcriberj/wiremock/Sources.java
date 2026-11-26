@@ -72,6 +72,10 @@ final class Sources {
         for (Plan.Fallback fallback : Plan.Fallback.values()) args.add(answer(op.answers().get(fallback)));
         args.add(list(op.enforces().stream().map(Sources::literal).toList(), i3 + INDENT));
         args.add(list(op.doesNotEnforce().stream().map(Sources::literal).toList(), i3 + INDENT));
+        List<String> examples = new ArrayList<>();
+        op.examples().forEach((status, named) -> named.forEach(e -> examples.add("new Example(" + status + ", "
+                + literal(e.name()) + ", " + literal(e.contentType()) + ", " + literal(e.text()) + ", " + e.isDefault() + ")")));
+        args.add(list(examples, i3 + INDENT));
         return INDENT + INDENT + "new Operation(\n" + i3 + String.join(",\n" + i3, args) + ")";
     }
 
@@ -159,7 +163,14 @@ final class Sources {
              *   <li>{@link #fallbacks()}: for every operation, the stubs that answer the requests no case sends,
              *       as closely to the contract as WireMock's matchers allow.</li>
              *   <li>{@link #all()}: every case's stub and every fallback.</li>
+             *   <li>{@link #example(String, String)}: a stub that answers any valid request with one of the named
+             *       examples a response declares, for a test to choose an outcome; {@link #examples(String)} lists
+             *       them.</li>
              * </ul>
+             *
+             * <p>A response that declares named examples is answered with its default one -- the one its
+             * {@code x-transcriberj-examples} names, else the first -- by every stub of its status; any other with
+             * its body class's {@code fullBody()}.
              *
              * <p>Register them on whichever WireMock the tests reach -- {@code server.stubFor(mapping)},
              * {@code WireMock.stubFor(mapping)}, or {@code wireMock.register(mapping)} -- in a contract test's hooks:
@@ -215,12 +226,25 @@ final class Sources {
                  * @param invalid              what its invalid fallback answers, or null for none
                  * @param enforces             what its valid fallback enforces
                  * @param doesNotEnforce       what its valid fallback does not enforce
+                 * @param examples             the named examples its responses declare, in declaration order
                  */
                 public record Operation(String name, String method, String pathTemplate, int rank, String acceptable,
                                         String supported, List<Parameter> parameters, String bodyMediaType,
                                         String bodySchema, boolean bodyRequired, Answer notAcceptable,
                                         Answer unsupportedMediaType, Answer valid, Answer invalid,
-                                        List<String> enforces, List<String> doesNotEnforce) {
+                                        List<String> enforces, List<String> doesNotEnforce, List<Example> examples) {
+                }
+
+                /**
+                 * A named example a response declares, as the contract writes it.
+                 *
+                 * @param status      the status of the response that declares it
+                 * @param name        its name
+                 * @param contentType the content type it is declared under
+                 * @param body        its value, as JSON text
+                 * @param isDefault   whether the stubs of its status answer with it
+                 */
+                public record Example(int status, String name, String contentType, String body, boolean isDefault) {
                 }
 
                 /**
@@ -303,8 +327,87 @@ final class Sources {
                                 .withRequestBody(WireMock.equalToJson(request.body(), false, false));
                     }
                     List<String> types = contractCase.expectedContentTypes();
-                    return mapping.willReturn(response(contractCase.expectedStatus(), types.isEmpty() ? null : types.get(0),
-                            types.isEmpty() ? null : contractCase.responseBodyClass()));
+                    return mapping.willReturn(response(operation, contractCase.expectedStatus(),
+                            types.isEmpty() ? null : types.get(0), types.isEmpty() ? null : contractCase.responseBodyClass()));
+                }
+
+                /**
+                 * The named examples an operation's responses declare, in declaration order.
+                 *
+                 * @param operation the operation's name, as {@link Operation#name()} gives it
+                 * @return the examples; empty where its responses declare none
+                 * @throws IllegalArgumentException when the contract has no such operation
+                 */
+                public static List<Example> examples(String operation) {
+                    return named(operation).examples();
+                }
+
+                /**
+                 * A stub that answers any valid request of an operation -- as its valid fallback matches one --
+                 * with one of the named examples its responses declare, at the priority of the exact stubs: for a
+                 * test to choose which outcome the double answers with. Named {@code <operation>/example-<status>-<name>}.
+                 *
+                 * @param operation the operation's name, as {@link Operation#name()} gives it
+                 * @param name      the example's name
+                 * @return the mapping
+                 * @throws IllegalArgumentException when there is no such operation or example, or more than one
+                 *                                  of the operation's responses declares an example of that name
+                 */
+                public static MappingBuilder example(String operation, String name) {
+                    Operation op = named(operation);
+                    List<Example> found = op.examples().stream().filter(e -> e.name().equals(name)).toList();
+                    if (found.isEmpty()) {
+                        throw new IllegalArgumentException("No example " + name + " of " + operation + "; it has "
+                                + listed(op.examples()) + ".");
+                    }
+                    if (found.size() > 1) {
+                        throw new IllegalArgumentException(operation + " has an example " + name + " for "
+                                + String.join(" and ", found.stream().map(e -> String.valueOf(e.status())).toList())
+                                + "; choose one with example(\\\"" + operation + "\\\", status, \\\"" + name + "\\\").");
+                    }
+                    return example(op, found.get(0));
+                }
+
+                /**
+                 * A stub that answers any valid request of an operation with the named example a response of
+                 * that status declares, as {@link #example(String, String)} does.
+                 *
+                 * @param operation the operation's name, as {@link Operation#name()} gives it
+                 * @param status    the status of the response that declares the example
+                 * @param name      the example's name
+                 * @return the mapping
+                 * @throws IllegalArgumentException when there is no such operation or example
+                 */
+                public static MappingBuilder example(String operation, int status, String name) {
+                    Operation op = named(operation);
+                    Example found = op.examples().stream().filter(e -> e.status() == status && e.name().equals(name))
+                            .findFirst().orElseThrow(() -> new IllegalArgumentException("No example " + name + " of "
+                                    + operation + "'s " + status + "; it has " + listed(op.examples()) + "."));
+                    return example(op, found);
+                }
+
+                private static MappingBuilder example(Operation operation, Example example) {
+                    String id = "example-" + example.status() + "-" + example.name();
+                    MappingBuilder mapping = WireMock.request(operation.method(), WireMock.urlPathTemplate(operation.pathTemplate()))
+                            .withName(operation.name() + "/" + id)
+                            .atPriority(PRIORITY)
+                            .withMetadata(metadata(operation, id, "EXAMPLE", false));
+                    return valid(mapping, operation).willReturn(WireMock.aResponse().withStatus(example.status())
+                            .withHeader("Content-Type", example.contentType()).withBody(example.body()));
+                }
+
+                /** The operation with a name. */
+                private static Operation named(String name) {
+                    for (Operation operation : OPERATIONS) {
+                        if (operation.name().equals(name)) return operation;
+                    }
+                    throw new IllegalArgumentException("No operation " + name + " in contract " + CONTRACT + "; it has "
+                            + String.join(", ", OPERATIONS.stream().map(Operation::name).toList()) + ".");
+                }
+
+                private static String listed(List<Example> examples) {
+                    return examples.isEmpty() ? "none"
+                            : String.join(", ", examples.stream().map(e -> e.status() + " " + e.name()).toList());
                 }
 
                 /**
@@ -368,7 +471,7 @@ final class Sources {
                             .withName(operation.name() + "/fallback-" + id)
                             .atPriority(priority)
                             .withMetadata(metadata(operation, "fallback-" + id, kind, true))
-                            .willReturn(response(answer.status(), answer.contentType(), answer.bodyClass()));
+                            .willReturn(response(operation, answer.status(), answer.contentType(), answer.bodyClass()));
                 }
 
                 /** The valid fallback's matchers: each parameter by its pattern, the media types, and the body's schema. */
@@ -399,10 +502,16 @@ final class Sources {
                     return mapping;
                 }
 
-                /** What the contract declares the response is. */
-                private static ResponseDefinitionBuilder response(int status, String contentType, String bodyClass) {
+                /** What the contract declares the response is: its default named example, else its body class's full body. */
+                private static ResponseDefinitionBuilder response(Operation operation, int status, String contentType,
+                                                                  String bodyClass) {
                     ResponseDefinitionBuilder response = WireMock.aResponse().withStatus(status);
                     if (contentType == null) return response;
+                    for (Example example : operation.examples()) {
+                        if (example.status() == status && example.isDefault()) {
+                            return response.withHeader("Content-Type", example.contentType()).withBody(example.body());
+                        }
+                    }
                     response = response.withHeader("Content-Type", contentType);
                     return bodyClass == null ? response : response.withBody(body(bodyClass));
                 }
